@@ -1,0 +1,103 @@
+@inject IJSRuntime JS
+@inject ISnackbarService Snackbar
+@inject NavigationManager Navigation
+
+<FlarePopover Open="_popoverOpen" OpenChanged="@(open => _popoverOpen = open)"
+              Placement="PopoverPlacement.Bottom">
+    <AnchorContent>
+        <FlareIconButton Icon="share"
+                         Variant="ButtonVariant.Text"
+                         Color="FlareColor.Default"
+                         OnClick="@TogglePopover" />
+    </AnchorContent>
+    <ChildContent>
+        <div class="deka-share-popover">
+            <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="deka-share-popover-label">
+                Ссылка для приглашения
+            </FlareText>
+            <FlareStack Row Gap="FlareSpacing.Small" Align="FlareAlignItems.Center">
+                <FlareTextField @bind-Value="_shareUrl"
+                                ReadOnly="true"
+                                Variant="InputVariant.Outlined"
+                                FullWidth="true"
+                                Margin="FieldMargin.Dense" />
+                <FlareButton Variant="ButtonVariant.Filled"
+                             Color="FlareColor.Primary"
+                             Size="ButtonSize.Sm"
+                             OnClick="CopyLink">
+                    @(_justCopied ? "Скопировано" : "Копировать")
+                </FlareButton>
+            </FlareStack>
+        </div>
+    </ChildContent>
+</FlarePopover>
+
+<style>
+    .deka-share-popover {
+        padding: 0.75rem;
+        min-width: 22rem;
+    }
+
+    .deka-share-popover-label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+@code {
+    private bool _popoverOpen;
+    private string _shareUrl = "";
+    private bool _justCopied;
+
+    /// <summary>
+    /// Ссылка для копирования. Если не указана, используется текущий URL страницы.
+    /// </summary>
+    [Parameter] public string ShareUrl { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (string.IsNullOrEmpty(ShareUrl))
+            ShareUrl = Navigation.Uri;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(ShareUrl))
+            _shareUrl = ShareUrl;
+    }
+
+    private async Task TogglePopover()
+    {
+        if (_popoverOpen)
+        {
+            _popoverOpen = false;
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(ShareUrl))
+            {
+                Snackbar.Show("Ссылка недоступна", SnackbarSeverity.Warning);
+                return;
+            }
+            _shareUrl = ShareUrl;
+            _popoverOpen = true;
+        }
+    }
+
+    private async Task CopyLink()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _shareUrl);
+            Snackbar.Show("Ссылка скопирована в буфер обмена", SnackbarSeverity.Success);
+            _justCopied = true;
+            StateHasChanged();
+            await Task.Delay(1500);
+            _justCopied = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Не удалось скопировать ссылку: {ex.Message}", SnackbarSeverity.Error);
+        }
+    }
+}

@@ -1,0 +1,195 @@
+@using PlaylistShare.Pwa.Components.Global
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Shared.Profile
+@inherits LayoutComponentBase
+@inject IVersionCheckService VersionCheck
+@inject ISnackbarService Snackbar
+@inject NavigationManager NavigationManager
+@inject ContextualActionBarService ContextualActionBarService
+@inject AppBarState AppBar
+@inject AuthenticationStateProvider AuthProvider
+@inject HttpClient Http
+@inject IAudioPlayerService AudioPlayerService
+@implements IDisposable
+
+@* Theme + dark/light is owned by <FlareThemeProvider> in App.razor. *@
+<FlareDialogProvider />
+<FlareSnackbarProvider />
+
+<div class="deka-shell">
+    <FlareHidden Above="Breakpoint.Sm">
+        <header class="deka-mobile-header">
+            <div class="deka-mobile-lead">
+                @if (AppBar.Title != null)
+                {
+                    @if (AppBar.ShowBack)
+                    {
+                        <FlareIconButton Icon="arrow_back" Variant="ButtonVariant.Text"
+                                         OnClick="OnAppBarBack" AriaLabel="Назад" Class="deka-mobile-back" />
+                    }
+                    <span class="deka-mobile-appbar-title" title="@AppBar.Title">@AppBar.Title</span>
+                }
+                else
+                {
+                    <a href="/" class="deka-mobile-brand">
+                        <span class="deka-mobile-brand-mark"><DekaMark Size="18" /></span>
+                        <span class="deka-mobile-brand-name">PlaylistShare</span>
+                    </a>
+                }
+            </div>
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/profile" class="deka-mobile-avatar" aria-label="Профиль">
+                        <FlareAvatar Text="@InitialOf(context.User.Identity?.Name)" Size="AvatarSize.Sm" />
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <FlareButton Variant="ButtonVariant.Text" Href="/login">Вход</FlareButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </header>
+    </FlareHidden>
+
+    <FlareLayout>
+        <FlareLayoutDrawer Variant="DrawerVariant.Permanent" Width="15.5rem">
+            <NavMenu />
+        </FlareLayoutDrawer>
+
+        <FlareLayoutContent>
+            @if (_actionBarContent != null)
+            {
+                <div class="deka-action-bar">@_actionBarContent</div>
+            }
+            <div class="deka-content">
+                @Body
+            </div>
+        </FlareLayoutContent>
+    </FlareLayout>
+
+    @if (AudioPlayerService.CurrentTrackId != null)
+    {
+        <div class="deka-mini-player">
+            <AudioPlayer OnExpandRequested="@(() => _fullPlayerOpen = true)" />
+        </div>
+    }
+
+    <FlareHidden Above="Breakpoint.Sm">
+        <nav class="deka-bottom-nav">
+            <AuthorizeView>
+                <Authorized>
+                    <FlareNavLink Href="/my-playlists">
+                        <Icon><FlareIcon Name="queue_music" /></Icon>
+                        <ChildContent>Плейлисты</ChildContent>
+                    </FlareNavLink>
+                    <FlareNavLink Href="/search">
+                        <Icon><FlareIcon Name="search" /></Icon>
+                        <ChildContent>Поиск</ChildContent>
+                    </FlareNavLink>
+                </Authorized>
+                <NotAuthorized>
+                    <FlareNavLink Href="/login">
+                        <Icon><FlareIcon Name="login" /></Icon>
+                        <ChildContent>Вход</ChildContent>
+                    </FlareNavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </FlareHidden>
+</div>
+
+<FullPlayer IsOpen="_fullPlayerOpen" OnClose="@(() => _fullPlayerOpen = false)" />
+
+@code {
+    private RenderFragment? _actionBarContent;
+    private bool _fullPlayerOpen;
+
+    // Один и тот же тост для "доступна новая версия" и последующего "обновление...".
+    private readonly Guid _updateToastId = Guid.NewGuid();
+
+    private static string InitialOf(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[..1].ToUpperInvariant();
+
+    private static readonly string[] _connectGateExemptPaths = ["connect-yandex", "profile", "login", "register", "logout"];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ContextualActionBarService.OnChanged += OnContextualChangedHandler;
+        AppBar.OnChanged += OnAppBarChanged;
+        AudioPlayerService.OnStateChanged += OnPlayerStateChanged;
+        // Flare сам опрашивает версию и регистрирует SW; мы лишь показываем плашку.
+        VersionCheck.NewVersionAvailable += OnNewVersionAsync;
+        VersionCheck.Start();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RedirectToConnectIfNeededAsync();
+        }
+    }
+
+    // Плашка "доступна новая версия": по "Обновить" активируем ждущий SW и перезагружаемся
+    // (весь SW-механизм внутри VersionCheck.ApplyUpdateAsync). Нашли новую версию - опрос больше не нужен.
+    private Task OnNewVersionAsync(VersionCheckInfo info) => InvokeAsync(() =>
+    {
+        VersionCheck.Stop();
+        Snackbar.Show(new SnackbarMessage(_updateToastId, "Доступна новая версия приложения", SnackbarSeverity.Info,
+            DurationMs: 0, ActionText: "Обновить", OnAction: StartUpdateAsync));
+    });
+
+    private async Task StartUpdateAsync()
+    {
+        Snackbar.Update(new SnackbarMessage(_updateToastId, "Обновление...", SnackbarSeverity.Info,
+            DurationMs: 0, ShowClose: false, ShowProgress: true));
+        await VersionCheck.ApplyUpdateAsync();
+    }
+
+    // Mirrors the mock's auth -> connect -> app flow: an authenticated user with no Yandex account
+    // linked yet is sent to the Connect screen before they can reach any playlist/search page.
+    private async Task RedirectToConnectIfNeededAsync()
+    {
+        try
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated != true) return;
+
+            var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Split('?')[0].Split('/')[0];
+            if (_connectGateExemptPaths.Contains(currentPath)) return;
+
+            var response = await Http.GetFromJsonAsync<ApiResponse<YandexTokenStatus>>("/api/yandexaccount/status");
+            if (response is { Success: true, Data.HasToken: false })
+            {
+                NavigationManager.NavigateTo("/connect-yandex");
+            }
+        }
+        catch { /* best-effort gate; a failed status check just lets the user through */ }
+    }
+
+    private void OnPlayerStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnAppBarChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task OnAppBarBack()
+    {
+        if (AppBar.BackAction != null)
+        {
+            await AppBar.BackAction();
+        }
+    }
+
+    private void OnContextualChangedHandler()
+    {
+        _actionBarContent = ContextualActionBarService.Content;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ContextualActionBarService.OnChanged -= OnContextualChangedHandler;
+        AppBar.OnChanged -= OnAppBarChanged;
+        AudioPlayerService.OnStateChanged -= OnPlayerStateChanged;
+        VersionCheck.NewVersionAvailable -= OnNewVersionAsync;
+    }
+}

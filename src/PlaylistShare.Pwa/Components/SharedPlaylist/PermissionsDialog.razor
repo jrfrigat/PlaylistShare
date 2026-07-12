@@ -1,0 +1,112 @@
+@using PlaylistShare.Shared.Enums
+@using PlaylistShare.Shared.SharedPlaylist
+@inject HttpClient Http
+@inject ISnackbarService Snackbar
+
+<FlareStack Gap="FlareSpacing.Medium">
+    <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
+        Настройте, кто может просматривать, слушать и редактировать этот плейлист.
+    </FlareText>
+    <FlareGrid Columns="12">
+        <FlareCol Xs="12" Sm="6">
+            <FlareSelect TValue="ViewPermission" Label="Просмотр" @bind-Value="_permissions.ViewPermission"
+                         Items="_viewOptions" ItemLabel="ViewLabel" Variant="InputVariant.Outlined" />
+        </FlareCol>
+        <FlareCol Xs="12" Sm="6">
+            <FlareSelect TValue="ViewPermission" Label="Воспроизведение" @bind-Value="_permissions.PlayPermission"
+                         Items="_viewOptions" ItemLabel="ViewLabel" Variant="InputVariant.Outlined" />
+        </FlareCol>
+        <FlareCol Xs="12" Sm="6">
+            <FlareSelect TValue="EditPermission" Label="Добавление треков" @bind-Value="_permissions.AddPermission"
+                         Items="_editOptions" ItemLabel="EditLabel" Variant="InputVariant.Outlined" />
+        </FlareCol>
+        <FlareCol Xs="12" Sm="6">
+            <FlareSelect TValue="EditPermission" Label="Удаление треков" @bind-Value="_permissions.RemovePermission"
+                         Items="_editOptions" ItemLabel="EditLabel" Variant="InputVariant.Outlined" />
+        </FlareCol>
+    </FlareGrid>
+    <FlareStack Row Gap="FlareSpacing.Small" Justify="FlareJustifyContent.End">
+        <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Default" OnClick="@(() => Dialog.Cancel())">Отмена</FlareButton>
+        <FlareButton Variant="ButtonVariant.Filled" Color="FlareColor.Primary" OnClick="Save" Disabled="_saving" Loading="_saving">
+            Сохранить
+        </FlareButton>
+    </FlareStack>
+</FlareStack>
+
+@code {
+    /// <summary>Дескриптор открытого диалога (каскадируется FlareDialogProvider). Закрывает с результатом.</summary>
+    [CascadingParameter] public FlareDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter] public string ShareToken { get; set; } = string.Empty;
+    [Parameter] public UpdatePermissionsDto InitialPermissions { get; set; } = new();
+
+    private static readonly ViewPermission[] _viewOptions =
+        { ViewPermission.Everyone, ViewPermission.AuthorizedOnly };
+    private static readonly EditPermission[] _editOptions =
+        { EditPermission.Everyone, EditPermission.AuthorizedOnly, EditPermission.AddedByUserOnly };
+
+    private static string ViewLabel(ViewPermission p) => p switch
+    {
+        ViewPermission.Everyone => "Все",
+        ViewPermission.AuthorizedOnly => "Только авторизованные",
+        _ => p.ToString()
+    };
+
+    private static string EditLabel(EditPermission p) => p switch
+    {
+        EditPermission.Everyone => "Все",
+        EditPermission.AuthorizedOnly => "Только авторизованные",
+        EditPermission.AddedByUserOnly => "Только добавивший",
+        _ => p.ToString()
+    };
+
+    private UpdatePermissionsDto _permissions = new();
+    private bool _saving;
+
+    // The dialog body is instantiated fresh per ShowAsync, so seed the working copy once from
+    // InitialPermissions (a cancel then leaves the caller's values untouched).
+    protected override void OnInitialized()
+    {
+        _permissions = new UpdatePermissionsDto
+        {
+            ViewPermission = InitialPermissions.ViewPermission,
+            PlayPermission = InitialPermissions.PlayPermission,
+            AddPermission = InitialPermissions.AddPermission,
+            RemovePermission = InitialPermissions.RemovePermission
+        };
+    }
+
+    private async Task Save()
+    {
+        _saving = true;
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"/api/sharedplaylist/{ShareToken}/permissions", _permissions);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse<SharedPlaylistDto>>();
+                if (result?.Success == true)
+                {
+                    Snackbar.Show("Настройки доступа сохранены", SnackbarSeverity.Success);
+                    Dialog.Close(_permissions);
+                }
+                else
+                {
+                    Snackbar.Show(result?.Error?.Message ?? "Ошибка сохранения", SnackbarSeverity.Error);
+                }
+            }
+            else
+            {
+                Snackbar.Show("Ошибка сохранения прав", SnackbarSeverity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

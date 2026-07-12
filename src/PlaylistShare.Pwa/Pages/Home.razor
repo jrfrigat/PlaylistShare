@@ -1,0 +1,16 @@
+@page "/"
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+
+@* The mock has no marketing landing page - it goes straight from the loading screen to the auth
+   screen (or into the app, if already signed in). "/" mirrors that: it never renders its own content,
+   it just routes to the right place. *@
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var destination = authState.User.Identity?.IsAuthenticated == true ? "/my-playlists" : "/login";
+        Navigation.NavigateTo(destination, replace: true);
+    }
+}

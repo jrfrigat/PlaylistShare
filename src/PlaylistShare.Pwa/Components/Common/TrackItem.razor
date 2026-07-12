@@ -1,0 +1,122 @@
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Pwa.Components.Common
+@using PlaylistShare.Pwa.Extensions
+@using PlaylistShare.Shared.Yandex
+@using PlaylistShare.Pwa.Services
+@inject IAudioPlayerService AudioPlayerService
+@implements IDisposable
+
+<FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Small" Class="@("deka-track-row" + (IsCurrentTrack ? " deka-track-row--current" : ""))">
+    @* Фоновый прогресс на текущем треке - играющая часть подсвечивает строку. *@
+    @if (IsCurrentTrack)
+    {
+        <div class="deka-track-fill" style="width:@(ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+    }
+    <!-- Обложка с фиксированной шириной -->
+    <div>
+        <TrackCoverWithPlay TrackId="@Track.TrackId"
+                            Track="@Track"
+                            PlaylistShareToken="@PlaylistShareToken"
+                            CanPlay="@CanPlay"
+                            Width="50" Height="50" />
+    </div>
+
+    <!-- Информация о треке (занимает всё доступное место) -->
+    <div class="deka-track-info">
+        <FlareStack Gap="FlareSpacing.None">
+            <FlareText Typo="TypographyScale.BodyLarge" Weight="FontWeight.SemiBold" Color="@(IsCurrentTrack ? FlareColor.Primary : FlareColor.Default)" Class="deka-track-title">@Track.Title</FlareText>
+            <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.XSmall">
+                <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="deka-track-artist">@string.Join(", ", Track.Artists.Select(a => a.Name))</FlareText>
+                @if (!string.IsNullOrEmpty(AddedByName))
+                {
+                    <FlareChip Variant="ChipVariant.Outlined" Size="ChipSize.Xs" Color="FlareColor.Secondary" Label="@AddedByName" />
+                }
+            </FlareStack>
+        </FlareStack>
+    </div>
+
+    <!-- Длительность (фиксированная ширина по содержимому) -->
+    <div class="deka-track-duration">
+        <FlareText Element="span" Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">@Track.DurationMs.FormatDuration()</FlareText>
+    </div>
+</FlareStack>
+
+<style>
+    .deka-track-row {
+        position: relative;
+        overflow: hidden;
+        padding: 0.375rem 0.5rem;
+        border-radius: var(--flare-shape-small);
+    }
+
+    .deka-track-row--current {
+        background: var(--flare-color-primary-container);
+    }
+
+    /* Фоновый прогресс проигрываемого трека. z-index: -1 держит его позади контента строки. */
+    .deka-track-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: -1;
+        background: var(--flare-color-primary);
+        opacity: 0.16;
+        pointer-events: none;
+    }
+
+    .deka-track-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .deka-track-title,
+    .deka-track-artist {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Позволяет строке исполнителя сжиматься и включать многоточие рядом с чипом "кем добавлено" */
+    .deka-track-artist {
+        min-width: 0;
+    }
+
+    .deka-track-duration {
+        flex: none;
+        min-width: 2.75rem;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+</style>
+
+@code {
+    [Parameter] public YandexTrack Track { get; set; } = null!;
+    [Parameter] public string PlaylistShareToken { get; set; } = string.Empty;
+    [Parameter] public bool CanPlay { get; set; } = true;
+    [Parameter] public string? AddedByName { get; set; }
+    [Parameter] public bool IsCurrentTrack { get; set; }
+
+    /// <summary>Прогресс воспроизведения в процентах (0-100) для фоновой заливки строки.</summary>
+    private double ProgressPercent =>
+        AudioPlayerService.TotalTime > 0
+            ? Math.Clamp(AudioPlayerService.CurrentTime / AudioPlayerService.TotalTime * 100, 0, 100)
+            : 0;
+
+    protected override void OnInitialized()
+    {
+        AudioPlayerService.OnStateChanged += OnPlayerStateChanged;
+    }
+
+    // Перерисовываем только текущий трек, чтобы не дёргать весь список на каждый тик прогресса.
+    private void OnPlayerStateChanged()
+    {
+        if (IsCurrentTrack)
+            InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AudioPlayerService.OnStateChanged -= OnPlayerStateChanged;
+    }
+}

@@ -1,0 +1,40 @@
+# Optional overlay: run PostgreSQL as a container and point the API at it.
+#
+# Usage (see run-docker-compose-postgres.bat):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.postgres.yml up -d --build
+#
+# For an EXTERNAL Postgres instead, do NOT use this file - just set DB_PROVIDER=Postgres and a Postgres
+# (Npgsql) CONNECTION_STRING in .env and run the normal run-docker-compose.bat.
+#
+# POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD come from .env (see .env.example).
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: playlistshare_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-PlaylistShare}
+      - POSTGRES_USER=${POSTGRES_USER:-playlist_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-playlist_user} -d ${POSTGRES_DB:-PlaylistShare}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - playlistshare_network
+
+  playlistshare.api:
+    # Override the provider + connection string to target the containerized Postgres above. This wins
+    # over docker-compose.prod.yml because it is passed later on the -f chain.
+    environment:
+      - Database__Provider=Postgres
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-PlaylistShare};Username=${POSTGRES_USER:-playlist_user};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

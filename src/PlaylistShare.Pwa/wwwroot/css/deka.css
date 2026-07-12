@@ -1,0 +1,313 @@
+/* ===========================================================================
+   Deka custom UI - faithful reproduction of the Claude Design mock.
+   Every color / radius / shadow references the Deka Flare theme's CSS vars
+   (--flare-* / --deka-*) - no hardcoded palette values. Mock var mapping:
+     --bg   = --flare-color-background            --card2 = --flare-color-surface-container-high
+     --bg2  = --flare-color-surface-container-low --text  = --flare-color-on-surface
+     --card = --flare-color-surface               --muted = --flare-color-on-surface-variant
+     --faint= --flare-color-on-surface-variant2   --line  = --flare-color-outline
+     --line2= --flare-color-outline-variant       --accent= --flare-color-primary
+     --acc-soft = --flare-color-primary-container --on-accent = --flare-color-on-primary
+     --accent-strong = --deka-accent-strong       --glass = --deka-glass
+   =========================================================================== */
+
+@keyframes deka-pop { from { transform: translateY(14px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes deka-fadein { from { opacity: 0; } to { opacity: 1; } }
+
+.deka-gradient-mark {
+    background: linear-gradient(150deg, var(--flare-color-primary), var(--deka-accent-strong));
+    color: var(--flare-color-on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+/* ---------- Auth / Connect full-screen shell ---------- */
+.deka-auth {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    /* Clip the decorative blur-blobs (which sit partly outside this box) instead of scrolling to them.
+       Because the box uses min-height + normal-flow content, hidden never clips real content - the box
+       grows to fit and the page scrolls only if the card genuinely exceeds the viewport. */
+    overflow: hidden;
+}
+
+.deka-auth-blob {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    filter: blur(90px);
+    background: var(--flare-color-primary-container);
+    pointer-events: none;
+}
+
+.deka-auth-blob--tr { top: -160px; right: -120px; }
+.deka-auth-blob--bl { width: 420px; height: 420px; bottom: -160px; left: -120px; }
+
+.deka-auth-box {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: deka-pop .5s ease both;
+}
+
+.deka-auth-mark {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    box-shadow: var(--flare-elevation-5);
+    margin-bottom: 16px;
+}
+
+.deka-auth-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    margin: 0 0 6px;
+    color: var(--flare-color-on-surface);
+    text-align: center;
+}
+
+.deka-auth-subtitle {
+    color: var(--flare-color-on-surface-variant);
+    font-size: 15px;
+    margin: 0 0 24px;
+    text-align: center;
+}
+
+.deka-auth-card {
+    width: 100%;
+    background: var(--flare-color-surface);
+    border: 1px solid var(--flare-color-outline);
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: var(--flare-elevation-5);
+}
+
+/* Pill segmented tab switcher (auth + connect) */
+.deka-seg {
+    display: flex;
+    gap: 4px;
+    background: var(--flare-color-surface-container-low);
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 20px;
+}
+
+.deka-seg-item {
+    flex: 1;
+    height: 40px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    text-decoration: none;
+    background: transparent;
+    color: var(--flare-color-on-surface-variant);
+    border: none;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+}
+
+.deka-seg-item--active {
+    background: var(--flare-color-primary);
+    color: var(--flare-color-on-primary);
+    box-shadow: 0 6px 16px -8px var(--deka-accent-strong);
+}
+
+/* Labeled inputs */
+.deka-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--flare-color-on-surface-variant);
+    margin-bottom: 6px;
+}
+
+/* Field focus indicator + placeholder color are now theme-token-driven (Flare 0.2.0:
+   InputTokens.FocusRing / .FocusOutline / .PlaceholderColor) - no CSS override needed here. */
+
+/* ConnectYandex token/URL paste field (FlareTextArea): keep the monospace readout of the old
+   deka-textarea. Class="deka-token-area" is captured as an unmatched attribute and lands on the
+   inner control, so cover it on the element itself and as an ancestor. */
+.deka-token-area,
+.deka-token-area textarea,
+.deka-token-area .flare-input__control { font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+
+/* Full-width primary CTA */
+.deka-cta {
+    width: 100%;
+    height: 52px;
+    border-radius: 15px;
+    background: var(--flare-color-primary);
+    color: var(--flare-color-on-primary);
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 24px -10px var(--deka-accent-strong);
+    transition: filter .15s ease, transform .12s ease;
+}
+
+.deka-cta:hover { filter: brightness(1.05); }
+.deka-cta:active { transform: scale(.98); }
+.deka-cta:disabled { opacity: .6; cursor: default; }
+
+.deka-auth-footnote {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--flare-color-on-surface-variant2);
+}
+
+/* ---------- Connect screen extras ---------- */
+.deka-connect-box {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    animation: deka-pop .45s ease both;
+}
+
+.deka-connect-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--flare-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.deka-connect-head {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-bottom: 22px;
+}
+
+.deka-connect-head-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+}
+
+.deka-connect-head h1 { font-size: 23px; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.deka-connect-head p { color: var(--flare-color-on-surface-variant); font-size: 14px; margin: 2px 0 0; }
+
+.deka-connect-card {
+    background: var(--flare-color-surface);
+    border: 1px solid var(--flare-color-outline);
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: var(--flare-elevation-5);
+}
+
+.deka-connect-hintbox {
+    background: var(--flare-color-primary-container);
+    border-radius: 14px;
+    padding: 13px 15px;
+    margin-bottom: 20px;
+}
+
+.deka-connect-hintbox-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--flare-color-primary);
+    margin-bottom: 6px;
+}
+
+.deka-connect-hintbox p { font-size: 13px; color: var(--flare-color-on-surface-variant); line-height: 1.5; margin: 0; }
+
+.deka-connect-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.deka-connect-qr-frame {
+    width: 200px;
+    height: 200px;
+    border-radius: 18px;
+    background: #fff;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 20px -10px rgba(0, 0, 0, .4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deka-connect-qr-frame img { width: 100%; height: 100%; border-radius: 8px; object-fit: contain; }
+.deka-connect-qr p { color: var(--flare-color-on-surface-variant); font-size: 14px; line-height: 1.5; margin: 0 0 18px; max-width: 280px; }
+
+.deka-connect-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 18px;
+    color: var(--flare-color-on-surface-variant2);
+    font-size: 13px;
+}
+
+/* Secondary full-width button (connect "Войти в Яндекс") */
+.deka-btn-secondary {
+    width: 100%;
+    height: 50px;
+    border-radius: 14px;
+    background: var(--flare-color-surface-container-high);
+    border: 1px solid var(--flare-color-outline);
+    color: var(--flare-color-on-surface);
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: background .15s ease;
+}
+
+.deka-btn-secondary:hover { background: var(--flare-color-surface-container-highest); }
+
+/* Кнопки play/pause: заполненные (FILL 1) иконки Material Symbols. По умолчанию тема
+   рисует их контурными (FILL 0), из-за чего значок на цветной кнопке выглядит "полым"/
+   прозрачным внутри. Глобальный класс (не scoped) достаёт глиф внутри FlareIconButton. */
+.deka-play-toggle .material-symbols-rounded {
+    font-variation-settings: "FILL" 1, "GRAD" 0, "opsz" 24, "wght" 400;
+}
+
+/* Заполненные (Filled) кнопки play/pause: значок красим в контрастный on-цвет.
+   Тема отдаёт глифу цвет primary - совпадающий с фоном кнопки, из-за чего иконка
+   "сливается". Берём локальный --fc-on (у dynamic-color кнопки - контраст к акценту
+   обложки), с откатом на on-primary темы. !important перебивает внутреннее правило Flare. */
+.deka-play-toggle--filled .material-symbols-rounded {
+    color: var(--fc-on, var(--flare-color-on-primary)) !important;
+}
+
+/* Прежний глобальный фикс центрирования глифа в icon-only кнопках убран: Flare 0.1.9
+   чинит это сам (сбрасывает оптический margin ведущей/замыкающей иконки без текста). */

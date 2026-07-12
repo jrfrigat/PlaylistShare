@@ -1,0 +1,370 @@
+@using Microsoft.JSInterop
+@inject IAudioPlayerService AudioPlayerService
+@inject IJSRuntime JS
+@inject TokenStorage TokenStorage
+@inject PlayerStorage PlayerStorage
+@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbarService Snackbar
+@inject HttpClient Http
+@implements IDisposable
+@implements IAsyncDisposable
+
+    <div class="deka-player-bar player-enter">
+        @* Фоновая заливка прогресса - играющая часть подсвечивает фон плеера (как было до переработки). *@
+        @if (AudioPlayerService.CurrentTrack != null)
+        {
+            <div class="deka-player-fill" style="width:@(ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+        }
+        <FlareStack Gap="FlareSpacing.XSmall" Row Align="FlareAlignItems.Center">
+            <!-- Кнопки управления -->
+            <FlareIconButton Icon="skip_previous"
+                             Variant="ButtonVariant.Text"
+                             Size="ButtonSize.Sm"
+                             Color="FlareColor.Default"
+                             Disabled="@(!AudioPlayerService.HasPrevious)"
+                             OnClick="() => AudioPlayerService.PlayPreviousAsync()" />
+
+            <div class="deka-player-cover">
+                @if (!string.IsNullOrEmpty(AudioPlayerService.CurrentTrack?.CoverUri))
+                {
+                    <FlareImage Src="@AudioPlayerService.CurrentTrack.CoverUri.FormatCoverUrl(46, 46)" Height="100%" Width="100%" />
+                }
+
+                <div class="deka-player-cover-overlay">
+                    <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? "pause" : "play_arrow")"
+                                     Variant="ButtonVariant.Filled"
+                                     Color="FlareColor.Primary"
+                                     Shape="ButtonShape.Circular"
+                                     Size="ButtonSize.Sm"
+                                     Class="deka-play-toggle deka-play-toggle--filled"
+                                     OnClick="OnPlayClick" />
+                </div>
+            </div>
+
+            <FlareIconButton Icon="skip_next"
+                             Variant="ButtonVariant.Text"
+                             Size="ButtonSize.Sm"
+                             Color="FlareColor.Default"
+                             Disabled="@(!AudioPlayerService.HasNext)"
+                             OnClick="() => AudioPlayerService.PlayNextAsync()" />
+
+            <!-- Название -->
+            @if (AudioPlayerService.CurrentTrack != null)
+            {
+                <FlareStack Gap="FlareSpacing.None" Align="FlareAlignItems.Start" Class="deka-player-title-block"
+                            role="button" tabindex="0" title="Открыть плеер"
+                            @onclick="() => OnExpandRequested.InvokeAsync()"
+                            @onkeydown="OnTitleKeyDown">
+                    <FlareText Element="span" Typo="TypographyScale.BodyMedium" Color="FlareColor.Default" Class="deka-player-title">
+                        @AudioPlayerService.CurrentTrack.Title
+                    </FlareText>
+
+                    <FlareText Element="span" Typo="TypographyScale.BodySmall" Class="deka-player-artist">
+                        @string.Join(", ", AudioPlayerService.CurrentTrack.Artists.Select(a => a.Name))
+                    </FlareText>
+                </FlareStack>
+
+                <FlareSpacer />
+
+                <FlareText Element="span" Typo="TypographyScale.BodyMedium">
+                    @AudioPlayerService.CurrentTimeString
+                </FlareText>
+            }
+            else
+            {
+                <FlareSpacer />
+            }
+
+            <FlareHidden Below="Breakpoint.Md">
+                <!-- Громкость -->
+                <div @onmouseenter="() => _volumeIsOpen = true"
+                     @onmouseleave="() => _volumeIsOpen = false"
+                     @onwheel="OnVolumeHandleWheel"
+                     style="position: relative; display: flex; align-items: center;">
+
+                    <FlarePopover Open="_volumeIsOpen" OpenChanged="@(open => _volumeIsOpen = open)"
+                                  Placement="PopoverPlacement.Top">
+                        <AnchorContent>
+                            <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? "volume_off" : "volume_up")"
+                                             Variant="ButtonVariant.Text"
+                                             Size="ButtonSize.Sm"
+                                             Color="FlareColor.Default"
+                                             OnClick="ToggleMute" />
+                        </AnchorContent>
+                        <ChildContent>
+                            <FlareSlider Vertical
+                                         Value="AudioPlayerService.CurrentVolume"
+                                         ValueChanged="ChangeVolume"
+                                         Min="0" Max="100" Step="1"
+                                         Color="FlareColor.Primary"
+                                         Style="--flare-slider-length:120px; padding:8px 4px;" />
+                        </ChildContent>
+                    </FlarePopover>
+                </div>
+            </FlareHidden>
+        </FlareStack>
+
+        @if (AudioPlayerService.CurrentTrack != null)
+        {
+            <div class="deka-player-progress">
+                <TrackProgress Value="@AudioPlayerService.CurrentTime"
+                               Min="0" Max="@AudioPlayerService.TotalTime"
+                               BufferValue="@_bufferSecond"
+                               Color="FlareColor.Primary"
+                               Step="0.1"
+                               Buffer
+                               ValueChanged="SeekTo" />
+            </div>
+        }
+    </div>
+
+<audio id="@_audioId" style="display: none;"></audio>
+
+@code {
+    /// <summary>Raised when the user taps the track title/artist area, requesting the full-screen player.</summary>
+    [Parameter] public EventCallback OnExpandRequested { get; set; }
+
+    private const double _volumeDefault = 50;
+
+    /// <summary>Прогресс воспроизведения в процентах (0-100) для фоновой заливки плеера.</summary>
+    private double ProgressPercent =>
+        AudioPlayerService.TotalTime > 0
+            ? Math.Clamp(AudioPlayerService.CurrentTime / AudioPlayerService.TotalTime * 100, 0, 100)
+            : 0;
+
+    // Генерируем уникальный ID для аудиоэлемента, чтобы избежать конфликтов при множественных экземплярах
+    private string _audioId = $"audio_{Guid.NewGuid():N}";
+    private IJSObjectReference? _audioModule;
+    private IJSObjectReference? _audioElement;
+
+    // Громкость
+    private bool _volumeIsOpen;
+    private double _volumeBeforeMute;
+    private double _bufferSecond;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        AudioPlayerService.OnLoadAndPlayRequested += OnServiceLoadAndPlay;
+        AudioPlayerService.OnPlayRequested += OnServicePlay;
+        AudioPlayerService.OnPauseRequested += OnServicePause;
+        AudioPlayerService.OnSeekRequested += OnServiceSeek;
+        AudioPlayerService.OnVolumeChangeRequested += OnServiceVolumeChange;
+        AudioPlayerService.OnStateChanged += OnServiceStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await EnsureAudioModuleAsync();
+        }
+    }
+
+    private async Task EnsureAudioModuleAsync()
+    {
+        if (_audioModule == null)
+            _audioModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/AudioPlayer.js");
+        if (_audioElement == null)
+            _audioElement = await _audioModule.InvokeAsync<IJSObjectReference>("init", _audioId, DotNetObjectReference.Create(this));
+    }
+
+    #region Обработка JS
+    [JSInvokable]
+    public async Task OnAudioEnded()
+    {
+        AudioPlayerService.NotifyTrackEnded();
+    }
+
+    [JSInvokable]
+    public async Task OnTimeUpdate(double currentTime, double duration)
+    {
+        if (!double.IsNaN(duration) && !double.IsNaN(currentTime) && duration > 0)
+        {
+            AudioPlayerService.UpdateProgress(currentTime, duration);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnDownloadProgress(double second)
+    {
+        _bufferSecond = second;
+    }
+
+    [JSInvokable]
+    public async Task OnKeyboardTogglePlay()
+    {
+        if (AudioPlayerService.IsPlaying)
+            await AudioPlayerService.PauseAsync();
+        else
+            await AudioPlayerService.PlayAsync();
+    }
+
+    [JSInvokable]
+    public async Task OnKeyboardSeek(double delta)
+    {
+        var newTime = Math.Max(0, AudioPlayerService.CurrentTime + delta);
+        await AudioPlayerService.SeekToAsync(newTime);
+    }
+
+    [JSInvokable]
+    public async Task OnKeyboardVolumeChange(double delta)
+    {
+        var newVol = Math.Clamp(AudioPlayerService.CurrentVolume + delta, 0, 100);
+        await AudioPlayerService.SetVolumeAsync(newVol);
+    }
+    #endregion
+
+    #region Обработка сервиса
+    private async Task OnServiceLoadAndPlay(string trackId, string? playToken, string? sharedPlaylistId)
+    {
+        if (string.IsNullOrWhiteSpace(playToken) && string.IsNullOrWhiteSpace(sharedPlaylistId))
+        {
+            Snackbar.Show("Токен авторизации не найден. Пожалуйста, войдите заново.", SnackbarSeverity.Error);
+            return;
+        }
+
+        var streamUrl = new Uri(Http.BaseAddress!, $"/api/audio/track/{trackId}").ToString();
+        await EnsureAudioModuleAsync();
+        await _audioElement!.InvokeVoidAsync("loadAndPlay", streamUrl, playToken, sharedPlaylistId);
+    }
+
+    private async Task OnServicePlay()
+    {
+        if (_audioElement == null) return;
+        await _audioElement.InvokeVoidAsync("play");
+    }
+
+    private async Task OnServicePause()
+    {
+        if (_audioElement == null) return;
+        await _audioElement.InvokeVoidAsync("pause");
+    }
+
+    private async Task OnServiceSeek(double time)
+    {
+        if (_audioElement == null) return;
+        try
+        {
+            await _audioElement.InvokeVoidAsync("setCurrentTime", time);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Seek error: {ex.Message}");
+        }
+    }
+
+    private async Task OnServiceVolumeChange(double volume)
+    {
+        if (_audioElement == null) return;
+
+        try
+        {
+            await _audioElement.InvokeVoidAsync("setVolume", volume / 100);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Volume change error: {ex.Message}");
+        }
+    }
+
+    private void OnServiceStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    #endregion
+
+    private async Task<bool> CheckAuthAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        if (!authState.User.Identity?.IsAuthenticated == true)
+        {
+            Snackbar.Show("Воспроизведение доступно только авторизованным пользователям", SnackbarSeverity.Warning);
+            return false;
+        }
+        return true;
+    }
+
+    private async Task OnVolumeHandleWheel(WheelEventArgs e)
+    {
+        // Изменяем громкость на 5 единиц за один тик колесика
+        double step = 5;
+        double newVolume = e.DeltaY < 0
+            ? Math.Min(AudioPlayerService.CurrentVolume + step, 100)
+            : Math.Max(AudioPlayerService.CurrentVolume - step, 0);
+
+        await ChangeVolume(newVolume);
+    }
+
+    private async Task SeekTo(double value)
+    {
+        await AudioPlayerService.SeekToAsync(value);
+    }
+
+    private async Task ChangeVolume(double value)
+    {
+        await AudioPlayerService.SetVolumeAsync(value);
+    }
+
+    private async Task ToggleMute()
+    {
+        if (AudioPlayerService.CurrentVolume > 0)
+        {
+            _volumeBeforeMute = AudioPlayerService.CurrentVolume;
+            await AudioPlayerService.SetVolumeAsync(0);
+        }
+        else
+        {
+            await AudioPlayerService.SetVolumeAsync(_volumeBeforeMute);
+            _volumeBeforeMute = 0;
+        }
+    }
+
+    private async Task OnPlayClick()
+    {
+        if (AudioPlayerService.IsPlaying)
+            await AudioPlayerService.PauseAsync();
+        else
+            await AudioPlayerService.PlayAsync();
+    }
+
+    // Открытие полноэкранного плеера с клавиатуры (блок названия - role="button").
+    private async Task OnTitleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+            await OnExpandRequested.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            AudioPlayerService.OnLoadAndPlayRequested -= OnServiceLoadAndPlay;
+            AudioPlayerService.OnPlayRequested -= OnServicePlay;
+            AudioPlayerService.OnPauseRequested -= OnServicePause;
+            AudioPlayerService.OnSeekRequested -= OnServiceSeek;
+            AudioPlayerService.OnVolumeChangeRequested -= OnServiceVolumeChange;
+            AudioPlayerService.OnStateChanged -= OnServiceStateChanged;
+
+            if (_audioElement != null)
+            {
+                try { await _audioElement.InvokeVoidAsync("destroy"); } catch { }
+                await _audioElement.DisposeAsync();
+            }
+            if (_audioModule != null)
+                await _audioModule.DisposeAsync();
+        }
+        catch { }
+    }
+
+    public void Dispose()
+    {
+        DisposeAsync().AsTask().Wait();
+    }
+}

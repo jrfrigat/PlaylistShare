@@ -1,0 +1,49 @@
+.deka-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6875rem;
+    text-decoration: none;
+    color: var(--flare-color-on-surface);
+    padding: 0.375rem 0.5rem 1.25rem;
+}
+
+.deka-nav-brand-mark {
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: var(--flare-shape-medium);
+    background: var(--deka-gradient-accent);
+    color: var(--flare-color-on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.deka-nav-brand-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.deka-nav-account {
+    display: flex;
+    align-items: center;
+    gap: 0.6875rem;
+    padding: 0.75rem 0.625rem;
+    text-decoration: none;
+    color: var(--flare-color-on-surface);
+    border-top: 1px solid var(--flare-color-outline-variant);
+    border-radius: 0 0 var(--flare-shape-medium) var(--flare-shape-medium);
+}
+
+.deka-nav-account:hover {
+    background: var(--flare-color-surface-container-high);
+}
+
+.deka-nav-account-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

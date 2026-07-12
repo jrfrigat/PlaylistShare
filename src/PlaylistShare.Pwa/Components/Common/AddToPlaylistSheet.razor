@@ -1,0 +1,314 @@
+@using PlaylistShare.Shared.SharedPlaylist
+@using PlaylistShare.Shared.Yandex
+@using PlaylistShare.Pwa.Extensions
+@inject HttpClient Http
+@inject ISnackbarService Snackbar
+
+<FlareStack Gap="FlareSpacing.Medium">
+    <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Small">
+        <FlareImage Src="@Track.CoverUri.FormatCoverUrl(96, 96)" Width="48px" Height="48px" BorderRadius="var(--flare-shape-small)" />
+        <FlareStack Gap="FlareSpacing.None" Class="min-width-0">
+            <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Primary">ДОБАВИТЬ В ПЛЕЙЛИСТ</FlareText>
+            <FlareText Typo="TypographyScale.TitleMedium" Class="deka-add-sheet-title">@Track.Title</FlareText>
+            <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">@string.Join(", ", Track.Artists.Select(a => a.Name))</FlareText>
+        </FlareStack>
+    </FlareStack>
+
+    @if (_loading)
+    {
+        <FlareStack Gap="FlareSpacing.Small">
+            <TrackItemSkeleton />
+            <TrackItemSkeleton />
+            <TrackItemSkeleton />
+        </FlareStack>
+    }
+    else if (_rows.Count == 0)
+    {
+        <div class="deka-add-sheet-empty">
+            <div class="deka-add-sheet-empty-icon">
+                <FlareIcon Name="playlist_add" SizePx="26" />
+            </div>
+            <FlareText Typo="TypographyScale.TitleSmall">Пока некуда добавлять</FlareText>
+            <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">
+                Добавлять треки можно только в плейлисты, которыми вы поделились, или в те, что добавили в избранное.
+            </FlareText>
+        </div>
+    }
+    else
+    {
+        <FlareStack Gap="FlareSpacing.XSmall" Class="deka-add-sheet-list">
+            @foreach (var row in _rows)
+            {
+                <button class="deka-add-sheet-row" @onclick="() => ToggleAsync(row)" disabled="@row.Busy">
+                    @if (!string.IsNullOrEmpty(row.CoverUrl))
+                    {
+                        <FlareImage Src="@row.CoverUrl.FormatCoverUrl(88, 88)" Width="44px" Height="44px" BorderRadius="var(--flare-shape-small)" />
+                    }
+                    else
+                    {
+                        <div class="deka-add-sheet-row-cover-fallback">
+                            <FlareIcon Name="library_music" SizePx="20" />
+                        </div>
+                    }
+                    <FlareStack Gap="FlareSpacing.None" Class="min-width-0 flex-grow-1 deka-add-sheet-row-text">
+                        <FlareText Typo="TypographyScale.BodyLarge" Weight="FontWeight.SemiBold" Class="deka-add-sheet-row-name">@row.Name</FlareText>
+                        <FlareText Typo="TypographyScale.LabelSmall" Color="FlareColor.Secondary" Class="deka-add-sheet-row-meta">@row.MetaLabel</FlareText>
+                    </FlareStack>
+                    <div class="deka-add-sheet-row-check @(row.Has ? "deka-add-sheet-row-check--on" : "")">
+                        @if (row.Busy)
+                        {
+                            <FlareProgress Variant="ProgressVariant.Circular" Size="16" />
+                        }
+                        else if (row.Has)
+                        {
+                            <FlareIcon Name="check" SizePx="18" />
+                        }
+                        else
+                        {
+                            <FlareIcon Name="add" SizePx="18" />
+                        }
+                    </div>
+                </button>
+            }
+        </FlareStack>
+    }
+
+    <FlareButton Variant="ButtonVariant.Filled" Color="FlareColor.Primary" FullWidth OnClick="@(() => Dialog.Close())">
+        Готово
+    </FlareButton>
+</FlareStack>
+
+<style>
+    .deka-add-sheet-title,
+    .deka-add-sheet-row-name,
+    .deka-add-sheet-row-meta {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .deka-add-sheet-empty {
+        text-align: center;
+        padding: 1.5rem 1rem;
+        color: var(--flare-color-on-surface-variant);
+    }
+
+    .deka-add-sheet-empty-icon {
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: var(--flare-shape-medium);
+        background: var(--flare-color-primary-container);
+        color: var(--flare-color-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+    }
+
+    .deka-add-sheet-list {
+        max-height: 45vh;
+        overflow-y: auto;
+    }
+
+    .deka-add-sheet-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: var(--flare-shape-medium);
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+        font: inherit;
+    }
+
+    .deka-add-sheet-row:hover:not(:disabled) {
+        background: var(--flare-color-surface-container-high);
+    }
+
+    .deka-add-sheet-row:disabled {
+        cursor: default;
+        opacity: 0.7;
+    }
+
+    .deka-add-sheet-row-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .deka-add-sheet-row-cover-fallback {
+        width: 44px;
+        height: 44px;
+        flex: none;
+        border-radius: var(--flare-shape-small);
+        background: var(--flare-color-surface-container-high);
+        color: var(--flare-color-on-surface-variant);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .deka-add-sheet-row-check {
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--flare-color-on-surface-variant);
+        background: var(--flare-color-surface-container-high);
+    }
+
+    .deka-add-sheet-row-check--on {
+        color: var(--flare-color-on-primary);
+        background: var(--flare-color-primary);
+    }
+</style>
+
+@code {
+    /// <summary>Дескриптор открытого диалога (каскадируется FlareDialogProvider). Используется для закрытия.</summary>
+    [CascadingParameter] public FlareDialogInstance Dialog { get; set; } = default!;
+
+    /// <summary>Трек, который добавляется в один из плейлистов пользователя.</summary>
+    [Parameter, EditorRequired] public YandexTrack Track { get; set; } = null!;
+
+    private bool _loading = true;
+    private List<PlaylistRow> _rows = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEligiblePlaylistsAsync();
+    }
+
+    /// <summary>
+    /// "Подходящие" плейлисты - те же, что в мокапе: собственные расшаренные плейлисты плюс все
+    /// избранные (свои и чужие). Членство трека в каждом определяется параллельно, чтобы не ждать
+    /// по одному запросу на плейлист.
+    /// </summary>
+    private async Task LoadEligiblePlaylistsAsync()
+    {
+        _loading = true;
+        try
+        {
+            var ownTask = Http.GetFromJsonAsync<ApiResponse<List<YandexPlaylistShare>>>("/api/playlists");
+            var favoritesTask = Http.GetFromJsonAsync<ApiResponse<List<SharedPlaylistDto>>>("/api/favorites");
+            await Task.WhenAll(ownTask, favoritesTask);
+
+            var ownShared = (ownTask.Result?.Success == true ? ownTask.Result.Data : null)
+                ?.Where(p => p.IsShared && !string.IsNullOrEmpty(p.ShareToken)) ?? Enumerable.Empty<YandexPlaylistShare>();
+            var favorites = (favoritesTask.Result?.Success == true ? favoritesTask.Result.Data : null) ?? new();
+
+            var rows = new List<PlaylistRow>();
+            var seenTokens = new HashSet<string>();
+
+            foreach (var p in ownShared)
+            {
+                if (!seenTokens.Add(p.ShareToken!)) continue;
+                rows.Add(new PlaylistRow
+                {
+                    ShareToken = p.ShareToken!,
+                    Name = p.Title,
+                    CoverUrl = p.CoverUrl,
+                    OwnerLabel = "вы",
+                    TrackCount = p.TrackCount,
+                });
+            }
+
+            foreach (var f in favorites)
+            {
+                if (!seenTokens.Add(f.ShareToken)) continue;
+                rows.Add(new PlaylistRow
+                {
+                    ShareToken = f.ShareToken,
+                    Name = f.Title,
+                    CoverUrl = f.CoverUrl,
+                    OwnerLabel = f.Creator?.UserName ?? "неизвестно",
+                });
+            }
+
+            // Параллельно проверяем, есть ли трек уже в каждом из подходящих плейлистов.
+            var membershipTasks = rows.Select(async row =>
+            {
+                try
+                {
+                    var response = await Http.GetFromJsonAsync<ApiResponse<YandexPlaylistData>>($"/api/sharedplaylist/{row.ShareToken}/tracks");
+                    if (response?.Success == true && response.Data != null)
+                    {
+                        row.Has = response.Data.Tracks.Any(t => t.TrackId == Track.TrackId);
+                        if (row.TrackCount == 0)
+                            row.TrackCount = response.Data.Tracks.Count;
+                    }
+                }
+                catch { /* оставляем "не добавлен" по умолчанию для этого плейлиста */ }
+            });
+            await Task.WhenAll(membershipTasks);
+
+            _rows = rows;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка загрузки плейлистов: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleAsync(PlaylistRow row)
+    {
+        if (row.Busy) return;
+
+        row.Busy = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new UpdateTrackListRequest { TrackIds = new List<string> { Track.TrackId } };
+            var url = row.Has
+                ? $"/api/sharedplaylist/{row.ShareToken}/remove-tracks"
+                : $"/api/sharedplaylist/{row.ShareToken}/add-tracks";
+
+            var response = await Http.PostAsJsonAsync(url, request);
+            if (response.IsSuccessStatusCode)
+            {
+                row.Has = !row.Has;
+                Snackbar.Show(
+                    row.Has ? $"Добавлено в '{row.Name}'" : $"Удалено из '{row.Name}'",
+                    SnackbarSeverity.Success);
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                Snackbar.Show(error?.Error?.Message ?? "Ошибка обновления плейлиста", SnackbarSeverity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            row.Busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private class PlaylistRow
+    {
+        public string ShareToken { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? CoverUrl { get; set; }
+        public string OwnerLabel { get; set; } = string.Empty;
+        public int TrackCount { get; set; }
+        public bool Has { get; set; }
+        public bool Busy { get; set; }
+
+        public string MetaLabel => $"От {OwnerLabel} - {TrackCount} треков";
+    }
+}

@@ -1,0 +1,5 @@
+.deka-fullscreen {
+    min-height: 100dvh;
+    background: var(--flare-color-background);
+    color: var(--flare-color-on-surface);
+}

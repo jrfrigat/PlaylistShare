@@ -1,0 +1,53 @@
+<FlareNavMenu AriaLabel="Основная навигация">
+    <Header>
+        <a href="/" class="deka-nav-brand">
+            <span class="deka-nav-brand-mark">
+                <DekaMark Size="20" />
+            </span>
+            <span class="deka-nav-brand-name">PlaylistShare</span>
+        </a>
+    </Header>
+
+    <ChildContent>
+        <AuthorizeView>
+            <Authorized>
+                <FlareNavLink Href="/my-playlists">
+                    <Icon><FlareIcon Name="queue_music" /></Icon>
+                    <ChildContent>Мои плейлисты</ChildContent>
+                </FlareNavLink>
+                <FlareNavLink Href="/search">
+                    <Icon><FlareIcon Name="search" /></Icon>
+                    <ChildContent>Поиск</ChildContent>
+                </FlareNavLink>
+            </Authorized>
+            <NotAuthorized>
+                <FlareNavLink Href="/" Match="NavMatchMode.Exact">
+                    <Icon><FlareIcon Name="home" /></Icon>
+                    <ChildContent>Главная</ChildContent>
+                </FlareNavLink>
+            </NotAuthorized>
+        </AuthorizeView>
+    </ChildContent>
+
+    <Footer>
+        <AuthorizeView>
+            <Authorized>
+                <a href="/profile" class="deka-nav-account">
+                    <FlareAvatar Text="@InitialOf(context.User.Identity?.Name)" Size="AvatarSize.Sm" />
+                    <span class="deka-nav-account-name">@(context.User.Identity?.Name ?? "Профиль")</span>
+                </a>
+            </Authorized>
+            <NotAuthorized>
+                <FlareNavLink Href="/login">
+                    <Icon><FlareIcon Name="login" /></Icon>
+                    <ChildContent>Вход</ChildContent>
+                </FlareNavLink>
+            </NotAuthorized>
+        </AuthorizeView>
+    </Footer>
+</FlareNavMenu>
+
+@code {
+    private static string InitialOf(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[..1].ToUpperInvariant();
+}

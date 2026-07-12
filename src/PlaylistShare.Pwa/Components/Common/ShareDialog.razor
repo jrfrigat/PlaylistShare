@@ -1,0 +1,145 @@
+@using PlaylistShare.Shared.Enums
+@using PlaylistShare.Shared.SharedPlaylist
+@using PlaylistShare.Pwa.Components.SharedPlaylist
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject ISnackbarService Snackbar
+@inject IDialogService DialogService
+
+<FlareStack Gap="FlareSpacing.Medium">
+    <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
+        Скопируйте ссылку и отправьте её друзьям
+    </FlareText>
+
+    <FlareStack Row Gap="FlareSpacing.Small" Align="FlareAlignItems.Center">
+        <FlareTextField @bind-Value="ShareUrl"
+                        Variant="InputVariant.Outlined"
+                        ReadOnly="true"
+                        FullWidth="true" />
+        <FlareButton Variant="ButtonVariant.Filled"
+                     Color="FlareColor.Primary"
+                     OnClick="CopyToClipboard">
+            @(_justCopied ? "Скопировано" : "Копировать")
+        </FlareButton>
+    </FlareStack>
+
+    @if (_hasPermissions)
+    {
+        <FlareStack Row Align="FlareAlignItems.Center" Justify="FlareJustifyContent.SpaceBetween" Class="deka-share-collab">
+            <FlareStack Gap="FlareSpacing.None">
+                <FlareText Typo="TypographyScale.BodyMedium">Разрешить добавлять треки</FlareText>
+                <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">Друзья смогут дополнять плейлист</FlareText>
+            </FlareStack>
+            <FlareSwitch Value="_allowAdding" ValueChanged="OnCollabToggled" Disabled="_savingPermissions" />
+        </FlareStack>
+
+        <FlareStack Row Gap="FlareSpacing.Small">
+            <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" FullWidth OnClick="OpenAdvancedPermissions">
+                <LeadingIcon><FlareIcon Name="tune" /></LeadingIcon>
+                <ChildContent>Расширенные настройки доступа</ChildContent>
+            </FlareButton>
+            <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" FullWidth Href="@ShareUrl" Target="_blank">
+                <LeadingIcon><FlareIcon Name="visibility" /></LeadingIcon>
+                <ChildContent>Как видит друг</ChildContent>
+            </FlareButton>
+        </FlareStack>
+    }
+
+    <FlareStack Row Gap="FlareSpacing.Small" Justify="FlareJustifyContent.End">
+        <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Default"
+                     OnClick="@(() => Dialog.Cancel())">
+            Закрыть
+        </FlareButton>
+    </FlareStack>
+</FlareStack>
+
+@code {
+    /// <summary>Дескриптор открытого диалога (каскадируется FlareDialogProvider). Используется для закрытия.</summary>
+    [CascadingParameter] public FlareDialogInstance Dialog { get; set; } = default!;
+
+    /// <summary>The public share link to display and copy.</summary>
+    [Parameter] public string ShareUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional: the playlist's share token. When set, the dialog also shows the collaborative-editing
+    /// toggle and a link to the full permissions editor; when omitted, it falls back to the plain
+    /// link-and-copy view.
+    /// </summary>
+    [Parameter] public string? ShareToken { get; set; }
+
+    /// <summary>The playlist's current permissions - required when <see cref="ShareToken"/> is set.</summary>
+    [Parameter] public UpdatePermissionsDto? InitialPermissions { get; set; }
+
+    private bool _justCopied;
+    private bool _allowAdding;
+    private bool _savingPermissions;
+    private UpdatePermissionsDto _permissions = new();
+
+    private bool _hasPermissions => !string.IsNullOrEmpty(ShareToken) && InitialPermissions != null;
+
+    protected override void OnInitialized()
+    {
+        if (InitialPermissions is { } p)
+        {
+            _permissions = new UpdatePermissionsDto
+            {
+                ViewPermission = p.ViewPermission,
+                PlayPermission = p.PlayPermission,
+                AddPermission = p.AddPermission,
+                RemovePermission = p.RemovePermission,
+            };
+            _allowAdding = p.AddPermission == EditPermission.Everyone;
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", ShareUrl);
+        Snackbar.Show("Ссылка скопирована в буфер обмена!", SnackbarSeverity.Success);
+        _justCopied = true;
+        StateHasChanged();
+        await Task.Delay(1500);
+        _justCopied = false;
+    }
+
+    // A simple on/off toggle over the richer 3-way AddPermission: on -> anyone can add, off -> only
+    // authorized (logged-in) users can. Power users can still reach the full picker below.
+    private async Task OnCollabToggled(bool allow)
+    {
+        _allowAdding = allow;
+        _permissions.AddPermission = allow ? EditPermission.Everyone : EditPermission.AuthorizedOnly;
+        _savingPermissions = true;
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"/api/sharedplaylist/{ShareToken}/permissions", _permissions);
+            if (!response.IsSuccessStatusCode)
+                Snackbar.Show("Ошибка сохранения прав", SnackbarSeverity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _savingPermissions = false;
+        }
+    }
+
+    private async Task OpenAdvancedPermissions()
+    {
+        var result = await DialogService.ShowAsync<PermissionsDialog>(
+            "Настройки доступа",
+            new DialogParameters
+            {
+                ["ShareToken"] = ShareToken!,
+                ["InitialPermissions"] = _permissions,
+            },
+            new DialogOptions { Size = DialogSize.Sm });
+
+        if (!result.Cancelled && result.Data is UpdatePermissionsDto updated)
+        {
+            _permissions = updated;
+            _allowAdding = updated.AddPermission == EditPermission.Everyone;
+        }
+    }
+}

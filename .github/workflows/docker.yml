@@ -1,0 +1,121 @@
+name: Docker (publish images)
+
+# Builds the API and PWA images and publishes them to the GitHub Container Registry (ghcr.io), and
+# additionally to Docker Hub when the DOCKERHUB_USERNAME repository variable is set (so GHCR-only still
+# works out of the box).
+#   - push a  v*  tag (e.g. v1.0.0) to release both images
+#   - or run manually (workflow_dispatch) with an optional version
+#   - pull requests touching the app only BUILD the images (no push) to validate the Dockerfiles
+on:
+  push:
+    tags: [ 'v*' ]
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'docker-compose*.yml'
+      - '.github/workflows/docker.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image version tag (e.g. 1.0.0). Defaults to the commit SHA.'
+        required: false
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write   # push to ghcr.io
+
+jobs:
+  docker:
+    name: Build & publish ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            dockerfile: src/PlaylistShare.Api/Dockerfile
+            short-description: "ASP.NET Core API for PlaylistShare - share & collaborate on Yandex Music playlists. .NET 10, SQL Server or PostgreSQL."
+          - name: pwa
+            dockerfile: src/PlaylistShare.Pwa/Dockerfile
+            short-description: "Blazor WebAssembly PWA for PlaylistShare - share & collaborate on Yandex Music playlists. Served by nginx."
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Resolve image tags & whether to push
+        id: meta
+        env:
+          DOCKERHUB_USER: ${{ vars.DOCKERHUB_USERNAME }}
+        run: |
+          image="ghcr.io/${{ github.repository_owner }}/playlistshare-${{ matrix.name }}"
+          image=$(echo "$image" | tr '[:upper:]' '[:lower:]')   # GHCR requires lowercase
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"; push=true
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            version="${{ github.event.inputs.version }}"
+            if [[ -z "$version" ]]; then version="${GITHUB_SHA::7}"; fi
+            push=true
+          else
+            version="pr-${GITHUB_SHA::7}"; push=false
+          fi
+          # Tag list: GHCR always, plus Docker Hub when DOCKERHUB_USERNAME is set (so GHCR-only still works).
+          {
+            echo "tags<<EOF"
+            echo "${image}:${version}"
+            echo "${image}:latest"
+            if [[ "$push" == "true" && -n "$DOCKERHUB_USER" ]]; then
+              echo "docker.io/${DOCKERHUB_USER}/playlistshare-${{ matrix.name }}:${version}"
+              echo "docker.io/${DOCKERHUB_USER}/playlistshare-${{ matrix.name }}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "image=$image"
+            echo "version=$version"
+            echo "push=$push"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        if: steps.meta.outputs.push == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: ${{ vars.DOCKERHUB_USERNAME != '' && steps.meta.outputs.push == 'true' }}
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: ${{ steps.meta.outputs.push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: ${{ steps.meta.outputs.push == 'true' && 'type=gha,mode=max' || '' }}
+
+      # Sync the Docker Hub repository overview + short description. Non-fatal (continue-on-error) so a
+      # description hiccup never fails a release, and gated on Docker Hub being configured + an actual push.
+      - name: Update Docker Hub description
+        if: ${{ vars.DOCKERHUB_USERNAME != '' && steps.meta.outputs.push == 'true' }}
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/playlistshare-${{ matrix.name }}
+          short-description: ${{ matrix.short-description }}
+          readme-filepath: docs/dockerhub/overview-${{ matrix.name }}.md

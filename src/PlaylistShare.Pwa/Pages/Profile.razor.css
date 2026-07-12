@@ -1,0 +1,30 @@
+.account-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--flare-shape-medium);
+}
+
+.account-badge--connected {
+    background: var(--deka-gradient-accent);
+    color: var(--flare-color-on-primary);
+}
+
+.account-badge--disconnected {
+    background: var(--flare-color-surface-container-high);
+    border: 1px solid var(--flare-color-outline-variant);
+    color: var(--flare-color-on-surface-variant);
+}
+
+.account-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.theme-mode-chip {
+    flex: 1;
+    justify-content: center;
+}

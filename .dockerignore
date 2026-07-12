@@ -1,0 +1,34 @@
+# Build context is the repository root. Keep it lean: ship only source + the local YandexMusic feed.
+**/.git
+**/.gitignore
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/*.user
+**/node_modules
+**/TestResults
+
+# AI tooling / local state
+.claude
+.claude-flow
+.swarm
+.mcp.json
+CLAUDE.md
+ruvector.db
+*.jsonl
+
+# Never bake secrets into an image - production secrets are injected via env (see .env / compose).
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.*.Local.json
+*.env
+.env
+
+# Docs / compose are not needed inside the build
+*.md
+!README.md
+docker-compose*.yml
+docker-compose.dcproj
+run-docker-compose.bat
+launchSettings.json

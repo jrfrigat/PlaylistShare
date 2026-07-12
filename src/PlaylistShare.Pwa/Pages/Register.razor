@@ -1,0 +1,90 @@
+@page "/register"
+@layout EmptyLayout
+@using PlaylistShare.Shared.Auth
+@using PlaylistShare.Pwa.Components.Common
+@inject HttpClient Http
+@inject AuthStateProvider AuthProvider
+@inject NavigationManager Navigation
+@inject ISnackbarService Snackbar
+
+<div class="deka-auth">
+    <div class="deka-auth-blob deka-auth-blob--tr"></div>
+    <div class="deka-auth-blob deka-auth-blob--bl"></div>
+
+    <div class="deka-auth-box">
+        <div class="deka-auth-mark deka-gradient-mark"><DekaMark Size="36" /></div>
+        <h1 class="deka-auth-title">Добро пожаловать в PlaylistShare</h1>
+        <p class="deka-auth-subtitle">Зарегистрируйтесь, чтобы делиться плейлистами</p>
+
+        <div class="deka-auth-card" @onkeydown="OnKeyDown">
+            <div class="deka-seg">
+                <a href="/login" class="deka-seg-item">Вход</a>
+                <span class="deka-seg-item deka-seg-item--active">Регистрация</span>
+            </div>
+
+            <label class="deka-label">Имя пользователя</label>
+            <FlareTextField Placeholder="Как вас зовут" Autocomplete="username" Style="margin-bottom:14px"
+                            @bind-Value="_model.Username" Immediate="true" />
+
+            <label class="deka-label">Email</label>
+            <FlareTextField Type="email" Placeholder="you@example.com" Autocomplete="email" Style="margin-bottom:14px"
+                            @bind-Value="_model.Email" Immediate="true" />
+
+            <label class="deka-label">Пароль</label>
+            <FlarePasswordField Placeholder="••••••••" Autocomplete="new-password" Style="margin-bottom:14px"
+                                @bind-Value="_model.Password" Immediate="true" />
+
+            <label class="deka-label">Подтверждение пароля</label>
+            <FlarePasswordField Placeholder="••••••••" Autocomplete="new-password" Style="margin-bottom:20px"
+                                @bind-Value="_model.ConfirmPassword" Immediate="true" />
+
+            <FlareButton Class="deka-cta" OnClick="OnRegister">Создать аккаунт</FlareButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel _model = new();
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnRegister();
+    }
+
+    private async Task OnRegister()
+    {
+        if (_model.Password != _model.ConfirmPassword)
+        {
+            Snackbar.Show("Пароли не совпадают", SnackbarSeverity.Error);
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync("/api/account/register", _model);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<LoginResponse>>();
+            if (result?.Success == true)
+            {
+                await AuthProvider.MarkUserAsAuthenticated(result.Data!.Token, result.Data.RefreshToken);
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Show(result?.Error?.Message ?? "Ошибка регистрации", SnackbarSeverity.Error);
+            }
+        }
+        else
+        {
+            var error = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            Snackbar.Show(error?.Error?.Message ?? "Ошибка регистрации", SnackbarSeverity.Error);
+        }
+    }
+
+    public class RegisterModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,32 @@
+<Project>
+  <!--
+    Solution-wide defaults for PlaylistShare (ASP.NET Core API + Blazor WebAssembly PWA + a shared
+    contracts library). Not a published NuGet package, so packaging/SourceLink properties are omitted.
+    The version is derived from the "v" git tag by MinVer (tag v1.2.3 -> 1.2.3; commits after a tag get
+    a -preview suffix). The Docker build has no .git in its context, so the Dockerfiles pass
+    -p:MinVerSkip=true and the image is versioned by its own tag (see .github/workflows/docker.yml).
+  -->
+  <PropertyGroup>
+    <Authors>FrigaT</Authors>
+    <Company>FrigaT</Company>
+    <Copyright>Copyright (c) 2026 FrigaT</Copyright>
+    <RepositoryUrl>https://github.com/jrfrigat/PlaylistShare</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Do NOT enable InvariantGlobalization: Microsoft.Data.SqlClient requires ICU and throws
+         "Globalization Invariant Mode is not supported" at runtime when it is on. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <!-- MinVer: derive the assembly/package version from the "v" git tag. -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>preview</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <!-- Only .csproj projects consume MinVer; the docker-compose.dcproj is not an SDK project and must
+       not get a PackageReference (it would fail NuGet restore on the net10.0 target framework). -->
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

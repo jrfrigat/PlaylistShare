@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b98cff"/>
+      <stop offset="1" stop-color="#e76edf"/>
+    </linearGradient>
+    <linearGradient id="neonH" gradientUnits="userSpaceOnUse" x1="430" y1="0" x2="1140" y2="0">
+      <stop offset="0" stop-color="#c49bff"/>
+      <stop offset="1" stop-color="#ef7ae7"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#c77bff" stop-opacity="0.5"/>
+      <stop offset="0.55" stop-color="#a06aec" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#0e0c12" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="640" fill="#0e0c12"/>
+  <circle cx="1180" cy="90" r="320" fill="url(#halo)"/>
+  <circle cx="80" cy="600" r="240" fill="url(#halo)"/>
+
+  <!-- App mark -->
+  <g transform="translate(104,150) scale(0.54)">
+    <rect width="512" height="512" rx="112" fill="#141019"/>
+    <circle cx="256" cy="256" r="206" fill="url(#halo)"/>
+    <g fill="none" stroke="url(#neon)" stroke-linecap="round">
+      <circle cx="256" cy="256" r="88"  stroke-width="14"/>
+      <circle cx="256" cy="256" r="152" stroke-width="11" opacity="0.62"/>
+      <circle cx="256" cy="256" r="216" stroke-width="8"  opacity="0.34"/>
+    </g>
+    <path d="M224 202 L224 310 L318 256 Z" fill="url(#neon)" stroke="url(#neon)" stroke-width="20" stroke-linejoin="round"/>
+  </g>
+
+  <text x="430" y="286" font-family="Segoe UI, Arial, sans-serif" font-size="116" font-weight="700" fill="url(#neonH)">PlaylistShare</text>
+  <text x="434" y="352" font-family="Segoe UI, Arial, sans-serif" font-size="37" font-weight="400" fill="#cbc7d2">Share Yandex Music playlists with anyone,</text>
+  <text x="434" y="404" font-family="Segoe UI, Arial, sans-serif" font-size="37" font-weight="400" fill="#cbc7d2">and collaborate on a shared track list in real time</text>
+
+  <text x="434" y="476" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#b48cf0">.NET 10&#160;&#160;-&#160;&#160;Blazor WASM PWA&#160;&#160;-&#160;&#160;SQL Server / PostgreSQL</text>
+
+  <text x="96" y="600" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="400" fill="#7c778a">github.com/jrfrigat/PlaylistShare - JWT auth + Yandex Music, Docker-ready</text>
+  <text x="1184" y="600" text-anchor="end" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="400" fill="#7c778a">MIT</text>
+</svg>

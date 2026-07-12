@@ -1,0 +1,583 @@
+@page "/search"
+@attribute [Authorize]
+<PageTitle>Поиск - Playlist Share</PageTitle>
+
+@using PlaylistShare.Pwa.Components.Common
+@using PlaylistShare.Pwa.Components.SharedPlaylist.Cards
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Shared.Enums
+@using PlaylistShare.Shared.SharedPlaylist
+@using PlaylistShare.Shared.Yandex
+@using PlaylistShare.Pwa.Extensions
+@inject HttpClient Http
+@inject ISnackbarService Snackbar
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject AppBarState AppBar
+@implements IDisposable
+
+<FlareContainer MaxWidth="ContainerMaxWidth.Lg" Class="deka-search-page px-0">
+    @* На мобильном "назад" и заголовок несёт контекстный app bar (см. ApplyAppBar);
+       в контенте дублируем их только на десктопе (>=960 = Below Md), где хедера нет. *@
+    <FlareHidden Below="Breakpoint.Md">
+        @if (_hasBackLink)
+        {
+            <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="GoBack" Class="deka-search-back">
+                <LeadingIcon><FlareIcon Name="arrow_back" /></LeadingIcon>
+                <ChildContent>Назад в "@_backName"</ChildContent>
+            </FlareButton>
+        }
+
+        <FlareText Typo="TypographyScale.HeadlineSmall" Class="mb-4">
+            @(_hasBackLink ? $"Добавить в '{_backName}'" : "Поиск треков")
+        </FlareText>
+    </FlareHidden>
+
+    <FlareField TValue="string" @bind-Value="_query"
+                @bind-Value:after="OnQueryChanged"
+                Variant="InputVariant.Outlined"
+                Placeholder="Трек, альбом, исполнитель или плейлист"
+                Class="mb-3">
+        <AdornmentStart><FlareIcon Name="search" Color="FlareColor.Secondary" /></AdornmentStart>
+        <AdornmentEnd>
+            @if (!string.IsNullOrEmpty(_query))
+            {
+                <FlareIconButton Icon="close" Size="ButtonSize.Sm" OnClick="ClearSearch" AriaLabel="Очистить" />
+            }
+        </AdornmentEnd>
+    </FlareField>
+
+    <div class="deka-search-chips mb-4">
+        <FlareChipGroup SelectedValues="_selectedChips" SelectedValuesChanged="OnChipChanged" AriaLabel="Тип поиска">
+            <FlareChip Value="all" Label="Топ" />
+            <FlareChip Value="track" Label="Треки" />
+            <FlareChip Value="playlist" Label="Плейлисты" />
+            <FlareChip Value="artist" Label="Исполнители" />
+            <FlareChip Value="album" Label="Альбомы" />
+            <FlareChip Value="my" Label="Мои плейлисты" />
+        </FlareChipGroup>
+    </div>
+
+    @if (_drill != null)
+    {
+        <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="BackFromDrill" Class="deka-search-back">
+            <LeadingIcon><FlareIcon Name="arrow_back" /></LeadingIcon>
+            <ChildContent>К результатам</ChildContent>
+        </FlareButton>
+        <FlareText Typo="TypographyScale.TitleLarge" Class="mb-2">@_drill.Label</FlareText>
+
+        @if (_drillLoading)
+        {
+            <TrackItemSkeleton /><TrackItemSkeleton /><TrackItemSkeleton /><TrackItemSkeleton />
+        }
+        else
+        {
+            @if (_drillResult?.Albums?.Count > 0)
+            {
+                <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Альбомы</FlareText>
+                <div class="deka-search-hscroll">
+                    @foreach (var album in _drillResult.Albums)
+                    {
+                        <div class="deka-search-hcard">
+                            <AlbumCard Item="album" Size="100" OnClick="() => DrillAsync(album.Id, TrackSearchType.Album, album.Title)" />
+                        </div>
+                    }
+                </div>
+                <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Популярные треки</FlareText>
+            }
+            @TrackSection(_drillResult?.Tracks ?? new())
+        }
+    }
+    else if (_type == TrackSearchType.MyPlaylists)
+    {
+        @if (_searching)
+        {
+            <div class="deka-search-card-grid">@for (var i = 0; i < 8; i++) { <CardSkeleton /> }</div>
+        }
+        else if ((_result?.Playlists?.Count ?? 0) == 0 && (_result?.LikedPlaylists?.Count ?? 0) == 0)
+        {
+            <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="pa-4 text-center">Плейлисты не найдены</FlareText>
+        }
+        else
+        {
+            @if (_result?.Playlists?.Count > 0)
+            {
+                <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Мои плейлисты</FlareText>
+                <div class="deka-search-card-grid">
+                    @foreach (var pl in _result.Playlists)
+                    {
+                        <PlaylistCard Item="pl" Size="100" OnClick="() => DrillAsync(pl.Uuid, TrackSearchType.Playlist, pl.Title)" />
+                    }
+                </div>
+            }
+            @if (_result?.LikedPlaylists?.Count > 0)
+            {
+                <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Понравившиеся</FlareText>
+                <div class="deka-search-card-grid">
+                    @foreach (var pl in _result.LikedPlaylists)
+                    {
+                        <PlaylistCard Item="pl" Size="100" OnClick="() => DrillAsync(pl.Uuid, TrackSearchType.Playlist, pl.Title)" />
+                    }
+                </div>
+            }
+        }
+    }
+    else if (_searching)
+    {
+        <TrackItemSkeleton /><TrackItemSkeleton /><TrackItemSkeleton /><TrackItemSkeleton /><TrackItemSkeleton />
+    }
+    else if (string.IsNullOrWhiteSpace(_query))
+    {
+        <div class="deka-search-empty">
+            <FlareIcon Name="search" SizePx="36" />
+            <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
+                Начните вводить название трека, альбома, исполнителя или плейлиста
+            </FlareText>
+        </div>
+    }
+    else if (_result == null || IsResultEmpty(_result))
+    {
+        <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="pa-4 text-center">Ничего не нашлось по запросу "@_query"</FlareText>
+    }
+    else if (_type == TrackSearchType.All)
+    {
+        @* "Топ": треки на первом месте (главный сценарий - быстро найти и добавить), ниже - сущности для drill-down. *@
+        @if (_result?.Tracks?.Count > 0)
+        {
+            <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Треки</FlareText>
+            @TrackSection(_result.Tracks)
+        }
+        @if (_result?.Artists?.Count > 0)
+        {
+            <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Исполнители</FlareText>
+            <div class="deka-search-hscroll">
+                @foreach (var artist in _result.Artists)
+                {
+                    <div class="deka-search-hcard">
+                        <ArtistCard Item="artist" Size="100" OnClick="() => DrillAsync(artist.Id, TrackSearchType.Artist, artist.Name)" />
+                    </div>
+                }
+            </div>
+        }
+        @if (_result?.Albums?.Count > 0)
+        {
+            <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Альбомы</FlareText>
+            <div class="deka-search-hscroll">
+                @foreach (var album in _result.Albums)
+                {
+                    <div class="deka-search-hcard">
+                        <AlbumCard Item="album" Size="100" OnClick="() => DrillAsync(album.Id, TrackSearchType.Album, album.Title)" />
+                    </div>
+                }
+            </div>
+        }
+        @if (_result?.Playlists?.Count > 0)
+        {
+            <FlareText Typo="TypographyScale.TitleSmall" Color="FlareColor.Secondary" Class="deka-search-section-title">Плейлисты</FlareText>
+            <div class="deka-search-hscroll">
+                @foreach (var pl in _result.Playlists)
+                {
+                    <div class="deka-search-hcard">
+                        <PlaylistCard Item="pl" Size="100" OnClick="() => DrillAsync(pl.Uuid, TrackSearchType.Playlist, pl.Title)" />
+                    </div>
+                }
+            </div>
+        }
+    }
+    else if (_type == TrackSearchType.Track)
+    {
+        @TrackSection(_result?.Tracks ?? new())
+    }
+    else if (_type == TrackSearchType.Artist)
+    {
+        <div class="deka-search-card-grid">
+            @foreach (var artist in _result?.Artists ?? new())
+            {
+                <ArtistCard Item="artist" Size="100" OnClick="() => DrillAsync(artist.Id, TrackSearchType.Artist, artist.Name)" />
+            }
+        </div>
+    }
+    else if (_type == TrackSearchType.Album)
+    {
+        <div class="deka-search-card-grid">
+            @foreach (var album in _result?.Albums ?? new())
+            {
+                <AlbumCard Item="album" Size="100" OnClick="() => DrillAsync(album.Id, TrackSearchType.Album, album.Title)" />
+            }
+        </div>
+    }
+    else if (_type == TrackSearchType.Playlist)
+    {
+        <div class="deka-search-card-grid">
+            @foreach (var pl in _result?.Playlists ?? new())
+            {
+                <PlaylistCard Item="pl" Size="100" OnClick="() => DrillAsync(pl.Uuid, TrackSearchType.Playlist, pl.Title)" />
+            }
+        </div>
+    }
+</FlareContainer>
+
+@code {
+    /// <summary>Токен расшаренного плейлиста, откуда пришёл пользователь. Если задан - у треков появляется
+    /// кнопка добавления/удаления именно в этот плейлист.</summary>
+    [SupplyParameterFromQuery] public string? AddTo { get; set; }
+
+    private bool _hasBackLink => !string.IsNullOrEmpty(AddTo);
+    private string? _backName;
+
+    private string _query = "";
+    private string _trackFilter = "";
+    private IReadOnlyCollection<string> _selectedChips = new[] { "all" };
+    private TrackSearchType _type = TrackSearchType.All;
+
+    private bool _searching;
+    private YandexSearchResult? _result;
+    private CancellationTokenSource? _debounceCts;
+
+    // Drill-down: открыли альбом / исполнителя / плейлист - показываем его треки.
+    private DrillState? _drill;
+    private YandexSearchResult? _drillResult;
+    private bool _drillLoading;
+
+    private HashSet<string> _addToTrackIds = new();
+    private HashSet<string> _busyTrackIds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApplyAppBar();
+        if (_hasBackLink)
+        {
+            await LoadBackLinkNameAsync();
+            await LoadAddToTrackIdsAsync();
+            ApplyAppBar(); // обновляем заголовок именем плейлиста, когда оно загрузилось
+        }
+    }
+
+    /// <summary>Мобильный app bar: "Поиск" на верхнем уровне или "Добавить в "X"" + "назад" при AddTo.</summary>
+    private void ApplyAppBar() =>
+        AppBar.Set(
+            _hasBackLink ? (_backName != null ? $"Добавить в '{_backName}'" : "Добавить трек") : "Поиск",
+            showBack: _hasBackLink,
+            back: () => { GoBack(); return Task.CompletedTask; });
+
+    public void Dispose()
+    {
+        AppBar.Reset();
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
+
+    private async Task LoadBackLinkNameAsync()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<SharedPlaylistDto>>($"/api/sharedplaylist/{AddTo}");
+            if (response?.Success == true && response.Data != null)
+                _backName = response.Data.Title;
+        }
+        catch { }
+    }
+
+    private async Task LoadAddToTrackIdsAsync()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<YandexPlaylistData>>($"/api/sharedplaylist/{AddTo}/tracks");
+            if (response?.Success == true && response.Data != null)
+                _addToTrackIds = response.Data.Tracks.Select(t => t.TrackId).ToHashSet();
+        }
+        catch { }
+    }
+
+    private async Task OnQueryChanged()
+    {
+        _debounceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _debounceCts = cts;
+        try { await Task.Delay(350, cts.Token); }
+        catch (TaskCanceledException) { return; }
+
+        _drill = null;
+        await RunSearchAsync();
+    }
+
+    private async Task OnChipChanged(IReadOnlyCollection<string> values)
+    {
+        // Один тип всегда выбран (как у Яндекса) - повторный клик по активному чипу игнорируем.
+        var value = values.FirstOrDefault();
+        if (value == null) return;
+
+        _selectedChips = new[] { value };
+        _type = MapChip(value);
+        _trackFilter = "";
+        _drill = null;
+        await RunSearchAsync();
+    }
+
+    private static TrackSearchType MapChip(string value) => value switch
+    {
+        "track" => TrackSearchType.Track,
+        "playlist" => TrackSearchType.Playlist,
+        "artist" => TrackSearchType.Artist,
+        "album" => TrackSearchType.Album,
+        "my" => TrackSearchType.MyPlaylists,
+        _ => TrackSearchType.All,
+    };
+
+    private void ClearSearch()
+    {
+        _query = "";
+        _result = null;
+        _drill = null;
+        StateHasChanged();
+    }
+
+    private async Task RunSearchAsync()
+    {
+        var isMy = _type == TrackSearchType.MyPlaylists;
+        if (!isMy && string.IsNullOrWhiteSpace(_query))
+        {
+            _result = null;
+            StateHasChanged();
+            return;
+        }
+
+        _searching = true;
+        _result = null;
+        StateHasChanged();
+
+        try
+        {
+            var url = $"/api/yandexsearch/search?searchType={_type}";
+            if (!isMy)
+                url += $"&query={Uri.EscapeDataString(_query)}";
+            if (!string.IsNullOrEmpty(AddTo))
+                url += $"&shared_id={Uri.EscapeDataString(AddTo)}";
+
+            var response = await Http.GetFromJsonAsync<ApiResponse<YandexSearchResult>>(url);
+            if (response?.Success == true)
+                _result = response.Data ?? new YandexSearchResult();
+            else
+            {
+                Snackbar.Show(response?.Error?.Message ?? "Ошибка поиска", SnackbarSeverity.Error);
+                _result = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+            _result = null;
+        }
+        finally
+        {
+            _searching = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DrillAsync(string id, TrackSearchType type, string label)
+    {
+        _drill = new DrillState { Label = label, Type = type };
+        _drillResult = null;
+        _drillLoading = true;
+        _trackFilter = "";
+        StateHasChanged();
+
+        try
+        {
+            var url = $"/api/yandexsearch/search?query={Uri.EscapeDataString(id)}&searchType={type}&byId=true";
+            if (!string.IsNullOrEmpty(AddTo))
+                url += $"&shared_id={Uri.EscapeDataString(AddTo)}";
+
+            var response = await Http.GetFromJsonAsync<ApiResponse<YandexSearchResult>>(url);
+            if (response?.Success == true)
+                _drillResult = response.Data ?? new YandexSearchResult();
+            else
+                Snackbar.Show(response?.Error?.Message ?? "Не удалось открыть", SnackbarSeverity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _drillLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void BackFromDrill()
+    {
+        _drill = null;
+        _drillResult = null;
+        _trackFilter = "";
+        StateHasChanged();
+    }
+
+    private static bool IsResultEmpty(YandexSearchResult r) =>
+        (r.Tracks?.Count ?? 0) == 0 && (r.Artists?.Count ?? 0) == 0 &&
+        (r.Albums?.Count ?? 0) == 0 && (r.Playlists?.Count ?? 0) == 0;
+
+    private IEnumerable<YandexTrack> FilterTracks(IEnumerable<YandexTrack> tracks)
+    {
+        if (string.IsNullOrWhiteSpace(_trackFilter))
+            return tracks;
+        return tracks.Where(t =>
+            t.Title.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase) ||
+            t.Artists.Any(a => a.Name.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase)));
+    }
+
+    private async Task ToggleAddToAsync(YandexTrack track)
+    {
+        if (string.IsNullOrEmpty(AddTo) || _busyTrackIds.Contains(track.TrackId)) return;
+
+        _busyTrackIds.Add(track.TrackId);
+        StateHasChanged();
+        try
+        {
+            var has = _addToTrackIds.Contains(track.TrackId);
+            var request = new UpdateTrackListRequest { TrackIds = new List<string> { track.TrackId } };
+            var relative = has ? "remove-tracks" : "add-tracks";
+            var response = await Http.PostAsJsonAsync($"/api/sharedplaylist/{AddTo}/{relative}", request);
+            if (response.IsSuccessStatusCode)
+            {
+                if (has) _addToTrackIds.Remove(track.TrackId); else _addToTrackIds.Add(track.TrackId);
+                Snackbar.Show(has ? $"Удалено из '{_backName}'" : $"Добавлено в '{_backName}'", SnackbarSeverity.Success);
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                Snackbar.Show(error?.Error?.Message ?? "Ошибка обновления плейлиста", SnackbarSeverity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _busyTrackIds.Remove(track.TrackId);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenAddSheet(YandexTrack track)
+    {
+        await DialogService.ShowSheetAsync<AddToPlaylistSheet>(
+            title: null,
+            new DialogParameters { ["Track"] = track },
+            new DialogOptions { Size = DialogSize.Sm, AriaLabel = "Добавить трек в плейлист" });
+    }
+
+    private void GoBack() => Navigation.NavigateTo($"/shared/{AddTo}");
+
+    /// <summary>Строка трека: инфо + кнопка добавления (в целевой плейлист или через окно выбора).</summary>
+    private RenderFragment<YandexTrack> TrackRow => track =>
+    @<FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Small" Class="deka-search-track-row">
+        <div class="flex-grow-1 min-width-0">
+            <TrackItem Track="@track" CanPlay="true" />
+        </div>
+        @if (_hasBackLink)
+        {
+            <FlareIconButton Icon="@(_addToTrackIds.Contains(track.TrackId) ? "check" : "add")"
+                             Color="@(_addToTrackIds.Contains(track.TrackId) ? FlareColor.Primary : FlareColor.Default)"
+                             Disabled="@_busyTrackIds.Contains(track.TrackId)"
+                             OnClick="() => ToggleAddToAsync(track)"
+                             AriaLabel="@($"Добавить в '{_backName}'")" />
+        }
+        else
+        {
+            <FlareIconButton Icon="playlist_add" OnClick="() => OpenAddSheet(track)" AriaLabel="Добавить в плейлист" />
+        }
+    </FlareStack>;
+
+    /// <summary>Секция треков: поле фильтра (если треков много) + список с кнопками добавления.</summary>
+    private RenderFragment<List<YandexTrack>> TrackSection => tracks =>
+    @<text>
+        @if (tracks.Count > 8)
+        {
+            <FlareField TValue="string" @bind-Value="_trackFilter"
+                        Variant="InputVariant.Outlined" Placeholder="Фильтр треков..." Class="deka-search-filter">
+                <AdornmentStart><FlareIcon Name="filter_list" Color="FlareColor.Secondary" /></AdornmentStart>
+            </FlareField>
+        }
+        <FlareStack Gap="FlareSpacing.XSmall">
+            @foreach (var track in FilterTracks(tracks))
+            {
+                @TrackRow(track)
+            }
+        </FlareStack>
+    </text>;
+
+    private class DrillState
+    {
+        public string Label { get; set; } = "";
+        public TrackSearchType Type { get; set; }
+    }
+}
+
+<style>
+    .deka-search-back {
+        margin-bottom: 0.5rem;
+    }
+
+    .deka-search-chips {
+        overflow-x: auto;
+        /* прячем полосу прокрутки - чипы скроллятся свайпом в один ряд */
+        scrollbar-width: none;
+    }
+
+    /* Инлайн-style в .razor НЕ скоупится, поэтому здесь работает обычный селектор,
+       а не deep (deep валиден только в .razor.css, а в plain-CSS игнорируется -
+       из-за чего чипы переносились в 3 ряда и съедали ~70px). */
+    .deka-search-chips .flare-chip-group {
+        flex-wrap: nowrap;
+        width: max-content;
+    }
+
+    .deka-search-section-title {
+        margin: 1.25rem 0 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .deka-search-filter {
+        margin-bottom: 0.5rem;
+    }
+
+    .deka-search-track-row {
+        padding: 0.25rem 0;
+    }
+
+    .deka-search-hscroll {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .deka-search-hcard {
+        width: 104px;
+        flex: none;
+    }
+
+    .deka-search-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 0.75rem;
+    }
+
+    /* Пустое состояние поиска: компактный центрированный блок вместо "висящей" строки
+       текста - пустое место читается как намеренное, а не как забытая половина экрана. */
+    .deka-search-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.5rem;
+        padding: 2rem 1rem;
+        color: var(--flare-color-on-surface-variant);
+        max-width: 22rem;
+        margin: 0 auto;
+    }
+</style>

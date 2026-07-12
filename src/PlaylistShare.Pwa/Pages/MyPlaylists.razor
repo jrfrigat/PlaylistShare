@@ -1,0 +1,261 @@
+@page "/my-playlists"
+<PageTitle>Мои плейлисты - Playlist Share</PageTitle>
+
+@attribute [Authorize]
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Shared.Enums
+@using PlaylistShare.Shared.SharedPlaylist
+@using PlaylistShare.Shared.Yandex
+@using PlaylistShare.Pwa.Components.Common
+@using PlaylistShare.Pwa.Extensions
+@inject HttpClient Http
+@inject ISnackbarService Snackbar
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+
+<FlareContainer MaxWidth="ContainerMaxWidth.Lg" Class="mt-8 deka-my-playlists">
+
+    @if (_favoritesLoading)
+    {
+        <FlareProgress Variant="ProgressVariant.Circular" />
+    }
+    else if (_favorites.Any())
+    {
+        <section class="deka-section">
+            <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-section-heading">
+                <FlareIcon Name="favorite" SizePx="20" Color="FlareColor.Primary" />
+                <FlareText Typo="TypographyScale.TitleLarge">Избранное</FlareText>
+            </FlareStack>
+            <div class="deka-card-grid">
+                @foreach (var playlist in _favorites)
+                {
+                    <FlareCard Class="deka-tile" OnClick="@(() => GoToShared(playlist.ShareToken))">
+                        <div class="deka-tile-cover">
+                            @if (!string.IsNullOrEmpty(playlist.CoverUrl))
+                            {
+                                <img class="deka-tile-cover-img" src="@playlist.CoverUrl.FormatCoverUrl(200, 200)" alt="@playlist.Title" />
+                            }
+                            else
+                            {
+                                <div class="deka-tile-cover-placeholder">
+                                    <FlareIcon Name="library_music" SizePx="36" />
+                                </div>
+                            }
+                            <div class="deka-tile-cover-shade"></div>
+                        </div>
+                        <FlareText Typo="TypographyScale.TitleSmall" Class="deka-tile-title">@playlist.Title</FlareText>
+                        <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-tile-owner">
+                            <FlareAvatar Size="AvatarSize.Xs" Text="@playlist.Creator?.UserName" />
+                            <FlareText Typo="TypographyScale.BodySmall" Class="deka-tile-owner-name">@playlist.Creator?.UserName</FlareText>
+                        </FlareStack>
+                        <div class="deka-tile-action" @onclick:stopPropagation="true">
+                            <FlareIconButton Icon="favorite"
+                                              Color="FlareColor.Error"
+                                              AriaLabel="Удалить из избранного"
+                                              OnClick="@(() => RemoveFromFavorites(playlist))" />
+                        </div>
+                    </FlareCard>
+                }
+            </div>
+        </section>
+    }
+
+    <FlareStack Row Justify="FlareJustifyContent.SpaceBetween" Align="FlareAlignItems.End" Class="deka-section-heading deka-my-playlists-heading">
+        <div>
+            <FlareText Typo="TypographyScale.LabelLarge" Color="FlareColor.Primary" Class="deka-eyebrow">ВАША ФОНОТЕКА</FlareText>
+            <FlareText Typo="TypographyScale.HeadlineMedium">Мои плейлисты</FlareText>
+        </div>
+        <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-sync-indicator">
+            <FlareIcon Name="schedule" SizePx="17" />
+            <span>Синхронизировано</span>
+        </FlareStack>
+    </FlareStack>
+
+    @if (_playlistsLoading)
+    {
+        <FlareProgress Variant="ProgressVariant.Circular" />
+    }
+    else if (!_playlists.Any())
+    {
+        <FlareText>Плейлисты не найдены. Убедитесь, что вы сохранили корректный токен Яндекс.Музыки.</FlareText>
+    }
+    else
+    {
+        <div class="deka-card-grid">
+            @foreach (var playlist in _playlists)
+            {
+                <FlareCard Class="deka-tile" OnClick="@(() => GoToShared(playlist.ShareToken))">
+                    <div class="deka-tile-cover">
+                        @if (!string.IsNullOrEmpty(playlist.CoverUrl))
+                        {
+                            <img class="deka-tile-cover-img" src="@playlist.CoverUrl.FormatCoverUrl(200, 200)" alt="@playlist.Title" />
+                        }
+                        else
+                        {
+                            <div class="deka-tile-cover-placeholder">
+                                <FlareIcon Name="library_music" SizePx="36" />
+                            </div>
+                        }
+                        <div class="deka-tile-cover-shade"></div>
+                        <FlareStack Row Gap="FlareSpacing.XXSmall" Align="FlareAlignItems.Center" Class="deka-tile-count">
+                            <FlareIcon Name="music_note" SizePx="13" />
+                            <span>@playlist.TrackCount</span>
+                        </FlareStack>
+                    </div>
+                    <FlareText Typo="TypographyScale.TitleSmall" Class="deka-tile-title">@playlist.Title</FlareText>
+                    <FlareText Typo="TypographyScale.BodySmall" Class="deka-tile-sub">
+                        @(playlist.IsShared ? "Расшарен" : "Не расшарен")
+                    </FlareText>
+                    <div class="deka-tile-action" @onclick:stopPropagation="true">
+                        <FlareIconButton Icon="ios_share"
+                                          AriaLabel="Поделиться"
+                                          OnClick="@(() => SharePlaylist(playlist))" />
+                    </div>
+                </FlareCard>
+            }
+        </div>
+    }
+</FlareContainer>
+
+@code {
+    private List<YandexPlaylistShare> _playlists = new();
+    private List<SharedPlaylistDto> _favorites = new();
+    private bool _playlistsLoading = true;
+    private bool _favoritesLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadPlaylists(), LoadFavorites());
+    }
+
+    private async Task LoadPlaylists()
+    {
+        _playlistsLoading = true;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<List<YandexPlaylistShare>>>("/api/playlists");
+            if (response?.Success == true)
+                _playlists = response.Data ?? new();
+            else
+                Snackbar.Show("Ошибка загрузки плейлистов", SnackbarSeverity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _playlistsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadFavorites()
+    {
+        _favoritesLoading = true;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<List<SharedPlaylistDto>>>("/api/favorites");
+            if (response?.Success == true)
+                _favorites = response.Data ?? new();
+            else
+                Snackbar.Show(response?.Error?.Message ?? "Ошибка загрузки избранного", SnackbarSeverity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _favoritesLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SharePlaylist(YandexPlaylistShare playlist)
+    {
+        if (playlist.IsShared && !string.IsNullOrEmpty(playlist.ShareToken))
+        {
+            await OpenShareDialog(playlist.ShareToken);
+            return;
+        }
+
+        var request = new SharePlaylistRequest { Kind = playlist.Kind, OwnerUid = playlist.OwnerUid };
+        var response = await Http.PostAsJsonAsync("/api/playlists/share", request);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Show("Плейлист расшарен", SnackbarSeverity.Success);
+            await LoadPlaylists();
+
+            var updated = _playlists.FirstOrDefault(p => p.Kind == playlist.Kind && p.OwnerUid == playlist.OwnerUid);
+            if (!string.IsNullOrEmpty(updated?.ShareToken))
+                await OpenShareDialog(updated.ShareToken);
+        }
+        else
+        {
+            Snackbar.Show("Ошибка расшаривания", SnackbarSeverity.Error);
+        }
+    }
+
+    private async Task OpenShareDialog(string shareToken)
+    {
+        var url = Navigation.ToAbsoluteUri($"/shared/{shareToken}").ToString();
+
+        UpdatePermissionsDto? initialPermissions = null;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<SharedPlaylistDto>>($"/api/sharedplaylist/{shareToken}");
+            if (response?.Success == true && response.Data is { } dto)
+            {
+                initialPermissions = new UpdatePermissionsDto
+                {
+                    ViewPermission = dto.ViewPermission,
+                    PlayPermission = dto.PlayPermission,
+                    AddPermission = dto.AddPermission,
+                    RemovePermission = dto.RemovePermission,
+                };
+            }
+        }
+        catch
+        {
+            // Fall back to the plain link-only dialog if permissions can't be loaded.
+        }
+
+        await DialogService.ShowSheetAsync<ShareDialog>("Поделиться", new DialogParameters
+        {
+            ["ShareUrl"] = url,
+            ["ShareToken"] = shareToken,
+            ["InitialPermissions"] = initialPermissions,
+        }, new DialogOptions { Size = DialogSize.Sm });
+    }
+
+    private async Task RemoveFromFavorites(SharedPlaylistDto playlist)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"/api/favorites/{playlist.ShareToken}");
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Show($"Плейлист \"{playlist.Title}\" удалён из избранного", SnackbarSeverity.Success);
+                await LoadFavorites();
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                Snackbar.Show(error?.Error?.Message ?? "Ошибка удаления", SnackbarSeverity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+    }
+
+    private void GoToShared(string? shareToken)
+    {
+        if (!string.IsNullOrEmpty(shareToken))
+            Navigation.NavigateTo($"/shared/{shareToken}");
+        else
+            Snackbar.Show("Ошибка: токен расшаривания не найден", SnackbarSeverity.Error);
+    }
+}

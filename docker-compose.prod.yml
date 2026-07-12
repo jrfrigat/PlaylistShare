@@ -1,0 +1,28 @@
+# Production-only overlay: injects secrets from the git-ignored .env file and mounts the persistent
+# Data Protection key-ring volume. Applied ON TOP OF docker-compose.yml by run-docker-compose.bat.
+#
+# This is deliberately kept OUT of docker-compose.yml because that base file is also merged with
+# docker-compose.override.yml for Visual Studio F5 debug - putting production secrets in the base
+# would make local debug connect to (and auto-migrate) the production database.
+services:
+  playlistshare.api:
+    # Survive host reboots and self-heal transient startup failures (e.g. the DB not being reachable
+    # yet when Database.Migrate() runs on startup).
+    restart: unless-stopped
+    environment:
+      # Database provider: SqlServer (default) or Postgres. For an external Postgres, set DB_PROVIDER
+      # and a matching Npgsql CONNECTION_STRING in .env. For a containerized Postgres, add the
+      # docker-compose.postgres.yml overlay (run-docker-compose-postgres.bat), which overrides these.
+      - Database__Provider=${DB_PROVIDER:-SqlServer}
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      # Data Protection key ring lives on the mounted volume, not in the database.
+      - DataProtection__KeysPath=/keys
+    volumes:
+      - dataprotection_keys:/keys
+
+  playlistshare.pwa:
+    restart: unless-stopped
+
+volumes:
+  dataprotection_keys:

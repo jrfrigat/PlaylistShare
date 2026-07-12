@@ -1,0 +1,102 @@
+@inject IAudioPlayerService AudioPlayerService
+@inject ISnackbarService Snackbar
+@inject IFlareColorExtractor ColorExtractor
+@using PlaylistShare.Pwa.Extensions
+
+@if (IsOpen && AudioPlayerService.CurrentTrack is { } track)
+{
+    @* --fc-* НЕ вешаем на корень: они наследуются и перекрашивают даже нейтральные (Default)
+       кнопки хедера (фон Filled подхватывает --fc-main -> иконка сливается). Акцент задаём точечно:
+       контролам - через Color="@_accent" (локальный --fc-*), а тонировку - переменной на самом scrim. *@
+    <div class="deka-full-player">
+        <div class="deka-full-player-bg" style="@BgStyle(track.CoverUri)"></div>
+        <div class="deka-full-player-scrim" style="@_accent.StyleContainer()"></div>
+
+        <div class="deka-full-player-content">
+            <FlareStack Row Align="FlareAlignItems.Center" Justify="FlareJustifyContent.SpaceBetween" Class="deka-full-player-header">
+                <FlareIconButton Icon="expand_more" Variant="ButtonVariant.Tonal" Color="@_accent"
+                                 Shape="ButtonShape.Circular" AriaLabel="Свернуть" OnClick="Close" />
+                <FlareStack Gap="FlareSpacing.None" Align="FlareAlignItems.Center">
+                    <FlareText Typo="TypographyScale.LabelSmall" Color="@_accent">СЛУШАЕМ ПЛЕЙЛИСТ</FlareText>
+                    <FlareText Typo="TypographyScale.BodyMedium" Color="@_accent">@Context</FlareText>
+                </FlareStack>
+                <FlareIconButton Icon="graphic_eq" Variant="ButtonVariant.Tonal" Color="@_accent"
+                                 Shape="ButtonShape.Circular" AriaLabel="Скоро будет доступно" OnClick="Noop" />
+            </FlareStack>
+
+            <div class="deka-full-player-cover">
+                <FlareImage Src="@track.CoverUri.FormatCoverUrl(600, 600)" Height="100%" Width="100%" />
+            </div>
+
+            <div class="deka-full-player-info">
+                <FlareStack Gap="FlareSpacing.None">
+                    <FlareText Typo="TypographyScale.HeadlineSmall" Class="deka-full-player-title">@track.Title</FlareText>
+                    <FlareText Typo="TypographyScale.BodyLarge" Color="@_accent">
+                        @string.Join(", ", track.Artists.Select(a => a.Name))
+                    </FlareText>
+                </FlareStack>
+
+                <TrackProgress Value="@AudioPlayerService.CurrentTime" Min="0" Max="@AudioPlayerService.TotalTime"
+                               Size="SliderSize.Sm" Color="@_accent" Step="0.1"
+                               ValueChanged="@(v => AudioPlayerService.SeekToAsync(v))" />
+                <FlareStack Row Justify="FlareJustifyContent.SpaceBetween">
+                    <FlareText Typo="TypographyScale.LabelSmall" Color="FlareColor.Secondary">@AudioPlayerService.CurrentTimeString</FlareText>
+                    <FlareText Typo="TypographyScale.LabelSmall" Color="FlareColor.Secondary">@AudioPlayerService.TotalTimeString</FlareText>
+                </FlareStack>
+
+                <FlareStack Row Align="FlareAlignItems.Center" Justify="FlareJustifyContent.SpaceBetween" Class="deka-full-player-transport">
+                    <FlareIconButton Icon="shuffle" Variant="ButtonVariant.Text" Color="@_accent" OnClick="Noop" />
+                    <FlareIconButton Icon="skip_previous" Variant="ButtonVariant.Text" Size="ButtonSize.Lg" Color="@_accent"
+                                     Disabled="@(!AudioPlayerService.HasPrevious)" OnClick="@(() => AudioPlayerService.PlayPreviousAsync())" />
+                    <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? "pause" : "play_arrow")"
+                                     Variant="ButtonVariant.Filled" Color="@_accent" Shape="ButtonShape.Circular"
+                                     Size="ButtonSize.Xl" Class="deka-play-toggle deka-play-toggle--filled" OnClick="TogglePlay" />
+                    <FlareIconButton Icon="skip_next" Variant="ButtonVariant.Text" Size="ButtonSize.Lg" Color="@_accent"
+                                     Disabled="@(!AudioPlayerService.HasNext)" OnClick="@(() => AudioPlayerService.PlayNextAsync())" />
+                    <FlareIconButton Icon="repeat" Variant="ButtonVariant.Text" Color="@_accent" OnClick="Noop" />
+                </FlareStack>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>Whether the full-screen player overlay is visible.</summary>
+    [Parameter] public bool IsOpen { get; set; }
+    /// <summary>Raised when the user closes the overlay (chevron-down button).</summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+    /// <summary>Label for what's currently playing (e.g. the playlist name), shown under the header.</summary>
+    [Parameter] public string Context { get; set; } = "Все треки";
+
+    /// <summary>Обложка, для которой уже извлечён акцент (чтобы не пересчитывать на каждый рендер).</summary>
+    private string? _lastCover;
+    /// <summary>Dynamic-color акцент из обложки; до извлечения/при неудаче - тема (Primary).</summary>
+    private FlareColor _accent = FlareColor.Primary;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Извлекаем доминирующий цвет обложки при открытии/смене трека и получаем из него
+        // гармонизированный контраст-безопасный акцент. Обложки Яндекса отдают CORS -
+        // getImageData не падает; при неудаче seed = null -> откат на тему.
+        if (IsOpen && AudioPlayerService.CurrentTrack is { CoverUri: { Length: > 0 } cover } && cover != _lastCover)
+        {
+            _lastCover = cover;
+            var seed = await ColorExtractor.GetDominantColorAsync(cover.FormatCoverUrl(200, 200));
+            _accent = string.IsNullOrWhiteSpace(seed) ? FlareColor.Primary : FlareColor.Dynamic(seed!);
+            StateHasChanged();
+        }
+    }
+
+    private static string BgStyle(string coverUri) =>
+        string.IsNullOrEmpty(coverUri) ? "" : $"background-image:url('{coverUri.FormatCoverUrl(600, 600)}')";
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private async Task TogglePlay()
+    {
+        if (AudioPlayerService.IsPlaying) await AudioPlayerService.PauseAsync();
+        else await AudioPlayerService.PlayAsync();
+    }
+
+    private void Noop() => Snackbar.Show("Скоро будет доступно", SnackbarSeverity.Info);
+}

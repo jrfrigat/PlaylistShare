@@ -1,0 +1,91 @@
+@using Microsoft.AspNetCore.Components.Web
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Shared.Yandex
+@inject IAudioPlayerService AudioPlayerService
+
+<div @onmouseenter="HandleMouseEnter"
+     @onmouseleave="HandleMouseLeave"
+     class="deka-track-cover"
+     style="width: @(Width)px; height: @(Height)px;">
+
+    <FlareImage Src="@Track?.CoverUri.FormatCoverUrl(Width, Height)" Height="@($"{Height}px")" Width="@($"{Width}px")" BorderRadius="var(--flare-shape-small)" Style="display: block;" />
+
+    @if (CanPlay)
+    {
+        <div class="deka-track-cover-overlay @(_isHovered || IsCurrentTrackPlaying ? "deka-track-cover-overlay--visible" : "")">
+            <FlareIconButton Icon="@(IsCurrentTrackPlaying ? "pause" : "play_arrow")"
+                             Variant="ButtonVariant.Text" Color="FlareColor.Default" Size="ButtonSize.Lg"
+                             Class="deka-play-toggle" OnClick="OnPlayClick" />
+        </div>
+    }
+</div>
+
+<style>
+    .deka-track-cover {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        border-radius: var(--flare-shape-small);
+        overflow: hidden;
+        flex: none;
+    }
+
+    .deka-track-cover-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: color-mix(in srgb, var(--flare-color-on-surface) 45%, transparent);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        color: var(--flare-color-surface);
+    }
+
+    .deka-track-cover-overlay--visible {
+        opacity: 1;
+    }
+</style>
+
+@code {
+    [Parameter] public YandexTrack? Track { get; set; } = null;
+    [Parameter] public string TrackId { get; set; } = string.Empty;
+    [Parameter] public int Height { get; set; } = 50;
+    [Parameter] public int Width { get; set; } = 50;
+    [Parameter] public string PlaylistShareToken { get; set; } = string.Empty;
+    [Parameter] public bool CanPlay { get; set; } = false;
+
+    private bool IsCurrentTrackPlaying => AudioPlayerService.IsPlaying && AudioPlayerService.CurrentTrackId == TrackId;
+
+    private bool _isHovered;
+
+    private void HandleMouseEnter() => _isHovered = true;
+    private void HandleMouseLeave() => _isHovered = false;
+
+    protected override void OnInitialized()
+    {
+        AudioPlayerService.OnStateChanged += OnPlayerStateChanged;
+    }
+
+    private async Task OnPlayClick()
+    {
+        var playlistShareToken = string.IsNullOrWhiteSpace(PlaylistShareToken) ? null : PlaylistShareToken;
+
+        if (IsCurrentTrackPlaying)
+        {
+            await AudioPlayerService.PauseAsync();
+        }
+        else
+        {
+            await AudioPlayerService.LoadAndPlayAsync(
+                trackId: TrackId,
+                playlistShareToken: playlistShareToken,
+                track: Track);
+        }
+    }
+
+    private void OnPlayerStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

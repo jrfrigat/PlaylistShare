@@ -1,0 +1,82 @@
+@page "/login"
+@layout EmptyLayout
+@using PlaylistShare.Shared.Auth
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Pwa.Services
+@using PlaylistShare.Pwa.Components.Common
+@inject HttpClient Http
+@inject AuthStateProvider AuthProvider
+@inject NavigationManager Navigation
+@inject ISnackbarService Snackbar
+
+<div class="deka-auth">
+    <div class="deka-auth-blob deka-auth-blob--tr"></div>
+    <div class="deka-auth-blob deka-auth-blob--bl"></div>
+
+    <div class="deka-auth-box">
+        <div class="deka-auth-mark deka-gradient-mark"><DekaMark Size="36" /></div>
+        <h1 class="deka-auth-title">Добро пожаловать в PlaylistShare</h1>
+        <p class="deka-auth-subtitle">Войдите, чтобы делиться плейлистами</p>
+
+        <div class="deka-auth-card" @onkeydown="OnKeyDown">
+            <div class="deka-seg">
+                <span class="deka-seg-item deka-seg-item--active">Вход</span>
+                <a href="/register" class="deka-seg-item">Регистрация</a>
+            </div>
+
+            <label class="deka-label">Имя пользователя</label>
+            <FlareTextField Placeholder="Введите имя" Autocomplete="username" Style="margin-bottom:14px"
+                            @bind-Value="_loginModel.Username" Immediate="true" />
+
+            <label class="deka-label">Пароль</label>
+            <FlarePasswordField Placeholder="••••••••" Autocomplete="current-password" Style="margin-bottom:20px"
+                                @bind-Value="_loginModel.Password" Immediate="true" />
+
+            <FlareButton Class="deka-cta" OnClick="LocalLogin">Войти</FlareButton>
+            <div class="deka-auth-footnote">Забыли пароль?</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel _loginModel = new();
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await LocalLogin();
+    }
+
+    private async Task LocalLogin()
+    {
+        if (string.IsNullOrWhiteSpace(_loginModel.Username) || string.IsNullOrWhiteSpace(_loginModel.Password))
+        {
+            Snackbar.Show("Пожалуйста, заполните все поля", SnackbarSeverity.Warning);
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync("/api/account/login", _loginModel);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<LoginResponse>>();
+            if (result?.Success == true && result.Data != null)
+            {
+                await AuthProvider.MarkUserAsAuthenticated(result.Data.Token, result.Data.RefreshToken);
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Show(result?.Error?.Message ?? "Ошибка входа", SnackbarSeverity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Show("Неверное имя пользователя или пароль", SnackbarSeverity.Error);
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+}

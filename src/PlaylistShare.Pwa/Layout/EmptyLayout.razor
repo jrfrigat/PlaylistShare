@@ -1,0 +1,10 @@
+@inherits LayoutComponentBase
+
+@* Full-screen chrome-less layout for the auth and connect screens - no sidebar, no bottom nav.
+   Matches the mock, where loading / auth / connect live entirely outside the app shell. *@
+<FlareDialogProvider />
+<FlareSnackbarProvider />
+
+<div class="deka-fullscreen">
+    @Body
+</div>

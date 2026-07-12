@@ -1,0 +1,112 @@
+.deka-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+    gap: 16px;
+}
+
+.deka-tile {
+    position: relative;
+    display: block;
+}
+
+.deka-tile-cover {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--flare-shape-small);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.deka-tile-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.deka-tile-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--deka-gradient-accent);
+    color: var(--flare-color-on-primary);
+}
+
+.deka-tile-cover-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, .35));
+}
+
+.deka-tile-count {
+    position: absolute;
+    left: 10px;
+    bottom: 9px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .4);
+}
+
+.deka-tile-title {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deka-tile-sub {
+    display: block;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--flare-color-on-surface-variant);
+}
+
+.deka-tile-action {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border-radius: var(--flare-shape-small);
+    background: var(--deka-glass);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+}
+
+.deka-tile-owner {
+    margin-top: 6px;
+}
+
+.deka-tile-owner-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--flare-color-on-surface-variant);
+}
+
+.deka-section {
+    margin-bottom: 34px;
+}
+
+.deka-section-heading {
+    margin-bottom: 16px;
+}
+
+.deka-my-playlists-heading {
+    margin-bottom: 26px;
+}
+
+.deka-eyebrow {
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.deka-sync-indicator {
+    color: var(--flare-color-on-surface-variant);
+    flex: none;
+}

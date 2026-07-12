@@ -1,0 +1,601 @@
+@page "/shared/{token}"
+<PageTitle>@_playlist?.Title - Playlist Share</PageTitle>
+
+<HeadContent>
+    <meta property="og:title" content="@(_playlist?.Title ?? "Поделиться плейлистом")" />
+    <meta property="og:description" content="@($"Слушайте плейлист '{_playlist?.Title}' на Playlist Share")" />
+    @if (!string.IsNullOrEmpty(_playlist?.CoverUrl))
+    {
+        <meta property="og:image" content="@_playlist.CoverUrl" />
+    }
+    <meta property="og:url" content="@Navigation.Uri" />
+    <meta property="og:type" content="music.playlist" />
+</HeadContent>
+
+@using PlaylistShare.Pwa.Components.Common
+@using PlaylistShare.Pwa.Components.SharedPlaylist
+@using PlaylistShare.Pwa.Extensions
+@using PlaylistShare.Shared.DTO
+@using PlaylistShare.Shared.Enums
+@using PlaylistShare.Pwa.Services
+@using PlaylistShare.Shared.SharedPlaylist
+@using PlaylistShare.Shared.Yandex
+@inject HttpClient Http
+@inject ISnackbarService Snackbar
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+@inject IDialogService DialogService
+@inject IAudioPlayerService AudioPlayerService
+@inject IJSRuntime JS
+@inject AppBarState AppBar
+@implements IDisposable
+
+<FlareContainer MaxWidth="ContainerMaxWidth.Md" Class="pb-2 px-0">
+    @* На мобильном "назад" живёт в контекстном app bar (см. AppBar.Set ниже); в контенте кнопку
+       показываем только на десктопе (>=960 = Below Md), где мобильного хедера нет. *@
+    <FlareHidden Below="Breakpoint.Md">
+        <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="GoBack" Class="deka-back-btn">
+            <LeadingIcon><FlareIcon Name="arrow_back" /></LeadingIcon>
+            <ChildContent>Назад</ChildContent>
+        </FlareButton>
+    </FlareHidden>
+
+    @if (_loading)
+    {
+        <div class="deka-playlist-hero">
+            <FlareSkeleton Width="172px" Height="172px" Variant="SkeletonVariant.Rect" Class="deka-playlist-cover" />
+            <FlareStack Gap="FlareSpacing.Small" Class="flex-grow-1">
+                <FlareSkeleton Width="200px" Height="32px" Variant="SkeletonVariant.Text" />
+                <FlareSkeleton Width="140px" Height="18px" Variant="SkeletonVariant.Text" />
+            </FlareStack>
+        </div>
+        <TrackItemSkeleton />
+        <TrackItemSkeleton />
+        <TrackItemSkeleton />
+        <TrackItemSkeleton />
+        <TrackItemSkeleton />
+    }
+    else
+    {
+        <div class="deka-playlist-hero">
+            @if (!string.IsNullOrEmpty(_playlist?.CoverUrl))
+            {
+                <FlareImage Src="@_playlist.CoverUrl.FormatCoverUrl(344, 344)" Height="172px" Width="172px" Class="deka-playlist-cover" />
+            }
+            else
+            {
+                <div class="deka-playlist-cover deka-playlist-cover--fallback deka-playlist-cover--lg">
+                    <FlareIcon Icon="library_music" />
+                </div>
+            }
+
+            <FlareStack Gap="FlareSpacing.None" Class="min-width-0 flex-grow-1">
+                <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Primary" Class="deka-playlist-eyebrow">
+                    ПЛЕЙЛИСТ
+                </FlareText>
+                <FlareText Typo="TypographyScale.HeadlineMedium" Class="deka-playlist-title">
+                    @_playlist?.Title
+                </FlareText>
+
+                @if (_tracksLoading)
+                {
+                    <FlareSkeleton Width="200px" Height="20px" Variant="SkeletonVariant.Text" />
+                }
+                else
+                {
+                    <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
+                        @($"{_playlistTrackCount} треков - {_playlistDurationMs.FormatDuration(LongExtensions.FormatDurationType.hhmmss)}")
+                    </FlareText>
+                }
+            </FlareStack>
+        </div>
+
+        @* Действия - отдельной строкой под hero (а не в узкой инфо-колонке): на мобильном
+           обложка ужимается и встаёт рядом с названием, а кнопки получают полную ширину.
+           Литеральный div (а не FlareStack) - чтобы scoped-CSS (.deka-playlist-actions) применялся. *@
+        @* Кнопку "Слушать" убрали - треки запускаются кликом по строке. Остаются "Добавить"
+           и группа icon-действий (поделиться / Яндекс / избранное / настройки). *@
+        <div class="deka-playlist-actions">
+            @if (_canAdd)
+            {
+                <FlareButton Variant="ButtonVariant.Tonal" OnClick="GoToAddTracks">
+                    <LeadingIcon><FlareIcon Icon="add" /></LeadingIcon>
+                    <ChildContent>Добавить</ChildContent>
+                </FlareButton>
+            }
+
+            @* Icon-кнопки держим одной группой, чтобы они не разрывались между рядами
+               (share то в 1-м ряду, то во 2-м в зависимости от ширины) и шли ровным блоком. *@
+            <div class="deka-playlist-icon-actions">
+                <FlareIconButton Icon="ios_share" Variant="ButtonVariant.Tonal" OnClick="SharePlaylist" AriaLabel="Поделиться" />
+
+                <FlareIconButton Href="@($"https://music.yandex.ru/playlists/{_playlist?.YandexPlaylistUuid}")"
+                                 Target="_blank"
+                                 Variant="ButtonVariant.Tonal"
+                                 AriaLabel="Открыть в Яндекс.Музыке">
+                    <FlareIcon Icon="@CustomIcons.YandexMusic" />
+                </FlareIconButton>
+
+                @* Избранное перенесено из убранного баннера владельца - для не-создателей. *@
+                @if (!_isCreator && _playlist != null)
+                {
+                    <FlareIconButton Icon="@(_isFavorite ? "star" : "star_border")"
+                                     Variant="ButtonVariant.Tonal"
+                                     Color="FlareColor.Warning"
+                                     OnClick="ToggleFavorite"
+                                     Disabled="_favoriteLoading"
+                                     AriaLabel="Избранное" />
+                }
+
+                @if (_isCreator && _isAuthenticated)
+                {
+                    <FlareIconButton Icon="settings" Variant="ButtonVariant.Tonal" OnClick="OpenPermissionsDialog" AriaLabel="Настройки доступа" />
+                }
+            </div>
+        </div>
+
+        @if (_tracksLoading)
+        {
+            <TrackItemSkeleton />
+            <TrackItemSkeleton />
+            <TrackItemSkeleton />
+            <TrackItemSkeleton />
+            <TrackItemSkeleton />
+        }
+        else
+        {
+            @if (_tracks.Count > 8)
+            {
+                <FlareField TValue="string" @bind-Value="_trackFilter"
+                            Variant="InputVariant.Outlined" Placeholder="Поиск трека..." Class="deka-playlist-filter">
+                    <AdornmentStart><FlareIcon Name="search" Color="FlareColor.Secondary" /></AdornmentStart>
+                </FlareField>
+            }
+            <FlareStack Gap="FlareSpacing.XSmall">
+                @foreach (var track in FilteredTracks)
+                {
+                    <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.XSmall">
+                        <div class="deka-track-row-item">
+                            <TrackItem Track="@track" PlaylistShareToken="@Token" CanPlay="@_canPlay"
+                                       IsCurrentTrack="@(AudioPlayerService.CurrentTrackId == track.TrackId)"
+                                       AddedByName="@(_trackAdditions.TryGetValue(track.TrackId, out var n) ? n : null)" />
+                        </div>
+                        @if (_canRemove)
+                        {
+                            <div class="deka-track-remove">
+                                <FlareIconButton Icon="more_vert" Size="ButtonSize.Sm" OnClick="() => OnRemoveTrack(track)" AriaLabel="Удалить трек" />
+                            </div>
+                        }
+                    </FlareStack>
+                }
+            </FlareStack>
+            @if (!string.IsNullOrWhiteSpace(_trackFilter) && !FilteredTracks.Any())
+            {
+                <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="pa-4 text-center">
+                    В плейлисте нет треков по запросу "@_trackFilter"
+                </FlareText>
+            }
+        }
+    }
+</FlareContainer>
+
+@code {
+    /// <summary>Токен расшаренного плейлиста</summary>
+    [Parameter] public required string Token { get; set; }
+
+    /// <summary>Свойства плейлиста.</summary>
+    private SharedPlaylistDto? _playlist;
+    /// <summary>Пользователь является создателем плейлиста.</summary>
+    private bool _isCreator;
+    /// <summary>Пользователь имеет право воспроизведения треков.</summary>
+    private bool _canPlay;
+    /// <summary>Пользователь имеет право добавления треков в плейлист.</summary>
+    private bool _canAdd;
+    /// <summary>Пользователь имеет право удаления треков из плейлиста.</summary>
+    private bool _canRemove;
+    /// <summary>Пользователь авторизован из под учетной записи.</summary>
+    private bool _isAuthenticated;
+    /// <summary>Текущий ID пользователя, если авторизован.</summary>
+    private string? _currentUserId;
+
+    /// <summary>Состояние: Происходит загрузка плейлиста.</summary>
+    private bool _loading = true;
+    /// <summary>Состояние: Происходит загрузка треков плейлиста.</summary>
+    private bool _tracksLoading = true;
+
+    /// <summary>
+    /// Список ID треков, уже добавленных в плейлист.
+    /// </summary>
+    private HashSet<string> _existingTrackIds = new();
+    /// <summary>
+    /// Список добавленных в плейлист треков.
+    /// </summary>
+    private List<YandexTrack> _tracks = new();
+    /// <summary>Текст фильтра по трекам плейлиста (клиентский поиск по названию/исполнителю).</summary>
+    private string _trackFilter = "";
+    /// <summary>Треки плейлиста с учётом фильтра.</summary>
+    private IEnumerable<YandexTrack> FilteredTracks =>
+        string.IsNullOrWhiteSpace(_trackFilter)
+            ? _tracks
+            : _tracks.Where(t =>
+                t.Title.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase) ||
+                t.Artists.Any(a => a.Name.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase)));
+    /// <summary>
+    /// Словарь trackId -> имя пользователя, добавившего трек.
+    /// </summary>
+    private Dictionary<string, string?> _trackAdditions = new();
+    /// <summary>
+    /// Продолжительность плейлиста.
+    /// </summary>
+    long _playlistDurationMs;
+    /// <summary>
+    /// Кол-во треков в ПЛ.
+    /// </summary>
+    int _playlistTrackCount;
+
+    /********************************
+     * Контекстные кнопки
+    *********************************/
+    /// <summary>Признак, что альбом в фаворитах.</summary>
+    private bool _isFavorite;
+    /// <summary>Загрузка признака "фаворит".</summary>
+    private bool _favoriteLoading;
+
+    /********************************
+     * Поделиться ссылкой
+    *********************************/
+    private IJSObjectReference? _shareModule;
+    private bool _isWebShareSupported = false;
+
+    /// <summary>Задать мобильный app bar: "назад" + заголовок (название плейлиста после загрузки).</summary>
+    private void ApplyAppBar() =>
+        AppBar.Set(_playlist?.Title ?? "Плейлист", showBack: true,
+            back: () => { GoBack(); return Task.CompletedTask; });
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApplyAppBar();
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        _currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        await LoadPlaylist();
+        await LoadTracks();
+        AudioPlayerService.OnStartedTrack += OnPlayerStateChanged;
+        AudioPlayerService.OnEndedTrack += OnPlayerStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Загружаем JS-модуль
+            _shareModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/shareUtils.js");
+            // Проверяем поддержку Web Share API
+            _isWebShareSupported = await _shareModule.InvokeAsync<bool>("isSupported");
+            StateHasChanged();
+        }
+    }
+
+    private void OnPlayerStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Кнопка "Добавить" в шапке плейлиста - переходит на страницу поиска для добавления треков в этот плейлист.</summary>
+    private void GoToAddTracks() => Navigation.NavigateTo($"/search?AddTo={Token}");
+
+    /// <summary>Кнопка "Назад".</summary>
+    private void GoBack() => Navigation.NavigateTo("/my-playlists");
+
+    /// <summary>Установка разрешений.</summary>
+    private async Task ConfigurePermissions()
+    {
+        if (_playlist is null)
+        {
+            _isCreator = false;
+            _canAdd = false;
+            _canRemove = false;
+            _canPlay = false;
+        }
+        else
+        {
+            _isCreator = _playlist.CreatorUserId.ToString() == _currentUserId;
+
+            _canAdd = _isCreator
+            || _playlist.AddPermission == EditPermission.Everyone
+            || (_playlist.AddPermission == EditPermission.AuthorizedOnly && _isAuthenticated);
+
+            _canRemove = _isCreator
+            || _playlist.RemovePermission == EditPermission.Everyone
+            || (_playlist.RemovePermission == EditPermission.AuthorizedOnly && _isAuthenticated);
+
+            _canPlay = _isCreator
+            || _playlist.PlayPermission == ViewPermission.Everyone
+            || (_playlist.PlayPermission == ViewPermission.AuthorizedOnly && _isAuthenticated);
+
+        }
+    }
+
+    /// <summary>Загрузка плейлиста.</summary>
+    private async Task LoadPlaylist()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<SharedPlaylistDto>>($"/api/sharedplaylist/{Token}");
+            if (response?.Success == true)
+            {
+                _playlist = response.Data;
+                ApplyAppBar();
+
+                await ConfigurePermissions();
+                await CheckFavoriteStatus();
+            }
+            else
+            {
+                Snackbar.Show(response?.Error?.Message ?? "Не удалось загрузить плейлист", SnackbarSeverity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>Загрузка треков.</summary>
+    private async Task LoadTracks()
+    {
+        if (_playlist == null) return;
+
+        _tracksLoading = true;
+
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<YandexPlaylistData>>($"/api/sharedplaylist/{Token}/tracks");
+            if (response?.Success == true && response.Data != null)
+            {
+                _tracks = response.Data.Tracks;
+                _existingTrackIds = _tracks.Select(t => t.TrackId).ToHashSet();
+                _playlistDurationMs = _tracks.Sum(t => t.DurationMs);
+                _playlistTrackCount = _tracks.Count();
+                AudioPlayerService.SetQueue(_tracks, shareToken: Token);
+
+                try
+                {
+                    var additionsResp = await Http.GetFromJsonAsync<ApiResponse<Dictionary<string, string?>>>($"/api/sharedplaylist/{Token}/additions");
+                    if (additionsResp?.Success == true && additionsResp.Data != null)
+                        _trackAdditions = additionsResp.Data;
+                }
+                catch { }
+            }
+            else
+            {
+                Snackbar.Show(response?.Error?.Message ?? "Не удалось загрузить треки", SnackbarSeverity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка загрузки треков: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _tracksLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>Удаление трека из списка плейлиста</summary>
+    private async Task OnRemoveTrack(YandexTrack track)
+    {
+        var confirmed = await DialogService.ConfirmAsync(
+            "Подтверждение удаления",
+            $"Вы уверены, что хотите удалить трек \"{track.Title}\"?",
+            "Удалить", "Отмена");
+
+        if (confirmed != true) return;
+
+        await RemoveTrack(track);
+    }
+
+    /// <summary>Удаление трека.</summary>
+    private async Task RemoveTrack(YandexTrack track)
+    {
+        if (!_existingTrackIds.Contains(track.TrackId)) return;
+
+        try
+        {
+            var request = new UpdateTrackListRequest { TrackIds = new List<string> { track.TrackId } };
+            var response = await Http.PostAsJsonAsync($"/api/sharedplaylist/{Token}/remove-tracks", request);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Show("Трек удалён", SnackbarSeverity.Success);
+                _tracks.Remove(track);
+                _existingTrackIds.Remove(track.TrackId);
+                _playlistDurationMs -= track.DurationMs;
+                _playlistTrackCount -= 1;
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                Snackbar.Show(error?.Error?.Message ?? "Ошибка удаления", SnackbarSeverity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        StateHasChanged();
+    }
+
+    #region Избранное / Фаворит
+    /// <summary>Установка галочки "избранное"</summary>
+    private async Task CheckFavoriteStatus()
+    {
+        if (string.IsNullOrWhiteSpace(Token)) return;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<bool>>($"/api/favorites/{Token}/check");
+            if (response?.Success == true)
+                _isFavorite = response.Data;
+        }
+        catch { }
+    }
+
+    private async Task ToggleFavorite()
+    {
+        if (string.IsNullOrWhiteSpace(Token)) return;
+
+        if (!_isAuthenticated)
+        {
+            Snackbar.Show("Добавление в избранное только авторизованным пользователям", SnackbarSeverity.Warning);
+            return;
+        }
+
+        _favoriteLoading = true;
+        try
+        {
+            if (_isFavorite)
+            {
+                var response = await Http.DeleteAsync($"/api/favorites/{Token}");
+                if (response.IsSuccessStatusCode)
+                {
+                    _isFavorite = false;
+                    Snackbar.Show("Плейлист удалён из избранного", SnackbarSeverity.Success);
+                }
+                else
+                {
+                    Snackbar.Show("Ошибка удаления из избранного", SnackbarSeverity.Error);
+                }
+            }
+            else
+            {
+                var response = await Http.PostAsync($"/api/favorites/{Token}", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    _isFavorite = true;
+                    Snackbar.Show("Плейлист добавлен в избранное", SnackbarSeverity.Success);
+                }
+                else
+                {
+                    Snackbar.Show("Ошибка добавления в избранное", SnackbarSeverity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+        }
+        finally
+        {
+            _favoriteLoading = false;
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Настройка доступов к плейлисту
+    private async Task OpenPermissionsDialog()
+    {
+        if (_playlist == null) return;
+
+        var initial = new UpdatePermissionsDto
+        {
+            ViewPermission = _playlist.ViewPermission,
+            PlayPermission = _playlist.PlayPermission,
+            AddPermission = _playlist.AddPermission,
+            RemovePermission = _playlist.RemovePermission
+        };
+
+        var parameters = new DialogParameters()
+            .Add(nameof(PermissionsDialog.ShareToken), Token)
+            .Add(nameof(PermissionsDialog.InitialPermissions), initial);
+
+        var result = await DialogService.ShowAsync<PermissionsDialog>(
+            "Настройки доступа",
+            parameters,
+            new DialogOptions { Size = DialogSize.Md });
+
+        if (result.Cancelled || _playlist == null) return;
+
+        if (result.GetData<UpdatePermissionsDto>() is { } dto)
+        {
+            _playlist.ViewPermission = dto.ViewPermission;
+            _playlist.PlayPermission = dto.PlayPermission;
+            _playlist.AddPermission = dto.AddPermission;
+            _playlist.RemovePermission = dto.RemovePermission;
+            await ConfigurePermissions();
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Поделиться ссылкой
+    /// <summary> Поделиться ссылкой </summary>
+    private async Task SharePlaylist()
+    {
+        if (_shareModule == null) return;
+
+        var shareUrl = Navigation.Uri;
+        var shareTitle = "Поделиться плейлистом";
+        var shareText = _playlist?.Title != null
+            ? $"Послушайте плейлист '{_playlist.Title}'!"
+            : "Послушайте этот плейлист!";
+
+        if (_isWebShareSupported)
+        {
+            var result = await _shareModule.InvokeAsync<ShareResult>("shareLink", shareTitle, shareText, shareUrl);
+            if (result?.Success == false && !string.IsNullOrEmpty(result.Error) && !result.Cancelled)
+            {
+                Snackbar.Show($"Не удалось поделиться: {result.Error}", SnackbarSeverity.Warning);
+                await ShowShareDialog(shareUrl);
+            }
+        }
+        else
+        {
+            await ShowShareDialog(shareUrl);
+        }
+    }
+
+    /// <summary> Модальное окно, чтобы поделиться ссылкой </summary>
+    private async Task ShowShareDialog(string url)
+    {
+        var parameters = new DialogParameters()
+            .Add(nameof(ShareDialog.ShareUrl), url)
+            .Add(nameof(ShareDialog.ShareToken), _playlist?.ShareToken)
+            .Add(nameof(ShareDialog.InitialPermissions), _playlist == null ? null : new UpdatePermissionsDto
+            {
+                ViewPermission = _playlist.ViewPermission,
+                PlayPermission = _playlist.PlayPermission,
+                AddPermission = _playlist.AddPermission,
+                RemovePermission = _playlist.RemovePermission
+            });
+
+        await DialogService.ShowSheetAsync<ShareDialog>(
+            "Поделиться плейлистом",
+            parameters,
+            new DialogOptions { Size = DialogSize.Sm });
+    }
+
+    // Вспомогательный класс для результата
+    private class ShareResult
+    {
+        public bool Success { get; set; }
+        public string? Error { get; set; }
+        public bool Cancelled { get; set; }
+    }
+    #endregion
+
+    public void Dispose()
+    {
+        AudioPlayerService.OnStartedTrack -= OnPlayerStateChanged;
+        AudioPlayerService.OnEndedTrack -= OnPlayerStateChanged;
+        AppBar.Reset();
+
+        _shareModule?.DisposeAsync();
+    }
+}

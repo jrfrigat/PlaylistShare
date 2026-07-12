@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- PlaylistShare mark: neon violet->magenta "share" ripples around a play triangle. -->
+  <defs>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b98cff"/>
+      <stop offset="1" stop-color="#e76edf"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#c77bff" stop-opacity="0.50"/>
+      <stop offset="0.55" stop-color="#a06aec" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#0e0c12" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0e0c12"/>
+  <circle cx="256" cy="256" r="206" fill="url(#halo)"/>
+  <g fill="none" stroke="url(#neon)" stroke-linecap="round">
+    <circle cx="256" cy="256" r="88"  stroke-width="14"/>
+    <circle cx="256" cy="256" r="152" stroke-width="11" opacity="0.62"/>
+    <circle cx="256" cy="256" r="216" stroke-width="8"  opacity="0.34"/>
+  </g>
+  <path d="M224 202 L224 310 L318 256 Z" fill="url(#neon)" stroke="url(#neon)" stroke-width="20" stroke-linejoin="round"/>
+</svg>

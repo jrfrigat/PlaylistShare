@@ -1,0 +1,198 @@
+.deka-shell {
+    display: flex;
+    flex-direction: column;
+    /* Фиксируем оболочку в высоту вьюпорта и распределяем её через flex: мобильные header/bottom-nav
+       занимают свою высоту, а FlareLayout - оставшееся место. Иначе .flare-layout со своими жёсткими
+       height: 100dvh + header + nav давал суммарно > 100dvh: страница скроллилась, а меню уходило вниз
+       за пределы экрана. overflow: hidden убирает внешний скролл - контент скроллится внутри FlareLayout. */
+    height: 100dvh;
+    overflow: hidden;
+}
+
+/* Переопределяем жёсткие .flare-layout { height: 100dvh } - пусть занимает остаток flex-колонки,
+   чтобы bottom-nav (и mobile header) помещались во вьюпорт, а не выталкивались за него. */
+.deka-shell ::deep .flare-layout {
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* На мобильном гасим горизонтальный паддинг контент-области FlareLayout (~18px по умолчанию),
+   оставляя только узкий отступ от .deka-content (0.5rem) - списки/треки идут почти во всю ширину.
+   padding-inline не трогает верхний отступ, который держит зазор над hero. */
+@media (max-width: 959.98px) {
+    .deka-shell ::deep .flare-layout-content {
+        padding-inline: 0;
+    }
+}
+
+.deka-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    min-height: 3.5rem;
+    background: var(--flare-color-background);
+    border-bottom: 1px solid var(--flare-color-outline-variant);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.deka-mobile-lead {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Контекстный заголовок app bar (MD3): усечение длинных названий плейлистов
+   вместо переноса - иначе хедер растёт по высоте и снова съедает место сверху. */
+.deka-mobile-appbar-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* Стрелка "назад" прижата к левому краю (компенсируем внутренний паддинг IconButton). */
+.deka-mobile-back {
+    margin-left: -0.5rem;
+    flex: none;
+}
+
+.deka-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--flare-color-on-surface);
+}
+
+.deka-mobile-brand-mark {
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--flare-shape-small);
+    background: var(--deka-gradient-accent);
+    color: var(--flare-color-on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.deka-mobile-brand-name {
+    font-size: 1.125rem;
+    font-weight: 800;
+}
+
+.deka-mobile-avatar {
+    display: inline-flex;
+}
+
+.deka-action-bar {
+    padding: 0.5rem 1rem 0;
+}
+
+.deka-content {
+    /* Верхний отступ на мобильном даёт сам FlareLayout (flare-layout-content ~1.25rem),
+       поэтому здесь 0 - иначе паддинги складывались и над контентом висела лишняя пустота.
+       Боковой отступ на мобильном узкий (0.5rem) - чтобы списки/треки шли почти во всю ширину. */
+    padding: 0 0.5rem 9rem;
+    max-width: 70rem;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* 960px = брейкпоинт Md, на котором FlareLayout переключается на десктоп (постоянный drawer 15.5rem)
+   и скрываются мобильные header/bottom-nav. Держим CSS плеера/контента в тех же границах, иначе в
+   диапазоне 769-959 плеер уезжал вправо на 248px при full-width контенте и off-canvas меню. */
+@media (min-width: 960px) {
+    .deka-content {
+        padding: 2rem 2.5rem 6rem;
+    }
+}
+
+/* Плеер накладывается поверх контента (position: fixed), а не занимает место в потоке.
+   .flare-layout имеет height: 100dvh; overflow: hidden - поэтому sticky-плеер добавлял
+   свою высоту к .deka-shell, вызывая внешний скролл body и уезжающее вместе с ним меню.
+   Место под плеер зарезервировано через padding-bottom у .deka-content. */
+.deka-mini-player {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(3.75rem + env(safe-area-inset-bottom));
+    z-index: 25;
+    padding: 0 0.625rem;
+    max-width: 70rem;
+    margin: 0 auto;
+    width: 100%;
+    pointer-events: none;
+}
+
+/* Плеер-бар рендерится компонентом AudioPlayer и несёт ЕГО scope-атрибут, поэтому
+   без ::deep правило компилируется в `> *[scope-MainLayout]` и не совпадает - бар
+   наследует pointer-events: none от контейнера и кнопки становятся некликабельными. */
+.deka-mini-player ::deep > * {
+    pointer-events: auto;
+}
+
+/* 960px = брейкпоинт Md, на котором FlareLayout переключается на десктоп (постоянный drawer 15.5rem)
+   и скрываются мобильные header/bottom-nav. Держим CSS плеера/контента в тех же границах, иначе в
+   диапазоне 769-959 плеер уезжал вправо на 248px при full-width контенте и off-canvas меню. */
+@media (min-width: 960px) {
+    .deka-mini-player {
+        /* Плеер прижат к колонке контента (левый край на ширину drawer 15.5rem, правый - к краю окна)
+           и капается на те же 70rem по центру, что и .deka-content, - чтобы на широких экранах бар
+           был выровнен со списком треков, а не тянулся шире него. */
+        left: 15.5rem;
+        right: 0;
+        width: auto;
+        max-width: 70rem;
+        margin-inline: auto;
+        bottom: 0.625rem;
+        padding: 0 2.5rem;
+    }
+}
+
+.deka-bottom-nav {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+    /* "Обтекаемая" панель: фон в цвет страницы и без верхней границы - раньше панель
+       на surface-container-low с чёткой линией "отрезалась" от контента и выделялась.
+       Лёгкое размытие сглаживает край, когда под ней проскроллен список. */
+    background: color-mix(in srgb, var(--flare-color-background) 80%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+}
+
+    .deka-bottom-nav ::deep .flare-nav-link {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.125rem;
+        padding: 0.375rem 0.25rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        border-radius: var(--flare-shape-medium);
+        color: var(--flare-color-on-surface-variant);
+    }
+
+    .deka-bottom-nav ::deep .flare-nav-link--active {
+        color: var(--flare-color-primary);
+    }
+
+    .deka-bottom-nav ::deep .flare-nav-link__icon {
+        margin: 0;
+    }

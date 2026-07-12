@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+  <Project Path="src/PlaylistShare.Api/PlaylistShare.Api.csproj" Id="b6d46333-e621-44d6-8d36-ca6323d21008" />
+  <Project Path="src/PlaylistShare.Pwa/PlaylistShare.Pwa.csproj" Id="a797ae39-be68-423e-8092-8994938efb99" />
+  <Project Path="src/PlaylistShare.Shared/PlaylistShare.Shared.csproj" Id="7e9d6faa-5f5b-49fb-bf62-71bf7758ca9d" />
+</Solution>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlaylistShare - делитесь плейлистами Яндекс Музыки</title>
+    <meta name="description" content="PlaylistShare - делитесь плейлистами Яндекс Музыки и редактируйте их совместно." />
+    <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="_content/Flare.Components/css/flare-components.css" />
+    <link rel="stylesheet" href="css/utilities.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/deka.css?v=6" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+    <link rel="icon" type="image/png" href="favicon.png?v=2" />
+    <link href="PlaylistShare.Pwa.styles.css" rel="stylesheet" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
+    <script type="importmap"></script>
+    <style>
+        :root {
+            --deka-bg: oklch(0.16 0.014 300);
+            --deka-accent: oklch(0.7 0.16 300);
+            --deka-accent-strong: oklch(0.64 0.19 300);
+            --deka-on-accent: oklch(0.16 0.03 300);
+            --deka-acc-soft: oklch(0.7 0.16 300 / 0.16);
+            --deka-muted: oklch(0.68 0.012 300);
+            --deka-line: oklch(1 0 0 / 0.09);
+        }
+
+        body {
+            background-color: var(--flare-color-background, var(--deka-bg));
+            margin: 0;
+            align-items: center;
+            font-family: 'Onest', system-ui, sans-serif;
+        }
+
+        /* Полноэкранный контейнер загрузки, показывается до первой отрисовки Blazor */
+        #app:empty,
+        #app > .loader-wrapper {
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            background: var(--deka-bg);
+            z-index: 9999;
+            box-sizing: border-box;
+        }
+
+        .loader-blob {
+            position: absolute;
+            width: 520px;
+            height: 520px;
+            border-radius: 50%;
+            filter: blur(100px);
+            background: var(--deka-acc-soft);
+        }
+
+        .loader-blob--tr {
+            top: -180px;
+            right: -140px;
+        }
+
+        .loader-blob--bl {
+            width: 440px;
+            height: 440px;
+            bottom: -180px;
+            left: -140px;
+        }
+
+        .loader-mark {
+            position: relative;
+            width: 230px;
+            height: 230px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 34px;
+        }
+
+        .loader-ripple {
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: 210px;
+            height: 210px;
+            border-radius: 50%;
+            border: 2px solid var(--deka-accent);
+            transform-origin: center;
+            animation: deka-ripple 1.5s cubic-bezier(.25, .6, .35, 1) infinite;
+        }
+
+        .loader-ripple:nth-child(2) {
+            animation-delay: .11s;
+        }
+
+        .loader-ripple:nth-child(3) {
+            animation-delay: .22s;
+        }
+
+        .loader-icon {
+            position: relative;
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(150deg, var(--deka-accent), var(--deka-accent-strong));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--deka-on-accent);
+            box-shadow: 0 18px 44px -10px var(--deka-accent-strong);
+            animation: deka-jump 1.5s linear infinite;
+        }
+
+        .loader-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .18em;
+            padding-left: .18em;
+            color: var(--deka-accent);
+            margin-bottom: 8px;
+        }
+
+        .loader-subtitle {
+            color: var(--deka-muted);
+            font-size: 15px;
+            margin-bottom: 26px;
+        }
+
+        .loader-progress-track {
+            width: 210px;
+            height: 4px;
+            border-radius: 4px;
+            background: var(--deka-line);
+            overflow: hidden;
+        }
+
+        .loader-progress-bar {
+            width: 45%;
+            height: 100%;
+            border-radius: 4px;
+            background: var(--deka-accent);
+            animation: deka-bootbar 1.3s ease-in-out infinite;
+        }
+
+        @keyframes deka-ripple {
+            0% { transform: scale(.42); opacity: 0; }
+            12% { opacity: .5; }
+            78% { opacity: 0; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        @keyframes deka-jump {
+            0% { transform: translateY(0) scaleX(1.12) scaleY(.86); }
+            24% { transform: translateY(-18px) scaleX(.99) scaleY(1.02); }
+            50% { transform: translateY(-34px) scaleX(.97) scaleY(1.05); }
+            76% { transform: translateY(-18px) scaleX(1) scaleY(1); }
+            100% { transform: translateY(0) scaleX(1.12) scaleY(.86); }
+        }
+
+        @keyframes deka-bootbar {
+            0% { transform: translateX(-160%); }
+            100% { transform: translateX(360%); }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="loader-wrapper">
+            <div class="loader-blob loader-blob--tr"></div>
+            <div class="loader-blob loader-blob--bl"></div>
+
+            <div class="loader-mark">
+                <span class="loader-ripple"></span>
+                <span class="loader-ripple"></span>
+                <span class="loader-ripple"></span>
+                <div class="loader-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9.3" stroke="currentColor" stroke-width="1.4" opacity="0.4" />
+                        <circle cx="12" cy="12" r="5.5" stroke="currentColor" stroke-width="1.7" opacity="0.75" />
+                        <path d="M10.5 9.4v5.2l4.1-2.6z" fill="currentColor" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="loader-title">PlaylistShare</div>
+            <div class="loader-subtitle">Собираем ваши плейлисты...</div>
+            <div class="loader-progress-track">
+                <div class="loader-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Произошла необработанная ошибка.
+        <a href="." class="reload">Перезагрузить</a>
+        <span class="dismiss">x</span>
+    </div>
+    <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    <script src="_content/Flare.Components/js/flare-bootstrap.js"></script>
+    <script src="js/hscroll.js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <!-- Регистрацию service worker и проверку обновлений выполняет Flare VersionCheckService
+         (AddFlareVersionCheck в Program.cs) - отдельный скрипт здесь не нужен. -->
+</body>
+
+</html>

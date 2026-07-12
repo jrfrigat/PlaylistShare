@@ -1,0 +1,36 @@
+name: playlistshare
+
+networks:
+  playlistshare_network:
+    driver: bridge
+  proxy_network:
+    external: true
+
+services:
+  playlistshare.api:
+    image: ${DOCKER_REGISTRY-}playlistshare.api
+    build:
+      context: .
+      dockerfile: src/PlaylistShare.Api/Dockerfile
+    container_name: playlistshare_api
+    ports:
+      - "7001:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+    networks:
+      - playlistshare_network
+      - proxy_network
+
+  playlistshare.pwa:
+    image: ${DOCKER_REGISTRY-}playlistshare.pwa
+    build:
+      context: .
+      dockerfile: src/PlaylistShare.Pwa/Dockerfile
+    container_name: playlistshare_pwa
+    ports:
+      - "7101:80"
+    depends_on:
+      - playlistshare.api
+    networks:
+      - playlistshare_network
+      - proxy_network

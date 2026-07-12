@@ -1,0 +1,27 @@
+@using PlaylistShare.Pwa.Components.Common
+
+<FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Small" Class="deka-track-row-skeleton">
+    <!-- Обложка-скелет -->
+    <div>
+        <FlareSkeleton Variant="SkeletonVariant.Rect" Width="50px" Height="50px" />
+    </div>
+
+    <!-- Информация о треке (две строки текста) -->
+    <div style="flex: 1; min-width: 0;">
+        <FlareStack Gap="FlareSpacing.XSmall">
+            <FlareSkeleton Variant="SkeletonVariant.Text" Width="180px" Class="my-0" />
+            <FlareSkeleton Variant="SkeletonVariant.Text" Width="120px" Class="my-0" />
+        </FlareStack>
+    </div>
+
+    <!-- Длительность-скелет -->
+    <div>
+        <FlareSkeleton Variant="SkeletonVariant.Text" Width="30px" />
+    </div>
+</FlareStack>
+
+<style>
+    .deka-track-row-skeleton {
+        padding: 0.375rem 0.5rem;
+    }
+</style>

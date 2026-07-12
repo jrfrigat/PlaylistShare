@@ -1,0 +1,24 @@
+@using PlaylistShare.Pwa.Components.Common
+
+<div class="deka-entity-card">
+    <!-- Аватар-скелет -->
+    <FlareSkeleton Variant="SkeletonVariant.Circle" Width="@($"{Size}px")" Height="@($"{Size}px")" />
+
+    <!-- Текст-скелет -->
+    <FlareSkeleton Variant="SkeletonVariant.Text" Width="50px" Class="mt-2" />
+    <FlareSkeleton Variant="SkeletonVariant.Text" Width="30px" Class="ma-0" />
+</div>
+
+<style>
+    .deka-entity-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+</style>
+
+@code {
+    [Parameter] public int Size { get; set; } = 50;
+}

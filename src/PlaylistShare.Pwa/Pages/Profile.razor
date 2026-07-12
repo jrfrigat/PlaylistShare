@@ -1,0 +1,100 @@
+@page "/profile"
+@attribute [Authorize]
+@inject HttpClient Http
+@inject Flare.Abstractions.IThemeService ThemeService
+@inject NavigationManager Navigation
+@using Flare.Abstractions.Tokens
+@using PlaylistShare.Shared.Profile
+
+<PageTitle>Профиль</PageTitle>
+
+<FlareContainer MaxWidth="ContainerMaxWidth.Sm" Class="mt-8">
+    <FlareText Typo="TypographyScale.HeadlineMedium" Class="mb-6">Настройки</FlareText>
+
+    <FlareStack Gap="FlareSpacing.Large">
+        <!-- Секция Яндекс.Музыки -->
+        <div>
+            <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="mb-3">АККАУНТ ЯНДЕКС МУЗЫКИ</FlareText>
+            <FlareCard Variant="CardVariant.Outlined">
+                <FlareCardContent>
+                    @if (_hasToken)
+                    {
+                        <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
+                            <div class="account-badge account-badge--connected">
+                                <FlareIcon Icon="check" />
+                            </div>
+                            <FlareStack Gap="FlareSpacing.None" Class="account-info">
+                                <FlareText Typo="TypographyScale.TitleMedium">Подключено</FlareText>
+                                <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">@_statusText</FlareText>
+                            </FlareStack>
+                            <FlareButton Variant="ButtonVariant.Outlined" OnClick="GoToConnect">Переподключить</FlareButton>
+                        </FlareStack>
+                    }
+                    else
+                    {
+                        <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
+                            <div class="account-badge account-badge--disconnected">
+                                <FlareIcon Icon="schedule" />
+                            </div>
+                            <FlareStack Gap="FlareSpacing.None" Class="account-info">
+                                <FlareText Typo="TypographyScale.TitleMedium">Не подключено</FlareText>
+                                <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">Подключите, чтобы видеть плейлисты</FlareText>
+                            </FlareStack>
+                            <FlareButton Variant="ButtonVariant.Filled" Color="FlareColor.Primary" OnClick="GoToConnect">Подключить</FlareButton>
+                        </FlareStack>
+                    }
+                </FlareCardContent>
+            </FlareCard>
+        </div>
+
+        <!-- Секция темы оформления -->
+        <div>
+            <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="mb-3">ТЕМА ОФОРМЛЕНИЯ</FlareText>
+            <FlareCard Variant="CardVariant.Outlined">
+                <FlareCardContent>
+                    <FlareStack Row Gap="FlareSpacing.Small">
+                        <FlareChip Label="Авто" Selected="@(ThemeService.Mode == ThemeMode.Auto)" OnClick="@(() => SetMode(ThemeMode.Auto))" Class="theme-mode-chip">
+                            <LeadingIcon><FlareIcon Icon="brightness_auto" /></LeadingIcon>
+                        </FlareChip>
+                        <FlareChip Label="Светлая" Selected="@(ThemeService.Mode == ThemeMode.Light)" OnClick="@(() => SetMode(ThemeMode.Light))" Class="theme-mode-chip">
+                            <LeadingIcon><FlareIcon Icon="light_mode" /></LeadingIcon>
+                        </FlareChip>
+                        <FlareChip Label="Тёмная" Selected="@(ThemeService.Mode == ThemeMode.Dark)" OnClick="@(() => SetMode(ThemeMode.Dark))" Class="theme-mode-chip">
+                            <LeadingIcon><FlareIcon Icon="dark_mode" /></LeadingIcon>
+                        </FlareChip>
+                    </FlareStack>
+                    <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary" Class="mt-3">"Авто" следует системным настройкам устройства.</FlareText>
+                </FlareCardContent>
+            </FlareCard>
+        </div>
+
+        <FlareButton Variant="ButtonVariant.Outlined" Color="FlareColor.Error" OnClick="Logout">Выйти</FlareButton>
+    </FlareStack>
+</FlareContainer>
+
+@code {
+    private string _statusText = "Загрузка...";
+    private bool _hasToken;
+
+    protected override async Task OnInitializedAsync() => await LoadStatus();
+
+    private async Task LoadStatus()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ApiResponse<YandexTokenStatus>>("/api/yandexaccount/status");
+            if (response?.Success == true)
+            {
+                _hasToken = response.Data.HasToken;
+                _statusText = _hasToken ? "Аккаунт подключен" : "Аккаунт не подключен";
+            }
+        }
+        catch { _statusText = "Ошибка загрузки статуса"; }
+    }
+
+    private void GoToConnect() => Navigation.NavigateTo("/connect-yandex?ReturnTo=%2Fprofile");
+
+    private async Task SetMode(ThemeMode mode) => await ThemeService.SetModeAsync(mode);
+
+    private void Logout() => Navigation.NavigateTo("/logout");
+}
