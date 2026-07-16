@@ -69,7 +69,7 @@
                 </div>
             }
 
-            <FlareStack Gap="FlareSpacing.None" Class="min-width-0 flex-grow-1">
+            <FlareStack Gap="FlareSpacing.None" Class="min-width-0 flex-grow-1 deka-playlist-info">
                 <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Primary" Class="deka-playlist-eyebrow">
                     ПЛЕЙЛИСТ
                 </FlareText>
@@ -88,11 +88,10 @@
                     </FlareText>
                 }
             </FlareStack>
-        </div>
 
-        @* Действия - отдельной строкой под hero (а не в узкой инфо-колонке): на мобильном
-           обложка ужимается и встаёт рядом с названием, а кнопки получают полную ширину.
-           Литеральный div (а не FlareStack) - чтобы scoped-CSS (.deka-playlist-actions) применялся. *@
+        @* Действия лежат внутри hero: на десктопе grid ставит их в правую колонку под описанием,
+           а на мобильном - отдельной строкой во всю ширину (там обложка ужимается и встаёт рядом
+           с названием). Литеральный div (а не FlareStack) - чтобы scoped-CSS применялся. *@
         @* Кнопку "Слушать" убрали - треки запускаются кликом по строке. Остаются "Добавить"
            и группа icon-действий (поделиться / Яндекс / избранное / настройки). *@
         <div class="deka-playlist-actions">
@@ -133,6 +132,7 @@
                 }
             </div>
         </div>
+        </div> @* /deka-playlist-hero *@
 
         @if (_tracksLoading)
         {
