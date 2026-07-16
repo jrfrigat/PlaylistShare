@@ -82,15 +82,18 @@
 
             <FlareHidden Below="Breakpoint.Md">
                 <!-- Громкость -->
-                <div @onmouseenter="() => _volumeIsOpen = true"
-                     @onmouseleave="() => _volumeIsOpen = false"
-                     @onwheel="OnVolumeHandleWheel"
+                <div @onwheel="OnVolumeHandleWheel"
                      @onclick="Swallow" @onclick:stopPropagation="true"
                      style="position: relative; display: flex; align-items: center;">
 
-                    @* MinWidth="auto" снимает штатные 192px панели: они рассчитаны на меню, а тут
+                    @* Trigger=Hover, а не самодельные mouseenter/mouseleave поверх Manual: панель
+                       отстоит от кнопки на Offset, и наш mouseleave срабатывал, едва курсор шёл к
+                       слайдеру - до громкости было не дотянуться. У Flare для этого зазора есть
+                       HideDelay. Он же убирает второй клик: в ручном режиме открытая панель
+                       перехватывала первый клик на себя, и mute срабатывал только со второго.
+                       MinWidth="auto" снимает штатные 192px панели: они рассчитаны на меню, а тут
                        вертикальный слайдер шириной 12px - панель выходила пустой коробкой. *@
-                    <FlarePopover Open="_volumeIsOpen" OpenChanged="@(open => _volumeIsOpen = open)"
+                    <FlarePopover Trigger="PopoverTrigger.Hover"
                                   Placement="PopoverPlacement.Top" MinWidth="auto">
                         <AnchorContent>
                             <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? "volume_off" : "volume_up")"
@@ -146,8 +149,7 @@
     private IJSObjectReference? _audioModule;
     private IJSObjectReference? _audioElement;
 
-    // Громкость
-    private bool _volumeIsOpen;
+    // Громкость (открытием панели заведует сам FlarePopover через Trigger=Hover)
     private double _volumeBeforeMute;
     private double _bufferSecond;
 
