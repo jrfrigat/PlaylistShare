@@ -65,8 +65,15 @@ public class AudioPlayerService : IAudioPlayerService
     private async Task LoadVolume()
     {
         var savedVolume = await _playerStorage.GetVolumeAsync();
-        if (savedVolume != null)
-            _currentVolume = savedVolume.Value;
+        if (savedVolume is null) return;
+
+        _currentVolume = savedVolume.Value;
+        // Раньше здесь всё и заканчивалось: поле восстановили, а <audio> о нём не узнавал и играл на
+        // 100%, хотя слайдер показывал сохранённое значение. Досылаем громкость в элемент. Если он
+        // ещё не создан (обычный случай - чтение хранилища быстрее первого рендера), подписчиков нет
+        // и вызов уйдёт впустую; тогда её применит сам AudioPlayer при инициализации элемента.
+        OnVolumeChangeRequested?.Invoke(_currentVolume);
+        OnStateChanged?.Invoke();
     }
 
     public async Task LoadAndPlayAsync(string trackId, string? accessToken = null, string? playlistShareToken = null, YandexTrack? track = null)

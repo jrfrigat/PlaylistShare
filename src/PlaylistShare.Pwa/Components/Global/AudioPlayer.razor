@@ -204,7 +204,13 @@
         if (_audioModule == null)
             _audioModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/AudioPlayer.js");
         if (_audioElement == null)
+        {
             _audioElement = await _audioModule.InvokeAsync<IJSObjectReference>("init", _audioId, DotNetObjectReference.Create(this));
+            // Сохранённую громкость сервис поднимает из хранилища ещё до того, как появится <audio>,
+            // поэтому применяем её здесь: иначе элемент стартует на 100%, а слайдер показывает
+            // сохранённое значение - и первое же касание громкости даёт скачок звука.
+            await _audioElement.InvokeVoidAsync("setVolume", AudioPlayerService.CurrentVolume / 100);
+        }
     }
 
     #region Обработка JS
