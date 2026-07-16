@@ -9,7 +9,10 @@
 @implements IDisposable
 @implements IAsyncDisposable
 
-    <div class="deka-player-bar player-enter">
+    @* Тап по бару открывает полноэкранный плеер (главный сценарий на мобиле, где мелкую полосу
+       перемотки всё равно не поймать). Все интерактивные элементы ниже гасят всплытие, поэтому
+       play/pause, prev/next, громкость и перемотка продолжают работать везде. *@
+    <div class="deka-player-bar player-enter" @onclick="Expand">
         @* Фоновая заливка прогресса - играющая часть подсвечивает фон плеера (как было до переработки). *@
         @if (AudioPlayerService.CurrentTrack != null)
         {
@@ -17,36 +20,38 @@
         }
         <FlareStack Gap="FlareSpacing.XSmall" Row Align="FlareAlignItems.Center">
             <!-- Кнопки управления -->
-            <FlareIconButton Icon="skip_previous"
-                             Variant="ButtonVariant.Text"
-                             Size="ButtonSize.Sm"
-                             Color="FlareColor.Default"
-                             Disabled="@(!AudioPlayerService.HasPrevious)"
-                             OnClick="() => AudioPlayerService.PlayPreviousAsync()" />
+            <div class="deka-player-controls" @onclick="Swallow" @onclick:stopPropagation="true">
+                <FlareIconButton Icon="skip_previous"
+                                 Variant="ButtonVariant.Text"
+                                 Size="ButtonSize.Sm"
+                                 Color="FlareColor.Default"
+                                 Disabled="@(!AudioPlayerService.HasPrevious)"
+                                 OnClick="() => AudioPlayerService.PlayPreviousAsync()" />
 
-            <div class="deka-player-cover">
-                @if (!string.IsNullOrEmpty(AudioPlayerService.CurrentTrack?.CoverUri))
-                {
-                    <FlareImage Src="@AudioPlayerService.CurrentTrack.CoverUri.FormatCoverUrl(46, 46)" Height="100%" Width="100%" />
-                }
+                <div class="deka-player-cover">
+                    @if (!string.IsNullOrEmpty(AudioPlayerService.CurrentTrack?.CoverUri))
+                    {
+                        <FlareImage Src="@AudioPlayerService.CurrentTrack.CoverUri.FormatCoverUrl(46, 46)" Height="100%" Width="100%" />
+                    }
 
-                <div class="deka-player-cover-overlay">
-                    <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? "pause" : "play_arrow")"
-                                     Variant="ButtonVariant.Filled"
-                                     Color="FlareColor.Primary"
-                                     Shape="ButtonShape.Circular"
-                                     Size="ButtonSize.Sm"
-                                     Class="deka-play-toggle deka-play-toggle--filled"
-                                     OnClick="OnPlayClick" />
+                    <div class="deka-player-cover-overlay">
+                        <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? "pause" : "play_arrow")"
+                                         Variant="ButtonVariant.Filled"
+                                         Color="FlareColor.Primary"
+                                         Shape="ButtonShape.Circular"
+                                         Size="ButtonSize.Sm"
+                                         Class="deka-play-toggle deka-play-toggle--filled"
+                                         OnClick="OnPlayClick" />
+                    </div>
                 </div>
-            </div>
 
-            <FlareIconButton Icon="skip_next"
-                             Variant="ButtonVariant.Text"
-                             Size="ButtonSize.Sm"
-                             Color="FlareColor.Default"
-                             Disabled="@(!AudioPlayerService.HasNext)"
-                             OnClick="() => AudioPlayerService.PlayNextAsync()" />
+                <FlareIconButton Icon="skip_next"
+                                 Variant="ButtonVariant.Text"
+                                 Size="ButtonSize.Sm"
+                                 Color="FlareColor.Default"
+                                 Disabled="@(!AudioPlayerService.HasNext)"
+                                 OnClick="() => AudioPlayerService.PlayNextAsync()" />
+            </div>
 
             <!-- Название -->
             @if (AudioPlayerService.CurrentTrack != null)
@@ -80,6 +85,7 @@
                 <div @onmouseenter="() => _volumeIsOpen = true"
                      @onmouseleave="() => _volumeIsOpen = false"
                      @onwheel="OnVolumeHandleWheel"
+                     @onclick="Swallow" @onclick:stopPropagation="true"
                      style="position: relative; display: flex; align-items: center;">
 
                     <FlarePopover Open="_volumeIsOpen" OpenChanged="@(open => _volumeIsOpen = open)"
@@ -106,7 +112,8 @@
 
         @if (AudioPlayerService.CurrentTrack != null)
         {
-            <div class="deka-player-progress">
+            @* Перемотка: гасим всплытие, иначе клик по полосе открывал бы полноэкранный плеер. *@
+            <div class="deka-player-progress" @onclick="Swallow" @onclick:stopPropagation="true">
                 <TrackProgress Value="@AudioPlayerService.CurrentTime"
                                Min="0" Max="@AudioPlayerService.TotalTime"
                                BufferValue="@_bufferSecond"
@@ -255,7 +262,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Seek error: {ex.Message}");
+            // Только тип исключения: Console в WASM видна пользователю, текст может утечь.
+            Console.WriteLine($"Seek error: {ex.GetType().Name}");
         }
     }
 
@@ -270,7 +278,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Volume change error: {ex.Message}");
+            // Только тип исключения: Console в WASM видна пользователю, текст может утечь.
+            Console.WriteLine($"Volume change error: {ex.GetType().Name}");
         }
     }
 
@@ -334,6 +343,15 @@
             await AudioPlayerService.PlayAsync();
     }
 
+    /// <summary>Открыть полноэкранный плеер: тап по бару (основной жест на мобиле) и по названию.</summary>
+    private Task Expand() => OnExpandRequested.InvokeAsync();
+
+    /// <summary>
+    /// Пустышка для элементов, которые не должны открывать полный плеер: @onclick:stopPropagation
+    /// работает только вместе с @onclick, поэтому нужен хоть какой-то обработчик.
+    /// </summary>
+    private static void Swallow() { }
+
     // Открытие полноэкранного плеера с клавиатуры (блок названия - role="button").
     private async Task OnTitleKeyDown(KeyboardEventArgs e)
     {
@@ -354,13 +372,17 @@
 
             if (_audioElement != null)
             {
-                try { await _audioElement.InvokeVoidAsync("destroy"); } catch { }
+                // Circuit may already be gone during teardown - JS call is moot in that case.
+                try { await _audioElement.InvokeVoidAsync("destroy"); } catch (JSDisconnectedException) { }
                 await _audioElement.DisposeAsync();
             }
             if (_audioModule != null)
                 await _audioModule.DisposeAsync();
         }
-        catch { }
+        catch (JSDisconnectedException)
+        {
+            // Circuit already disconnected during teardown - nothing left to clean up client-side.
+        }
     }
 
     public void Dispose()

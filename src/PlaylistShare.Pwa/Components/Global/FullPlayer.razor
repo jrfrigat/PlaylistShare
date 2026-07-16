@@ -2,6 +2,7 @@
 @inject ISnackbarService Snackbar
 @inject IFlareColorExtractor ColorExtractor
 @using PlaylistShare.Pwa.Extensions
+@implements IDisposable
 
 @if (IsOpen && AudioPlayerService.CurrentTrack is { } track)
 {
@@ -72,6 +73,18 @@
     private string? _lastCover;
     /// <summary>Dynamic-color акцент из обложки; до извлечения/при неудаче - тема (Primary).</summary>
     private FlareColor _accent = FlareColor.Primary;
+
+    // Подписываемся на состояние плеера сами (как мини-плеер): позиция трека тикает ~4 раза в
+    // секунду через UpdateProgress -> OnStateChanged, и без этой подписи прогресс и время здесь
+    // не перерисовывались бы.
+    protected override void OnInitialized()
+    {
+        AudioPlayerService.OnStateChanged += OnPlayerStateChanged;
+    }
+
+    private void OnPlayerStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => AudioPlayerService.OnStateChanged -= OnPlayerStateChanged;
 
     protected override async Task OnParametersSetAsync()
     {

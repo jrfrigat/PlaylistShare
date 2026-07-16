@@ -522,17 +522,21 @@ internal static class DekaTokens
 
     private static readonly SliderTokens Slider = new()
     {
-        TrackHeight = "initial",
-        TrackRadius = "initial",
-        GapRadius = "initial",
-        Gap = "initial",
-        HandleHeight = "initial",
-        HandleWidth = "initial",
-        HandlePressedWidth = "initial",
-        HandleRadius = "initial",
-        HandleClipPath = "initial",
-        HandleBorderWidth = "initial",
-        HandleFill = "initial",
+        // Размеры обязаны быть реальными: "initial" разворачивается в height:auto, и слайдер
+        // схлопывается в 0px - он становится невидимым и его нельзя ухватить мышью (именно из-за
+        // этого не было прогресса в плеере и не работала перемотка). Значения - как у MD3.
+        TrackHeight = "1rem",
+        TrackRadius = "0.5rem",
+        GapRadius = "2px",
+        Gap = "6px",
+        HandleHeight = "2.75rem",
+        HandleWidth = "4px",
+        HandlePressedWidth = "2px",
+        HandleRadius = "var(--flare-shape-full)",
+        HandleClipPath = "none",
+        HandleBorderWidth = "0px",
+        // Следуем за локальным акцентом инстанса (Color="@_accent" в полном плеере).
+        HandleFill = "var(--fc-main, var(--flare-color-primary))",
         ActiveColor = "var(--flare-color-primary)",
         InactiveColor = "var(--flare-color-outline)",
         StateLayerSize = "40px",
