@@ -37,12 +37,8 @@
                     </FlareText>
                 </FlareStack>
 
-                @* Единственный контрол без акцента обложки. Fill слайдера - сплошная заливка прямо
-                   поверх фона-обложки, а _accent извлечён из неё же: цвета совпадали и полоса
-                   пропадала. Кнопкам акцент безопасен - Tonal/Filled берут container-тон с
-                   контрастным on-*, у заливки такой пары нет. Primary контрастен к затемнению. *@
                 <TrackProgress Value="@AudioPlayerService.CurrentTime" Min="0" Max="@AudioPlayerService.TotalTime"
-                               Size="SliderSize.Sm" Color="FlareColor.Primary" Step="0.1"
+                               Size="SliderSize.Sm" Color="@_accent" Step="0.1"
                                ValueChanged="@(v => AudioPlayerService.SeekToAsync(v))" />
                 <FlareStack Row Justify="FlareJustifyContent.SpaceBetween">
                     <FlareText Typo="TypographyScale.LabelSmall" Color="FlareColor.Secondary">@AudioPlayerService.CurrentTimeString</FlareText>
@@ -86,22 +82,44 @@
         AudioPlayerService.OnStateChanged += OnPlayerStateChanged;
     }
 
-    private void OnPlayerStateChanged() => InvokeAsync(StateHasChanged);
+    // Смена трека приходит этим же событием, поэтому акцент пересчитываем здесь, а не только в
+    // OnParametersSetAsync: тот на StateHasChanged НЕ выполняется - он ждёт передачи параметров от
+    // родителя, а родитель на смену трека не перерисовывается. Из-за этого обложка с названием
+    // менялись, а расцветка оставалась от прошлого трека.
+    private void OnPlayerStateChanged() => _ = InvokeAsync(async () =>
+    {
+        await RefreshAccentAsync();
+        StateHasChanged();
+    });
 
     public void Dispose() => AudioPlayerService.OnStateChanged -= OnPlayerStateChanged;
 
-    protected override async Task OnParametersSetAsync()
+    // Открытие плеера приходит параметром (IsOpen), а не событием сервиса - этот путь тоже нужен.
+    protected override Task OnParametersSetAsync() => RefreshAccentAsync();
+
+    /// <summary>
+    /// Пересчитывает dynamic-color акцент, когда сменилась обложка. Вызывается ~4 раза в секунду,
+    /// поэтому при совпадении обложки выходит сразу, до всякой работы.
+    /// </summary>
+    private async Task RefreshAccentAsync()
     {
-        // Извлекаем доминирующий цвет обложки при открытии/смене трека и получаем из него
-        // гармонизированный контраст-безопасный акцент. Обложки Яндекса отдают CORS -
-        // getImageData не падает; при неудаче seed = null -> откат на тему.
-        if (IsOpen && AudioPlayerService.CurrentTrack is { CoverUri: { Length: > 0 } cover } && cover != _lastCover)
-        {
-            _lastCover = cover;
-            var seed = await ColorExtractor.GetDominantColorAsync(cover.FormatCoverUrl(200, 200));
-            _accent = string.IsNullOrWhiteSpace(seed) ? FlareColor.Primary : FlareColor.Dynamic(seed!);
-            StateHasChanged();
-        }
+        if (!IsOpen || AudioPlayerService.CurrentTrack is not { CoverUri: { Length: > 0 } cover }
+            || cover == _lastCover)
+            return;
+
+        // Запоминаем ДО await: событие частое, иначе на одну обложку уйдёт несколько извлечений.
+        _lastCover = cover;
+        // Обложки Яндекса отдают CORS - getImageData не падает; при неудаче seed = null -> тема.
+        var seed = await ColorExtractor.GetDominantColorAsync(cover.FormatCoverUrl(200, 200));
+        // Vibrant, а не TonalSpot по умолчанию: variant пересобирает насыщенность семени ДО
+        // генерации палитры, а TonalSpot на малонасыщенной обложке отдаёт почти серый main. Именно
+        // он делал заливку слайдера неразличимой: скрим тонирован container-тоном того же акцента,
+        // и серый main ложился на серый фон. Параметр contrast тут не помог бы - он двигает только
+        // on-цвета, а слайдер красится из --fc-main.
+        _accent = string.IsNullOrWhiteSpace(seed)
+            ? FlareColor.Primary
+            : FlareColor.Dynamic(seed!, DynamicVariant.Vibrant);
+        StateHasChanged();
     }
 
     private static string BgStyle(string coverUri) =>
