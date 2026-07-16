@@ -18,7 +18,21 @@
         {
             <div class="deka-player-fill" style="width:@(ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
         }
-        <FlareStack Gap="FlareSpacing.XSmall" Row Align="FlareAlignItems.Center">
+        @* Перемотка по фону бара - только ПК. Нативный range пересчитывает координату клика в
+           значение сам, поэтому не нужны ни замер ширины через JS, ни свой обработчик координат.
+           Полностью прозрачен: позицию показывают заливка и дорожка внизу. Гасит всплытие, поэтому
+           клик по фону НЕ открывает полный плеер. Контент бара лежит выше по z-index - кнопки и
+           название работают как раньше. На мобиле поверхности нет (display:none), клик доходит до
+           бара и открывает плеер: там мелкую полосу всё равно не поймать. *@
+        @if (AudioPlayerService.CurrentTrack != null)
+        {
+            <input type="range" class="deka-player-seek-surface" aria-label="Перемотка по фону плеера"
+                   min="0" max="@AudioPlayerService.TotalTime" step="0.1"
+                   value="@AudioPlayerService.CurrentTime"
+                   @oninput="OnSeekSurfaceInput"
+                   @onclick="Swallow" @onclick:stopPropagation="true" />
+        }
+        <FlareStack Gap="FlareSpacing.XSmall" Row Align="FlareAlignItems.Center" Class="deka-player-row">
             <!-- Кнопки управления -->
             <div class="deka-player-controls" @onclick="Swallow" @onclick:stopPropagation="true">
                 <FlareIconButton Icon="skip_previous"
@@ -322,6 +336,14 @@
     private async Task SeekTo(double value)
     {
         await AudioPlayerService.SeekToAsync(value);
+    }
+
+    /// <summary>Перемотка кликом/протяжкой по фону бара (ПК). Значение приходит строкой от range.</summary>
+    private async Task OnSeekSurfaceInput(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out var value))
+            await AudioPlayerService.SeekToAsync(value);
     }
 
     private async Task ChangeVolume(double value)

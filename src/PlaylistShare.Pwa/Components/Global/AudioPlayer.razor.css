@@ -80,6 +80,53 @@
     z-index: 1;
 }
 
+/* Фон бара как поверхность перемотки (только ПК). Нативный range - чтобы координату в значение
+   пересчитывал браузер, без замеров ширины. Невидим, но кликабелен: opacity 0 не отключает
+   события, в отличие от visibility/display. */
+.deka-player-seek-surface {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: none;
+    outline: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Ползунок гасим: поверхность обязана быть невидимой целиком. */
+.deka-player-seek-surface::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 0;
+    height: 0;
+}
+
+.deka-player-seek-surface::-moz-range-thumb {
+    width: 0;
+    height: 0;
+    border: none;
+}
+
+/* Мобильная версия: поверхности нет, клик по бару доходит до него и открывает полный плеер. */
+@media (max-width: 899px) {
+    .deka-player-seek-surface {
+        display: none;
+    }
+}
+
+/* Ряд с контентом - НАД поверхностью перемотки, иначе она перехватила бы кнопки и название.
+   ::deep: корень FlareStack - чужой компонент и scope этого файла не несёт. */
+::deep .deka-player-row {
+    position: relative;
+    z-index: 1;
+}
+
 /* Группа кнопок (prev / play-pause / next). Отдельный контейнер нужен, чтобы гасить всплытие
    клика до бара (иначе play/pause открывал бы полноэкранный плеер). */
 .deka-player-controls {
