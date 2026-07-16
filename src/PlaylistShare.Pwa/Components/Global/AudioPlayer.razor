@@ -13,10 +13,14 @@
        перемотки всё равно не поймать). Все интерактивные элементы ниже гасят всплытие, поэтому
        play/pause, prev/next, громкость и перемотка продолжают работать везде. *@
     <div class="deka-player-bar player-enter" @onclick="Expand">
-        @* Фоновая заливка прогресса - играющая часть подсвечивает фон плеера (как было до переработки). *@
+        @* Фоновая заливка прогресса - играющая часть подсвечивает фон плеера. Обёртка нужна, чтобы
+           скруглить заливку по углам бара: сам бар клипать не может, иначе срежет панель громкости
+           (см. .deka-player-fill-clip). *@
         @if (AudioPlayerService.CurrentTrack != null)
         {
-            <div class="deka-player-fill" style="width:@(ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+            <div class="deka-player-fill-clip">
+                <div class="deka-player-fill" style="width:@(ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+            </div>
         }
         @* Перемотка по фону бара - только ПК. Нативный range пересчитывает координату клика в
            значение сам, поэтому не нужны ни замер ширины через JS, ни свой обработчик координат.
@@ -96,7 +100,7 @@
 
             <FlareHidden Below="Breakpoint.Md">
                 <!-- Громкость -->
-                <div @onwheel="OnVolumeHandleWheel"
+                <div class="deka-player-volume" @onwheel="OnVolumeHandleWheel"
                      @onclick="Swallow" @onclick:stopPropagation="true"
                      style="position: relative; display: flex; align-items: center;">
 
