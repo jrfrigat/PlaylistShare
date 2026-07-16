@@ -88,8 +88,10 @@
                      @onclick="Swallow" @onclick:stopPropagation="true"
                      style="position: relative; display: flex; align-items: center;">
 
+                    @* MinWidth="auto" снимает штатные 192px панели: они рассчитаны на меню, а тут
+                       вертикальный слайдер шириной 12px - панель выходила пустой коробкой. *@
                     <FlarePopover Open="_volumeIsOpen" OpenChanged="@(open => _volumeIsOpen = open)"
-                                  Placement="PopoverPlacement.Top">
+                                  Placement="PopoverPlacement.Top" MinWidth="auto">
                         <AnchorContent>
                             <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? "volume_off" : "volume_up")"
                                              Variant="ButtonVariant.Text"
