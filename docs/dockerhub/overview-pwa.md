@@ -18,9 +18,18 @@ docker run -p 8080:80 frigat/playlistshare-pwa:latest
 # Open http://localhost:8080
 ```
 
-The PWA needs a reachable `playlistshare-api` instance. For a full stack (PWA + API + optional
-containerized Postgres), use the Compose files in the repository, which wire the two together on a shared
-network.
+The app reads its **API base URL** at runtime from `/usr/share/nginx/html/appsettings.json`. The published
+image bakes in the project's own domain, so to point it at **your** API, mount your own file:
+
+```sh
+echo '{ "ApiBaseUrl": "https://your-api.example.com" }' > appsettings.json
+docker run -p 8080:80 \
+  -v "$(pwd)/appsettings.json:/usr/share/nginx/html/appsettings.json:ro" \
+  frigat/playlistshare-pwa:latest
+```
+
+For a full stack (PWA + API + optional containerized Postgres), use the Compose files in the repository,
+which wire the two together on a shared network.
 
 ## Tags
 
