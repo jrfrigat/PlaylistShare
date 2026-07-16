@@ -318,8 +318,13 @@
    музыкального плеера - кружок 12px, и вместе с ним до 12px схлопывалась вся область захвата:
    мышью ещё попадёшь, пальцем уже нет. Отдельного токена под зону захвата у Flare нет, поэтому
    растягиваем input здесь. Дорожка центрирована в track-wrap, input тоже, так что центр input
-   совпадает с дорожкой. */
-.flare-slider__input {
+   совпадает с дорожкой.
+   Только для ГОРИЗОНТАЛЬНЫХ: у вертикального (громкость) те же height/margin-top означают совсем
+   другое - он выложен writing-mode: vertical-rl, где высота это длина дорожки, а не зона захвата.
+   Flare задаёт ему height двумя классами и по специфичности выигрывает, но margin-top ползунку не
+   ставит - и наше правило доезжало, сдвигая ползунок на 16px вдоль колеи. Регулировать громкость
+   было невозможно. */
+.flare-slider:not(.flare-slider--vertical) .flare-slider__input {
     height: var(--deka-slider-hit-area, 2.75rem);
 }
 
@@ -330,6 +335,6 @@
    Читаем внутреннюю --_hnd-height, а не токен темы: с Flare 0.4.0 высота ползунка задаётся
    токеном на каждый размер (--flare-slider-handle-height-xs/-sm/...), и какой из них в силе,
    знает только size-класс - он и кладёт выбранное значение в --_hnd-height. */
-.flare-slider__input::-webkit-slider-thumb {
+.flare-slider:not(.flare-slider--vertical) .flare-slider__input::-webkit-slider-thumb {
     margin-top: calc((var(--deka-slider-hit-area, 2.75rem) - var(--_hnd-height)) / 2);
 }
