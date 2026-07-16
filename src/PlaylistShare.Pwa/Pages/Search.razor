@@ -278,7 +278,7 @@
         catch (Exception ex)
         {
             // не критично - просто не покажем имя плейлиста в заголовке "Добавить в ..."
-            Console.Error.WriteLine($"Не удалось загрузить имя плейлиста: {ex.Message}");
+            Console.WriteLine($"Не удалось загрузить имя плейлиста: {ex.Message}");
         }
     }
 
@@ -293,7 +293,7 @@
         catch (Exception ex)
         {
             // не критично - список "уже добавлен" останется пустым
-            Console.Error.WriteLine($"Не удалось загрузить треки плейлиста: {ex.Message}");
+            Console.WriteLine($"Не удалось загрузить треки плейлиста: {ex.Message}");
         }
     }
 

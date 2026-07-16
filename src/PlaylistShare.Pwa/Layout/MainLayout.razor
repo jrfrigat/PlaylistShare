@@ -167,7 +167,7 @@
         catch (Exception ex)
         {
             // best-effort gate; a failed status check just lets the user through
-            Console.Error.WriteLine($"Connect gate check failed: {ex.Message}");
+            Console.WriteLine($"Connect gate check failed: {ex.Message}");
         }
     }
 

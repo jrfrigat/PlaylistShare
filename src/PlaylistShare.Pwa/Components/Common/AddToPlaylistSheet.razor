@@ -246,7 +246,7 @@
                 catch (Exception ex)
                 {
                     // оставляем "не добавлен" по умолчанию для этого плейлиста
-                    Console.Error.WriteLine($"Не удалось проверить состав плейлиста {row.ShareToken}: {ex.Message}");
+                    Console.WriteLine($"Не удалось проверить состав плейлиста {row.ShareToken}: {ex.Message}");
                 }
             });
             await Task.WhenAll(membershipTasks);
