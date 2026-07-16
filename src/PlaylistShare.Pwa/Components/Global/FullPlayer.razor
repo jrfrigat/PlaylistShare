@@ -37,8 +37,12 @@
                     </FlareText>
                 </FlareStack>
 
+                @* Единственный контрол без акцента обложки. Fill слайдера - сплошная заливка прямо
+                   поверх фона-обложки, а _accent извлечён из неё же: цвета совпадали и полоса
+                   пропадала. Кнопкам акцент безопасен - Tonal/Filled берут container-тон с
+                   контрастным on-*, у заливки такой пары нет. Primary контрастен к затемнению. *@
                 <TrackProgress Value="@AudioPlayerService.CurrentTime" Min="0" Max="@AudioPlayerService.TotalTime"
-                               Size="SliderSize.Sm" Color="@_accent" Step="0.1"
+                               Size="SliderSize.Sm" Color="FlareColor.Primary" Step="0.1"
                                ValueChanged="@(v => AudioPlayerService.SeekToAsync(v))" />
                 <FlareStack Row Justify="FlareJustifyContent.SpaceBetween">
                     <FlareText Typo="TypographyScale.LabelSmall" Color="FlareColor.Secondary">@AudioPlayerService.CurrentTimeString</FlareText>
