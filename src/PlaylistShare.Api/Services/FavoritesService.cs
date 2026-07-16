@@ -86,7 +86,11 @@ public class FavoritesService
                     changed = true;
                 }
             }
-            catch { /* обложка не критична - при ошибке просто оставляем заглушку */ }
+            catch (Exception ex)
+            {
+                // обложка не критична - при ошибке просто оставляем заглушку
+                Console.Error.WriteLine($"Не удалось подтянуть обложку плейлиста: {ex.Message}");
+            }
         }
         if (changed)
             await _db.SaveChangesAsync();

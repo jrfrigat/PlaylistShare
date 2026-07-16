@@ -216,9 +216,10 @@
                 };
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Fall back to the plain link-only dialog if permissions can't be loaded.
+            Console.Error.WriteLine($"Failed to load share permissions: {ex.Message}");
         }
 
         await DialogService.ShowSheetAsync<ShareDialog>("Поделиться", new DialogParameters

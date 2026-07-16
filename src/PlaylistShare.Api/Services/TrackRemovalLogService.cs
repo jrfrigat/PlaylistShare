@@ -2,6 +2,9 @@
 
 public class TrackRemovalLogService
 {
+    // DI-owned (scoped) ApplicationDbContext - the container manages its lifetime.
+    // Do NOT implement IDisposable/dispose _db here, that would tear down a context
+    // shared by the rest of the request scope.
     private readonly ApplicationDbContext _db;
     public TrackRemovalLogService(ApplicationDbContext db) => _db = db;
 

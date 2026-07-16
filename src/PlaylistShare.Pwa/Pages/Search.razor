@@ -275,7 +275,11 @@
             if (response?.Success == true && response.Data != null)
                 _backName = response.Data.Title;
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // не критично - просто не покажем имя плейлиста в заголовке "Добавить в ..."
+            Console.Error.WriteLine($"Не удалось загрузить имя плейлиста: {ex.Message}");
+        }
     }
 
     private async Task LoadAddToTrackIdsAsync()
@@ -286,7 +290,11 @@
             if (response?.Success == true && response.Data != null)
                 _addToTrackIds = response.Data.Tracks.Select(t => t.TrackId).ToHashSet();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // не критично - список "уже добавлен" останется пустым
+            Console.Error.WriteLine($"Не удалось загрузить треки плейлиста: {ex.Message}");
+        }
     }
 
     private async Task OnQueryChanged()

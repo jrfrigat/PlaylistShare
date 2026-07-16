@@ -243,7 +243,11 @@
                             row.TrackCount = response.Data.Tracks.Count;
                     }
                 }
-                catch { /* оставляем "не добавлен" по умолчанию для этого плейлиста */ }
+                catch (Exception ex)
+                {
+                    // оставляем "не добавлен" по умолчанию для этого плейлиста
+                    Console.Error.WriteLine($"Не удалось проверить состав плейлиста {row.ShareToken}: {ex.Message}");
+                }
             });
             await Task.WhenAll(membershipTasks);
 

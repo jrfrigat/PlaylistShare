@@ -265,6 +265,13 @@ public class YandexMusicService
                     .Select(t => MapTrack(t.Track!))
                     .ToList();
                 break;
+
+            case TrackSearchType.MyPlaylists:
+                // Не поддерживается: "мои плейлисты" не ищутся по ID - см. SearchMyPlaylists.
+                throw new ArgumentOutOfRangeException(nameof(searchType), searchType, "Поиск по ID не поддерживается для типа MyPlaylists.");
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(searchType), searchType, null);
         }
 
         return result;

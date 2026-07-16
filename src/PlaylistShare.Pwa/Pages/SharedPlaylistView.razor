@@ -370,7 +370,11 @@
                     if (additionsResp?.Success == true && additionsResp.Data != null)
                         _trackAdditions = additionsResp.Data;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // не критично - имена добавивших треки просто не отобразятся
+                    Console.Error.WriteLine($"Не удалось загрузить информацию о добавлениях: {ex.Message}");
+                }
             }
             else
             {
@@ -443,7 +447,11 @@
             if (response?.Success == true)
                 _isFavorite = response.Data;
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // не критично - если проверка не удалась, кнопка "избранное" останется в дефолтном состоянии
+            Console.Error.WriteLine($"Не удалось проверить статус избранного: {ex.Message}");
+        }
     }
 
     private async Task ToggleFavorite()
@@ -502,13 +510,14 @@
     private async Task OpenPermissionsDialog()
     {
         if (_playlist == null) return;
+        var playlist = _playlist; // локальная копия - гарантированно не null для инициализатора ниже
 
         var initial = new UpdatePermissionsDto
         {
-            ViewPermission = _playlist.ViewPermission,
-            PlayPermission = _playlist.PlayPermission,
-            AddPermission = _playlist.AddPermission,
-            RemovePermission = _playlist.RemovePermission
+            ViewPermission = playlist.ViewPermission,
+            PlayPermission = playlist.PlayPermission,
+            AddPermission = playlist.AddPermission,
+            RemovePermission = playlist.RemovePermission
         };
 
         var parameters = new DialogParameters()

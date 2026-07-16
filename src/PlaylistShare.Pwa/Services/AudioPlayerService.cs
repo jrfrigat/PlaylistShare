@@ -106,7 +106,9 @@ public class AudioPlayerService : IAudioPlayerService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to fetch track info: {ex.Message}");
+                // Логируем только тип: это WASM, Console пишет в консоль браузера, а текст исключения
+                // может содержать чувствительные детали (URL, токен в запросе).
+                Console.WriteLine($"Failed to fetch track info: {ex.GetType().Name}");
             }
         }
 
