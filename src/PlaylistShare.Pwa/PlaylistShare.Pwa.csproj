@@ -22,7 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ServiceWorker Include="wwwroot\\service-worker.js" PublishedContent="wwwroot\\service-worker.published.js" />
+    <!-- Слэши здесь одинарные: MSBuild не экранирует их, и "wwwroot\\service-worker.js" - это путь
+         с двумя слэшами, который никуда не ведёт. Промах молчаливый: подмена не срабатывает, и в
+         прод уезжает dev-заглушка service worker'а (265 байт, "do not enable offline support"). -->
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
   <ItemGroup>
