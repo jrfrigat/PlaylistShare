@@ -15,14 +15,17 @@
     margin-bottom: 1.5rem;
 }
 
-/* FlareImage/FlareStack рендерят корень своим компонентом (чужой scope), поэтому области
-   раздаём селектором-потомком от scoped-предка .deka-playlist-hero. */
-.deka-playlist-hero .deka-playlist-cover {
+/* FlareImage/FlareStack рендерят корень своим компонентом (чужой scope), поэтому ::deep
+   обязателен: без него scoped-CSS компилирует правило в `.deka-playlist-hero .deka-playlist-cover[scope]`
+   (атрибут вешается на ПОСЛЕДНИЙ селектор), у чужого корня его нет - и область молча не
+   применяется. С ::deep атрибут уходит на предка: `.deka-playlist-hero[scope] .deka-playlist-cover`,
+   что совпадает и с корнем FlareImage, и с литеральным div-фолбэком обложки. */
+.deka-playlist-hero ::deep .deka-playlist-cover {
     grid-area: cover;
     align-self: end;
 }
 
-.deka-playlist-hero .deka-playlist-info {
+.deka-playlist-hero ::deep .deka-playlist-info {
     grid-area: info;
     align-self: end;
 }
@@ -63,6 +66,10 @@
 
 .deka-playlist-actions {
     grid-area: actions;
+    /* Прижимаемся к верху своей строки, а описание - к низу своей: обложка выше их суммы и
+       растягивает обе строки, поэтому без выравнивания кнопки повисали бы в середине пустой
+       строки, оторванные от описания. Так они читаются одним блоком с ним. */
+    align-self: start;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
