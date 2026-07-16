@@ -397,15 +397,34 @@ internal static class DekaTokens
 
     private static readonly ProgressTokens Progress = new()
     {
-        LinearHeight = "4px",
+        // Ramp по размерам (Flare 0.6.0): раньше это были одиночные LinearHeight/CircularSize/
+        // CircularWidth, а размер прогресса задавался пикселями через Size="40". Md держим ровно
+        // тем, что тема рисовала до 0.6.0 (4px / 40px / 4px), чтобы по умолчанию ничего не сдвинулось;
+        // шкала расходится в обе стороны - мелкий спиннер в строке нужен не реже крупного.
+        LinearHeightXs = "2px",
+        LinearHeightSm = "3px",
+        LinearHeightMd = "4px",
+        LinearHeightLg = "6px",
+        LinearHeightXl = "8px",
         TrackRadius = "var(--flare-shape-full)",
         Gap = "4px",
         StopSize = "4px",
         StopInset = "0px",
         StopColor = "var(--fc-main, var(--flare-color-primary))",
         BufferOpacity = "30%",
-        CircularSize = "40px",
-        CircularWidth = "4px",
+        // Xs и Sm подобраны под живые вызовы (спиннер в строке списка просил 16px, экран привязки
+        // Яндекса - 24px), чтобы переход на шкалу не изменил ни один существующий размер.
+        CircularSizeXs = "16px",
+        CircularSizeSm = "24px",
+        CircularSizeMd = "40px",
+        CircularSizeLg = "48px",
+        CircularSizeXl = "56px",
+        // Толщина кольца растёт вместе с диаметром, иначе крупный спиннер выглядит проволочным.
+        CircularWidthXs = "2px",
+        CircularWidthSm = "3px",
+        CircularWidthMd = "4px",
+        CircularWidthLg = "5px",
+        CircularWidthXl = "6px",
         CircularCap = "round",
         CircularGap = "4px",
         WavyEnabled = "0",

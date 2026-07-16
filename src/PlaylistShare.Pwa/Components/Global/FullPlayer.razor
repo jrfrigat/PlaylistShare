@@ -38,7 +38,7 @@
                 </FlareStack>
 
                 <TrackProgress Value="@AudioPlayerService.CurrentTime" Min="0" Max="@AudioPlayerService.TotalTime"
-                               Size="SliderSize.Sm" Color="@_accent" Step="0.1"
+                               Size="TrackSize.Sm" Color="@_accent" Step="0.1"
                                ValueChanged="@(v => AudioPlayerService.SeekToAsync(v))" />
                 <FlareStack Row Justify="FlareJustifyContent.SpaceBetween">
                     <FlareText Typo="TypographyScale.LabelSmall" Color="FlareColor.Secondary">@AudioPlayerService.CurrentTimeString</FlareText>
