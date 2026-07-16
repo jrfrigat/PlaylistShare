@@ -1,13 +1,15 @@
-@* Аудио-прогресс на FlareSlider. Буфер (загруженная часть) рисуется зоной FlareSliderZone под
-   активным заполнением - раньше это был кастомный бар, т.к. у FlareSlider не было вторичной дорожки;
-   Flare 0.2.0 закрыл пробел через <Zones>. Позиция обновляется на лету через одностороннее Value. *@
+@* Аудио-прогресс на FlareSlider. Буфер (загруженная часть) рисуется зоной от начала дорожки до
+   загруженной точки, под активным заполнением - раньше это был кастомный бар, т.к. у FlareSlider не
+   было вторичной дорожки. Позиция обновляется на лету через одностороннее Value.
+   FlareZone (Flare 0.3.0) заменил FlareSliderZone: тот остался лишь тонким наследником с
+   предупреждением об устаревании. *@
 <FlareSlider Value="@Value" Min="@Min" Max="@Max" Step="@Step"
              Color="@Color" Size="@Size" MouseWheel="true" ShowValue="false"
              AriaLabel="Позиция воспроизведения" ValueChanged="ValueChanged">
     <Zones>
         @if (Buffer && BufferValue > Min)
         {
-            <FlareSliderZone Start="@Min" End="@BufferValue" Color="FlareColor.OnSurfaceVariant" />
+            <FlareZone Start="@Min" End="@BufferValue" Color="FlareColor.OnSurfaceVariant" />
         }
     </Zones>
 </FlareSlider>

@@ -522,24 +522,53 @@ internal static class DekaTokens
 
     private static readonly SliderTokens Slider = new()
     {
-        // Размеры обязаны быть реальными: "initial" разворачивается в height:auto, и слайдер
-        // схлопывается в 0px - он становится невидимым и его нельзя ухватить мышью (именно из-за
-        // этого не было прогресса в плеере и не работала перемотка). Значения - как у MD3.
-        TrackHeight = "1rem",
-        TrackRadius = "0.5rem",
-        GapRadius = "2px",
-        Gap = "6px",
-        HandleHeight = "2.75rem",
-        HandleWidth = "4px",
-        HandlePressedWidth = "2px",
+        // Силуэт - классическая полоса музыкального плеера, а не MD3 Expressive (дорожка 16px +
+        // ползунок-палка 4x44px с разрывом 6px): в мини-плеере она занимала почти всю высоту бара.
+        // Xs достаётся мини-плееру, Sm - полному; ramp по дорожке даёт мини-плееру более тонкую
+        // линию. До Flare 0.4.0 такой ramp был невыразим - геометрия была одним токеном на все
+        // размеры, и Size на неё не влиял.
+        TrackHeightXs = "3px",
+        TrackHeightSm = "4px",
+        TrackHeightMd = "4px",
+        TrackHeightLg = "6px",
+        TrackHeightXl = "8px",
+        TrackRadiusXs = "var(--flare-shape-full)",
+        TrackRadiusSm = "var(--flare-shape-full)",
+        TrackRadiusMd = "var(--flare-shape-full)",
+        TrackRadiusLg = "var(--flare-shape-full)",
+        TrackRadiusXl = "var(--flare-shape-full)",
+        // Разрыв дорожки вокруг ползунка - приём MD3 Expressive; музыкальному плееру он чужд,
+        // заливка должна доходить до ползунка вплотную.
+        GapRadius = "0",
+        Gap = "0",
+        // Круглая "таблетка" вместо вертикальной палки. Высота обязана совпадать с шириной, а
+        // ширина - одна на все размеры (ramp есть только у высоты), поэтому и высота везде 12px:
+        // разведи их - и кружок станет овалом. Так же поступают все темы с круглой ручкой.
+        HandleHeightXs = "12px",
+        HandleHeightSm = "12px",
+        HandleHeightMd = "12px",
+        HandleHeightLg = "12px",
+        HandleHeightXl = "12px",
+        HandleWidth = "12px",
+        // Expressive сплющивает ползунок при нажатии до 2px - здесь это выглядело бы дёрганьем.
+        HandlePressedWidth = "12px",
         HandleRadius = "var(--flare-shape-full)",
         HandleClipPath = "none",
         HandleBorderWidth = "0px",
-        // Следуем за локальным акцентом инстанса (Color="@_accent" в полном плеере).
+        // Иконки по краям дорожки: мы их не используем, значения - как у эталонных тем.
+        IconSizeXs = "20px",
+        IconSizeSm = "22px",
+        IconSizeMd = "24px",
+        IconSizeLg = "24px",
+        IconSizeXl = "32px",
+        // Длина вертикального слайдера по умолчанию; вертикальных у нас нет.
+        Length = "12rem",
+        // Следуем за локальным акцентом инстанса (Color="..." на самом слайдере).
         HandleFill = "var(--fc-main, var(--flare-color-primary))",
         ActiveColor = "var(--flare-color-primary)",
         InactiveColor = "var(--flare-color-outline)",
-        StateLayerSize = "40px",
+        // Ореол под курсором соразмерен ползунку: при 40px вокруг 12px-точки вздувался пузырь.
+        StateLayerSize = "28px",
         StateHoverOpacity = "0.08",
         StatePressedOpacity = "0.10",
         StopColor = "var(--flare-color-on-primary)",
@@ -573,9 +602,17 @@ internal static class DekaTokens
         LoadingDim = "0.6",
     };
 
+    // Rating и Pagination в приложении пока не используются, но токены обязаны нести реальный
+    // ramp: "initial" (стояло здесь раньше) означает "не переопределяю, возьми значение
+    // компонента", а после 0.2.0 брать стало нечего - звезда и кнопки схлопывались. Значения - как
+    // у эталонных тем.
     private static readonly RatingTokens Rating = new()
     {
-        Size = "initial",
+        SizeXs = "1rem",
+        SizeSm = "1.25rem",
+        SizeMd = "1.5rem",
+        SizeLg = "2rem",
+        SizeXl = "2.5rem",
         EmptyColor = "var(--flare-color-outline-variant)",
         FilledColor = "var(--flare-color-primary)",
         HoverScale = "1.15",
@@ -583,7 +620,11 @@ internal static class DekaTokens
 
     private static readonly PaginationTokens Pagination = new()
     {
-        Size = "initial",
+        SizeXs = "1.5rem",
+        SizeSm = "1.75rem",
+        SizeMd = "2.25rem",
+        SizeLg = "2.75rem",
+        SizeXl = "3.25rem",
         Radius = "var(--flare-shape-small)",
         BorderColor = "var(--flare-color-outline-variant)",
         ActiveColor = "var(--flare-color-primary)",
