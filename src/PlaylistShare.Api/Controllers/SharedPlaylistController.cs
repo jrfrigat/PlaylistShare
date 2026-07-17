@@ -107,6 +107,13 @@ public class SharedPlaylistController : ControllerBase
         if (playlist == null)
             return NotFound(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 404, Message = "Плейлист не найден" }));
 
+        // Просмотр - предусловие правки: право менять список сильнее права его видеть, поэтому и
+        // проверяться должно не слабее. Без этого при ViewPermission=AuthorizedOnly и
+        // AddPermission=Everyone аноним со ссылкой правил бы плейлист, который ему не разрешено
+        // даже открыть.
+        if (!_sharedService.CanView(playlist, currentUserId))
+            return Unauthorized(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 401, Message = "Недостаточно прав" }));
+
         if (!_sharedService.CanAddTrack(playlist, currentUserId))
             return StatusCode(403, ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 403, Message = "Недостаточно прав для добавления треков" }));
 
@@ -155,6 +162,11 @@ public class SharedPlaylistController : ControllerBase
         var playlist = await _sharedService.GetEntityByTokenAsync(token, cancellationToken);
         if (playlist == null)
             return NotFound(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 404, Message = "Плейлист не найден" }));
+
+        // Просмотр - предусловие правки (см. AddTracks). Проверяем до создания сессии: незачем
+        // заводить строку в БД тому, кому и смотреть-то нельзя.
+        if (!_sharedService.CanView(playlist, currentUserId))
+            return Unauthorized(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 401, Message = "Недостаточно прав" }));
 
         var session = await _userSessionService.GetOrCreateCurrentSessionAsync(currentUserId, cancellationToken);
         var sessionId = session.SessionId;
