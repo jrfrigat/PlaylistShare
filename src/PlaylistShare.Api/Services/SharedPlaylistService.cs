@@ -18,7 +18,7 @@ public class SharedPlaylistService
         _trackLogService = trackLogService;
     }
 
-    public async Task<SharedPlaylistDto> CreateAsync(Guid creatorUserId, SharePlaylistDto dto)
+    public async Task<SharedPlaylistDto> CreateAsync(Guid creatorUserId, SharePlaylistDto dto, CancellationToken cancellationToken = default)
     {
         var entity = new SharedPlaylist
         {
@@ -39,37 +39,44 @@ public class SharedPlaylistService
             RemovePermission = dto.RemovePermission
         };
         _db.SharedPlaylists.Add(entity);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
         return MapToDto(entity);
     }
 
-    public async Task<SharedPlaylist?> GetEntityByTokenAsync(string token)
+    /// <summary>
+    /// Читающая точка входа по share-токену: результат только отображается в DTO или отдаётся как
+    /// контекст (Creator - для запросов к Яндексу), но никогда не изменяется и не сохраняется,
+    /// поэтому AsNoTracking. Изменяющие методы (UpdatePermissionsAsync, DeleteAsync) грузят строку
+    /// заново своим FindAsync и получают отслеживаемую сущность.
+    /// </summary>
+    public async Task<SharedPlaylist?> GetEntityByTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         return await _db.SharedPlaylists
+            .AsNoTracking()
             .Include(sp => sp.Creator)
-            .FirstOrDefaultAsync(sp => sp.ShareToken == token && !sp.IsDeleted);
+            .FirstOrDefaultAsync(sp => sp.ShareToken == token && !sp.IsDeleted, cancellationToken);
     }
 
-    public async Task<SharedPlaylistDto?> UpdatePermissionsAsync(Guid playlistId, UpdatePermissionsDto dto)
+    public async Task<SharedPlaylistDto?> UpdatePermissionsAsync(Guid playlistId, UpdatePermissionsDto dto, CancellationToken cancellationToken = default)
     {
-        var entity = await _db.SharedPlaylists.FindAsync(playlistId);
+        var entity = await _db.SharedPlaylists.FindAsync([playlistId], cancellationToken);
         if (entity == null) return null;
         entity.ViewPermission = dto.ViewPermission;
         entity.PlayPermission = dto.PlayPermission;
         entity.AddPermission = dto.AddPermission;
         entity.RemovePermission = dto.RemovePermission;
         entity.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
         return MapToDto(entity);
     }
 
-    public async Task<bool> DeleteAsync(Guid playlistId)
+    public async Task<bool> DeleteAsync(Guid playlistId, CancellationToken cancellationToken = default)
     {
-        var entity = await _db.SharedPlaylists.FindAsync(playlistId);
+        var entity = await _db.SharedPlaylists.FindAsync([playlistId], cancellationToken);
         if (entity == null) return false;
         entity.IsDeleted = true;
         entity.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
         return true;
     }
 
@@ -99,7 +106,7 @@ public class SharedPlaylistService
                (playlist.AddPermission == EditPermission.AuthorizedOnly && currentUserId.HasValue);
     }
 
-    public async Task<bool> CanRemoveTrackAsync(SharedPlaylist playlist, Guid? currentUserId, string trackId, string sessionId)
+    public async Task<bool> CanRemoveTrackAsync(SharedPlaylist playlist, Guid? currentUserId, string trackId, string sessionId, CancellationToken cancellationToken = default)
     {
         if (currentUserId == playlist.CreatorUserId) return true;
         return playlist.RemovePermission switch
@@ -107,16 +114,16 @@ public class SharedPlaylistService
             EditPermission.Everyone => true,
             EditPermission.AuthorizedOnly => currentUserId.HasValue,
             EditPermission.AddedByUserOnly when currentUserId.HasValue =>
-                await _trackLogService.IsTrackAddedByCurrentUserOrSessionAsync(playlist.Id, trackId, currentUserId, sessionId),
+                await _trackLogService.IsTrackAddedByCurrentUserOrSessionAsync(playlist.Id, trackId, currentUserId, sessionId, cancellationToken),
             EditPermission.AddedByUserOnly when !currentUserId.HasValue =>
-                await _trackLogService.IsTrackAddedByCurrentUserOrSessionAsync(playlist.Id, trackId, null, sessionId),
+                await _trackLogService.IsTrackAddedByCurrentUserOrSessionAsync(playlist.Id, trackId, null, sessionId, cancellationToken),
             _ => false
         };
     }
 
-    public async Task<bool> IsCreatorAsync(Guid playlistId, Guid userId)
+    public async Task<bool> IsCreatorAsync(Guid playlistId, Guid userId, CancellationToken cancellationToken = default)
     {
-        var playlist = await _db.SharedPlaylists.FindAsync(playlistId);
+        var playlist = await _db.SharedPlaylists.FindAsync([playlistId], cancellationToken);
         return playlist != null && playlist.CreatorUserId == userId;
     }
 
@@ -128,11 +135,12 @@ public class SharedPlaylistService
             .TrimEnd('=');
     }
 
-    public async Task<List<SharedPlaylist>> GetAllByUserAsync(Guid userId)
+    public async Task<List<SharedPlaylist>> GetAllByUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _db.SharedPlaylists
+            .AsNoTracking()
             .Where(sp => sp.CreatorUserId == userId && !sp.IsDeleted)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     public SharedPlaylistDto MapToDto(SharedPlaylist entity)

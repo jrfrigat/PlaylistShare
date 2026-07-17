@@ -36,61 +36,61 @@ public class YandexMusicService
             throw new Exception("Не удалось авторизоваться в Яндекс.Музыке. Проверьте токен.");
     }
 
-    private async Task<string?> GetAccountUidAsync()
+    private async Task<string?> GetAccountUidAsync(CancellationToken cancellationToken)
     {
-        var status = await Client.Account.GetStatusAsync();
+        var status = await Client.Account.GetStatusAsync(cancellationToken);
         return status?.Account.Uid.ToString();
     }
 
-    public async Task<Playlist?> GetPlaylistAsync(ApplicationUser user, string ownerUid, string kind)
+    public async Task<Playlist?> GetPlaylistAsync(ApplicationUser user, string ownerUid, string kind, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
-        return await Client.Playlists.GetAsync(ownerUid, kind);
+        return await Client.Playlists.GetAsync(ownerUid, kind, cancellationToken);
     }
 
     /// <summary>URL обложки плейлиста Яндекс.Музыки (для backfill сохранённых шеринг-плейлистов).</summary>
-    public async Task<string?> GetPlaylistCoverUrlAsync(ApplicationUser user, string ownerUid, string kind)
+    public async Task<string?> GetPlaylistCoverUrlAsync(ApplicationUser user, string ownerUid, string kind, CancellationToken cancellationToken = default)
     {
-        var playlist = await GetPlaylistAsync(user, ownerUid, kind);
+        var playlist = await GetPlaylistAsync(user, ownerUid, kind, cancellationToken);
         return playlist?.Cover?.GetUrl();
     }
 
-    public async Task<YandexPlaylistData?> GetPlaylistDataAsync(ApplicationUser user, string ownerUid, string kind)
+    public async Task<YandexPlaylistData?> GetPlaylistDataAsync(ApplicationUser user, string ownerUid, string kind, CancellationToken cancellationToken = default)
     {
-        var playlist = await GetPlaylistAsync(user, ownerUid, kind);
+        var playlist = await GetPlaylistAsync(user, ownerUid, kind, cancellationToken);
         return playlist is null ? null : MapToPlaylistData(playlist);
     }
 
-    public async Task<(IReadOnlyList<Playlist>? OwnPlaylists, string? AccountUid)> GetOwnFavoritesAsync(ApplicationUser user)
+    public async Task<(IReadOnlyList<Playlist>? OwnPlaylists, string? AccountUid)> GetOwnFavoritesAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
-        var accountUid = await GetAccountUidAsync();
+        var accountUid = await GetAccountUidAsync(cancellationToken);
         if (string.IsNullOrEmpty(accountUid))
             return (null, null);
 
-        var ownPlaylists = await Client.Playlists.GetByUserAsync(accountUid);
+        var ownPlaylists = await Client.Playlists.GetByUserAsync(accountUid, cancellationToken);
         return (ownPlaylists, accountUid);
     }
 
-    public async Task<Playlist?> CreatePlaylistAsync(ApplicationUser user, string title)
+    public async Task<Playlist?> CreatePlaylistAsync(ApplicationUser user, string title, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
-        var accountUid = await GetAccountUidAsync();
+        var accountUid = await GetAccountUidAsync(cancellationToken);
         if (string.IsNullOrEmpty(accountUid))
             return null;
 
-        return await Client.Playlists.CreateAsync(accountUid, title);
+        return await Client.Playlists.CreateAsync(accountUid, title, cancellationToken: cancellationToken);
     }
 
-    public async Task<Playlist?> AddTracksAsync(ApplicationUser user, string ownerUid, string kind, IEnumerable<string> trackIds)
+    public async Task<Playlist?> AddTracksAsync(ApplicationUser user, string ownerUid, string kind, IEnumerable<string> trackIds, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
 
-        var playlist = await Client.Playlists.GetAsync(ownerUid, kind);
+        var playlist = await Client.Playlists.GetAsync(ownerUid, kind, cancellationToken);
         if (playlist is null)
             return null;
 
-        var tracks = await Client.Tracks.GetManyAsync(trackIds);
+        var tracks = await Client.Tracks.GetManyAsync(trackIds, cancellationToken);
         if (tracks.Count == 0)
             return null;
 
@@ -108,7 +108,7 @@ public class YandexMusicService
         foreach (var track in toInsert)
         {
             var albumId = track.Albums.FirstOrDefault()?.Id.ToString() ?? string.Empty;
-            updated = await Client.Playlists.InsertTrackAsync(ownerUid, kind, track.Id, albumId, at, revision);
+            updated = await Client.Playlists.InsertTrackAsync(ownerUid, kind, track.Id, albumId, at, revision, cancellationToken);
             if (updated is null)
                 return null;
 
@@ -119,11 +119,11 @@ public class YandexMusicService
         return updated;
     }
 
-    public async Task<Playlist?> RemoveTracksAsync(ApplicationUser user, string ownerUid, string kind, IEnumerable<string> trackIds)
+    public async Task<Playlist?> RemoveTracksAsync(ApplicationUser user, string ownerUid, string kind, IEnumerable<string> trackIds, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
 
-        var playlist = await Client.Playlists.GetAsync(ownerUid, kind);
+        var playlist = await Client.Playlists.GetAsync(ownerUid, kind, cancellationToken);
         if (playlist is null)
             return null;
 
@@ -147,7 +147,7 @@ public class YandexMusicService
 
         foreach (var index in indices)
         {
-            updated = await Client.Playlists.DeleteTracksAsync(ownerUid, kind, index, index + 1, revision);
+            updated = await Client.Playlists.DeleteTracksAsync(ownerUid, kind, index, index + 1, revision, cancellationToken);
             if (updated is null)
                 return null;
 
@@ -157,23 +157,24 @@ public class YandexMusicService
         return updated;
     }
 
-    public async Task<string?> GetTrackFileUrlAsync(ApplicationUser user, string trackId)
+    public async Task<string?> GetTrackFileUrlAsync(ApplicationUser user, string trackId, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
-        return await Client.Tracks.GetDirectLinkAsync(trackId);
+        return await Client.Tracks.GetDirectLinkAsync(trackId, cancellationToken);
     }
 
-    public async Task<Track?> GetYTrackAsync(ApplicationUser user, string trackId)
+    public async Task<Track?> GetYTrackAsync(ApplicationUser user, string trackId, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
-        return await Client.Tracks.GetAsync(trackId);
+        return await Client.Tracks.GetAsync(trackId, cancellationToken);
     }
 
     public async Task<YandexSearchResult> SearchAsync(
         ApplicationUser user,
         string query,
         TrackSearchType? searchType = TrackSearchType.All,
-        int limit = 20)
+        int limit = 20,
+        CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
 
@@ -186,7 +187,7 @@ public class YandexMusicService
             _ => SearchType.All,
         };
 
-        var searchResult = await Client.Search.SearchAsync(query, type);
+        var searchResult = await Client.Search.SearchAsync(query, type, cancellationToken: cancellationToken);
         if (searchResult is null)
             return new YandexSearchResult();
 
@@ -199,20 +200,20 @@ public class YandexMusicService
         };
     }
 
-    public async Task<YandexSearchResult> SearchMyPlaylists(ApplicationUser user)
+    public async Task<YandexSearchResult> SearchMyPlaylists(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
 
         var result = new YandexSearchResult();
 
-        var accountUid = await GetAccountUidAsync();
+        var accountUid = await GetAccountUidAsync(cancellationToken);
         if (string.IsNullOrEmpty(accountUid))
             return result;
 
-        var ownPlaylists = await Client.Playlists.GetByUserAsync(accountUid);
+        var ownPlaylists = await Client.Playlists.GetByUserAsync(accountUid, cancellationToken);
         result.Playlists = ownPlaylists.Select(MapPlaylist).ToList();
 
-        var likedPlaylists = await Client.Library.GetLikedPlaylistsAsync(accountUid);
+        var likedPlaylists = await Client.Library.GetLikedPlaylistsAsync(accountUid, cancellationToken);
         result.LikedPlaylists = likedPlaylists
             .Where(l => l.Playlist is not null)
             .Select(l => MapPlaylist(l.Playlist!))
@@ -227,7 +228,8 @@ public class YandexMusicService
     public async Task<YandexSearchResult> SearchTracksByIdAsync(
         ApplicationUser user,
         string id,
-        TrackSearchType searchType)
+        TrackSearchType searchType,
+        CancellationToken cancellationToken = default)
     {
         await AuthorizeIfNot(user);
 
@@ -239,18 +241,18 @@ public class YandexMusicService
                 throw new Exception("Для поиска по ID необходимо указать конкретный тип (трек, альбом, исполнитель или плейлист).");
 
             case TrackSearchType.Track:
-                var track = await Client.Tracks.GetAsync(id);
+                var track = await Client.Tracks.GetAsync(id, cancellationToken);
                 if (track is not null)
                     result.Tracks = [MapTrack(track)];
                 break;
 
             case TrackSearchType.Album:
-                var album = await Client.Albums.GetWithTracksAsync(id);
+                var album = await Client.Albums.GetWithTracksAsync(id, cancellationToken);
                 result.Tracks = album?.Volumes?.SelectMany(v => v).Select(MapTrack).ToList();
                 break;
 
             case TrackSearchType.Artist:
-                var brief = await Client.Artists.GetBriefInfoAsync(id);
+                var brief = await Client.Artists.GetBriefInfoAsync(id, cancellationToken);
                 if (brief is not null)
                 {
                     result.Albums = brief.Albums.Select(MapAlbum).ToList();
@@ -259,7 +261,7 @@ public class YandexMusicService
                 break;
 
             case TrackSearchType.Playlist:
-                var playlist = await Client.Playlists.GetByUuidAsync(id);
+                var playlist = await Client.Playlists.GetByUuidAsync(id, cancellationToken);
                 result.Tracks = playlist?.Tracks
                     .Where(t => t.Track is not null)
                     .Select(t => MapTrack(t.Track!))

@@ -13,7 +13,7 @@ public class TrackAdditionLogService
         _db = db;
     }
 
-    public async Task LogAdditionAsync(Guid sharedPlaylistId, string trackId, Guid? addedByUserId, string sessionId)
+    public async Task LogAdditionAsync(Guid sharedPlaylistId, string trackId, Guid? addedByUserId, string sessionId, CancellationToken cancellationToken = default)
     {
         var log = new TrackAdditionLog
         {
@@ -25,32 +25,34 @@ public class TrackAdditionLogService
             SessionId = sessionId
         };
         _db.TrackAdditionLogs.Add(log);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> IsTrackAddedByCurrentUserOrSessionAsync(Guid sharedPlaylistId, string trackId, Guid? userId, string sessionId)
+    public async Task<bool> IsTrackAddedByCurrentUserOrSessionAsync(Guid sharedPlaylistId, string trackId, Guid? userId, string sessionId, CancellationToken cancellationToken = default)
     {
         return await _db.TrackAdditionLogs
             .AnyAsync(l => l.SharedPlaylistId == sharedPlaylistId && l.TrackId == trackId &&
-                (userId != null ? l.AddedByUserId == userId : l.SessionId == sessionId));
+                (userId != null ? l.AddedByUserId == userId : l.SessionId == sessionId), cancellationToken);
     }
 
-    public async Task RemoveLogsForTrackAsync(Guid sharedPlaylistId, string trackId)
+    // Без AsNoTracking: строки грузятся именно ради RemoveRange, удалять можно только отслеживаемые.
+    public async Task RemoveLogsForTrackAsync(Guid sharedPlaylistId, string trackId, CancellationToken cancellationToken = default)
     {
         var logs = await _db.TrackAdditionLogs
             .Where(l => l.SharedPlaylistId == sharedPlaylistId && l.TrackId == trackId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
         _db.TrackAdditionLogs.RemoveRange(logs);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<Dictionary<string, string?>> GetAdditionUserNamesAsync(Guid sharedPlaylistId)
+    public async Task<Dictionary<string, string?>> GetAdditionUserNamesAsync(Guid sharedPlaylistId, CancellationToken cancellationToken = default)
     {
         var rows = await _db.TrackAdditionLogs
+            .AsNoTracking()
             .Where(l => l.SharedPlaylistId == sharedPlaylistId)
             .Include(l => l.AddedByUser)
             .OrderByDescending(l => l.AddedAtUtc)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return rows
             .GroupBy(l => l.TrackId)

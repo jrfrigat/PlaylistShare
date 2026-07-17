@@ -32,7 +32,8 @@ public class YandexSearchController : ControllerBase
         [FromQuery] int limit = 40,
         [FromQuery] TrackSearchType searchType = TrackSearchType.All,
         [FromQuery] bool byId = false,
-        [FromQuery] string? shared_id = null)
+        [FromQuery] string? shared_id = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query) && searchType != TrackSearchType.MyPlaylists)
             return BadRequest(ApiResponse<YandexSearchResult>.Fail(new ErrorResponse
@@ -54,13 +55,13 @@ public class YandexSearchController : ControllerBase
             if (string.IsNullOrEmpty(shared_id))
                 return Unauthorized("Не установлен яндекс токен.");
 
-            var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shared_id);
+            var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shared_id, cancellationToken);
             if (playlist == null) return NotFound("Не найден плейлист.");
 
             if (!_sharedPlaylistService.CanAddTrack(playlist, userId))
                 return StatusCode(403, "Нет доступа для добавления трека.");
 
-            var owner = await _userManager.FindByIdAsync(playlist.CreatorUserId.ToString());
+            var owner = playlist.Creator;
             if (owner == null) return StatusCode(500, "Не удалось найти владельца плейлиста.");
             user = owner;
 
@@ -78,7 +79,7 @@ public class YandexSearchController : ControllerBase
 
         if (byId)
         {
-            results = await _yandexService.SearchTracksByIdAsync(user, query, searchType);
+            results = await _yandexService.SearchTracksByIdAsync(user, query, searchType, cancellationToken);
         }
         else if (searchType == TrackSearchType.MyPlaylists)
         {
@@ -87,11 +88,11 @@ public class YandexSearchController : ControllerBase
                 return Unauthorized("Необходимо подключение профиля к яндекс музыке.");
             }
 
-            results = await _yandexService.SearchMyPlaylists(user);
+            results = await _yandexService.SearchMyPlaylists(user, cancellationToken);
         }
         else
         {
-            results = await _yandexService.SearchAsync(user, query, searchType, limit);
+            results = await _yandexService.SearchAsync(user, query, searchType, limit, cancellationToken);
         }
 
         return Ok(ApiResponse<YandexSearchResult>.Ok(results));

@@ -45,13 +45,13 @@ public class AudioController : ControllerBase
 
     [HttpGet("track/{trackId}")]
     [AllowAnonymous]
-    public async Task<IActionResult> StreamTrack(string trackId, [FromQuery] string? play_token = null, [FromQuery] string? shared_id = null)
+    public async Task<IActionResult> StreamTrack(string trackId, CancellationToken cancellationToken, [FromQuery] string? play_token = null, [FromQuery] string? shared_id = null)
     {
         var user = await GetUserFromPlayToken(play_token);
-        if (user == null || user.YandexAccessToken is null) user = await GetUserFromSharedPlaylistId(shared_id);
+        if (user == null || user.YandexAccessToken is null) user = await GetUserFromSharedPlaylistId(shared_id, cancellationToken);
         if (user == null) return Unauthorized();
 
-        var streamUrl = await _yandexService.GetTrackFileUrlAsync(user, trackId);
+        var streamUrl = await _yandexService.GetTrackFileUrlAsync(user, trackId, cancellationToken);
         if (string.IsNullOrEmpty(streamUrl)) return NotFound();
 
         var httpClient = _httpClientFactory.CreateClient();
@@ -60,7 +60,7 @@ public class AudioController : ControllerBase
         if (Request.Headers.ContainsKey("Range"))
             request.Headers.Add("Range", Request.Headers["Range"].ToString());
 
-        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
         Response.StatusCode = (int)response.StatusCode;
         Response.ContentType = response.Content.Headers.ContentType?.ToString() ?? "audio/mpeg";
@@ -72,19 +72,19 @@ public class AudioController : ControllerBase
         if (response.Content.Headers.Contains("Content-Length"))
             Response.Headers.Append("Content-Length", response.Content.Headers.ContentLength?.ToString());
 
-        await response.Content.CopyToAsync(Response.Body);
+        await response.Content.CopyToAsync(Response.Body, cancellationToken);
         return new EmptyResult();
     }
 
     [HttpGet("track-info/{trackId}")]
     [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<YandexTrack>>> GetTrackInfo(string trackId, [FromQuery] string? play_token = null, [FromQuery] string? shared_id = null)
+    public async Task<ActionResult<ApiResponse<YandexTrack>>> GetTrackInfo(string trackId, CancellationToken cancellationToken, [FromQuery] string? play_token = null, [FromQuery] string? shared_id = null)
     {
         var user = await GetUserFromPlayToken(play_token);
-        if (user == null || user.YandexAccessToken is null) user = await GetUserFromSharedPlaylistId(shared_id);
+        if (user == null || user.YandexAccessToken is null) user = await GetUserFromSharedPlaylistId(shared_id, cancellationToken);
         if (user == null) return Unauthorized();
 
-        var track = await _yandexService.GetYTrackAsync(user, trackId);
+        var track = await _yandexService.GetYTrackAsync(user, trackId, cancellationToken);
         if (track == null) return NotFound();
 
         return Ok(ApiResponse<YandexTrack>.Ok(new YandexTrack
@@ -110,12 +110,12 @@ public class AudioController : ControllerBase
         return await _userManager.FindByIdAsync(userId.Value.ToString());
     }
 
-    private async Task<ApplicationUser?> GetUserFromSharedPlaylistId(string? sharedId)
+    private async Task<ApplicationUser?> GetUserFromSharedPlaylistId(string? sharedId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(sharedId)) return null;
-        var playlist = await _sharedService.GetEntityByTokenAsync(sharedId);
+        var playlist = await _sharedService.GetEntityByTokenAsync(sharedId, cancellationToken);
         if (playlist == null) return null;
         if (!_sharedService.CanPlayEveryone(playlist)) return null;
-        return await _userManager.FindByIdAsync(playlist.CreatorUserId.ToString());
+        return playlist.Creator;
     }
 }

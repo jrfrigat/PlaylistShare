@@ -27,7 +27,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<ApiResponse<LoginResponse>>> Register(RegisterRequest request)
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         var user = new ApplicationUser
         {
@@ -42,11 +42,11 @@ public class AccountController : ControllerBase
                 Message = string.Join(", ", result.Errors.Select(e => e.Description))
             }));
 
-        return await GenerateTokenResponse(user);
+        return await GenerateTokenResponse(user, cancellationToken);
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<ApiResponse<LoginResponse>>> Login(LoginRequest request)
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByNameAsync(request.Username);
         if (user == null)
@@ -56,12 +56,12 @@ public class AccountController : ControllerBase
         if (!result.Succeeded)
             return Unauthorized(ApiResponse<LoginResponse>.Fail(new ErrorResponse { StatusCode = 401, Message = "Неверное имя пользователя или пароль" }));
 
-        return await GenerateTokenResponse(user);
+        return await GenerateTokenResponse(user, cancellationToken);
     }
 
-    private async Task<ActionResult<ApiResponse<LoginResponse>>> GenerateTokenResponse(ApplicationUser user)
+    private async Task<ActionResult<ApiResponse<LoginResponse>>> GenerateTokenResponse(ApplicationUser user, CancellationToken cancellationToken)
     {
-        await _userSessionService.GetOrCreateCurrentSessionAsync(user.Id);
+        await _userSessionService.GetOrCreateCurrentSessionAsync(user.Id, cancellationToken);
 
         var (token, refreshToken, expiration) = await _jwtService.GenerateTokenAsync(user);
         return Ok(ApiResponse<LoginResponse>.Ok(new LoginResponse
@@ -73,12 +73,13 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    public async Task<ActionResult<ApiResponse<LoginResponse>>> RefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken && u.RefreshTokenExpiryUtc > DateTime.UtcNow);
+        // Без AsNoTracking: JwtService выдаёт этому же user новый RefreshToken и сохраняет его.
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken && u.RefreshTokenExpiryUtc > DateTime.UtcNow, cancellationToken);
         if (user == null)
             return Unauthorized(ApiResponse<LoginResponse>.Fail(new ErrorResponse { StatusCode = 401, Message = "Неверный или просроченный refresh token" }));
 
-        return await GenerateTokenResponse(user);
+        return await GenerateTokenResponse(user, cancellationToken);
     }
 }

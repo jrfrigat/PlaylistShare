@@ -12,7 +12,7 @@ public class UserSessionService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<UserSession> GetOrCreateCurrentSessionAsync(Guid? associatedUserId = null)
+    public async Task<UserSession> GetOrCreateCurrentSessionAsync(Guid? associatedUserId = null, CancellationToken cancellationToken = default)
     {
         var httpContext = _httpContextAccessor.HttpContext
             ?? throw new InvalidOperationException("No HttpContext available");
@@ -20,7 +20,7 @@ public class UserSessionService
         var sessionId = httpContext.Session.Id;
         var now = DateTime.UtcNow;
 
-        var session = await _db.UserSessions.FindAsync(sessionId);
+        var session = await _db.UserSessions.FindAsync([sessionId], cancellationToken);
         if (session == null)
         {
             session = new UserSession
@@ -41,7 +41,7 @@ public class UserSessionService
                 session.AssociatedUserId = associatedUserId;
             _db.UserSessions.Update(session);
         }
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
         return session;
     }
 }

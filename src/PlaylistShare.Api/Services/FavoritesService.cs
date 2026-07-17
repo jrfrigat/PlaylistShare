@@ -18,22 +18,22 @@ public class FavoritesService
         _yandexService = yandexService;
     }
 
-    public async Task<bool> IsFavoriteAsync(Guid userId, string shareToken)
+    public async Task<bool> IsFavoriteAsync(Guid userId, string shareToken, CancellationToken cancellationToken = default)
     {
-        var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shareToken);
+        var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shareToken, cancellationToken);
         if (playlist == null) return false;
         return await _db.FavoritePlaylists
-            .AnyAsync(f => f.UserId == userId && f.SharedPlaylistId == playlist.Id);
+            .AnyAsync(f => f.UserId == userId && f.SharedPlaylistId == playlist.Id, cancellationToken);
     }
 
-    public async Task AddFavoriteAsync(Guid userId, string shareToken)
+    public async Task AddFavoriteAsync(Guid userId, string shareToken, CancellationToken cancellationToken = default)
     {
-        var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shareToken);
+        var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shareToken, cancellationToken);
         if (playlist == null)
             throw new ArgumentException("Playlist not found");
 
         var exists = await _db.FavoritePlaylists
-            .AnyAsync(f => f.UserId == userId && f.SharedPlaylistId == playlist.Id);
+            .AnyAsync(f => f.UserId == userId && f.SharedPlaylistId == playlist.Id, cancellationToken);
         if (exists) return;
 
         var favorite = new FavoritePlaylist
@@ -43,24 +43,25 @@ public class FavoritesService
             AddedAtUtc = DateTime.UtcNow
         };
         _db.FavoritePlaylists.Add(favorite);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RemoveFavoriteAsync(Guid userId, string shareToken)
+    public async Task RemoveFavoriteAsync(Guid userId, string shareToken, CancellationToken cancellationToken = default)
     {
-        var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shareToken);
+        var playlist = await _sharedPlaylistService.GetEntityByTokenAsync(shareToken, cancellationToken);
         if (playlist == null) return;
 
         var favorite = await _db.FavoritePlaylists
-            .FirstOrDefaultAsync(f => f.UserId == userId && f.SharedPlaylistId == playlist.Id);
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.SharedPlaylistId == playlist.Id, cancellationToken);
         if (favorite != null)
         {
             _db.FavoritePlaylists.Remove(favorite);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
         }
     }
 
-    public async Task<List<SharedPlaylistDto>> GetUserFavoritesAsync(Guid userId)
+    // Без AsNoTracking: backfill ниже дописывает CoverUrl прямо в эти сущности и сохраняет их.
+    public async Task<List<SharedPlaylistDto>> GetUserFavoritesAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var favoritePlaylists = await _db.FavoritePlaylists
             .Include(f => f.SharedPlaylist)
@@ -68,7 +69,7 @@ public class FavoritesService
             .Where(f => f.UserId == userId)
             .OrderByDescending(f => f.AddedAtUtc)
             .Select(f => f.SharedPlaylist)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         // Backfill: плейлисты, расшаренные до сохранения обложки, лежат в БД с CoverUrl = null.
         // Подтягиваем обложку из Яндекса токеном создателя и сохраняем - далее берётся из БД.
@@ -79,21 +80,23 @@ public class FavoritesService
                 continue;
             try
             {
-                var cover = await _yandexService.GetPlaylistCoverUrlAsync(sp.Creator, sp.YandexPlaylistOwnerUid, sp.YandexPlaylistKind);
+                var cover = await _yandexService.GetPlaylistCoverUrlAsync(sp.Creator, sp.YandexPlaylistOwnerUid, sp.YandexPlaylistKind, cancellationToken);
                 if (!string.IsNullOrEmpty(cover))
                 {
                     sp.CoverUrl = cover;
                     changed = true;
                 }
             }
-            catch (Exception ex)
+            // Отмену не глушим: иначе после ухода клиента цикл продолжил бы дёргать Яндекс по
+            // каждому оставшемуся плейлисту, ловя отмену на каждом.
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // обложка не критична - при ошибке просто оставляем заглушку
                 Console.Error.WriteLine($"Не удалось подтянуть обложку плейлиста: {ex.Message}");
             }
         }
         if (changed)
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
 
         // Маппинг в DTO (можно использовать AutoMapper, но для простоты сделаем вручную)
         return favoritePlaylists.Select(sp => new SharedPlaylistDto

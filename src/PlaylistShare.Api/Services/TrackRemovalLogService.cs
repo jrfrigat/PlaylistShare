@@ -8,7 +8,7 @@ public class TrackRemovalLogService
     private readonly ApplicationDbContext _db;
     public TrackRemovalLogService(ApplicationDbContext db) => _db = db;
 
-    public async Task LogRemovalAsync(Guid sharedPlaylistId, string trackId, Guid? removedByUserId, string sessionId)
+    public async Task LogRemovalAsync(Guid sharedPlaylistId, string trackId, Guid? removedByUserId, string sessionId, CancellationToken cancellationToken = default)
     {
         var log = new TrackRemovalLog
         {
@@ -20,6 +20,6 @@ public class TrackRemovalLogService
             SessionId = sessionId
         };
         _db.TrackRemovalLogs.Add(log);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }

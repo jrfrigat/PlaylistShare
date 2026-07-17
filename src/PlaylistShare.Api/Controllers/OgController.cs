@@ -18,9 +18,9 @@ public class OgController : ControllerBase
 
     [HttpGet("{token}")]
     [Produces("text/html")]
-    public async Task<ContentResult> GetOgPage(string token)
+    public async Task<ContentResult> GetOgPage(string token, CancellationToken cancellationToken)
     {
-        var entity = await _sharedService.GetEntityByTokenAsync(token);
+        var entity = await _sharedService.GetEntityByTokenAsync(token, cancellationToken);
         var pwaUrl = $"{_clientBaseUrl}/shared/{token}";
 
         string title = entity?.Title ?? "Playlist Share";

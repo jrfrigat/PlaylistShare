@@ -54,28 +54,31 @@ public class YandexAccountController : ControllerBase
     }
 
     [HttpGet("qr")]
-    public async Task<ActionResult<ApiResponse<YandexAuthQr>>> GetQr()
+    public async Task<ActionResult<ApiResponse<YandexAuthQr>>> GetQr(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null) return Unauthorized();
 
-        var qr = await _yandexService.GetQrOrGenerate(user);
+        var qr = await _yandexService.GetQrOrGenerate(user, cancellationToken);
         return Ok(ApiResponse<YandexAuthQr>.Ok(qr));
     }
 
     [HttpGet("qr/{sessionId}")]
-    public async Task<IActionResult> CheckQr(int sessionId)
+    public async Task<IActionResult> CheckQr(int sessionId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null) return Unauthorized();
 
-        var checkResult = await _yandexService.CheckQrAsync(sessionId);
+        var checkResult = await _yandexService.CheckQrAsync(sessionId, cancellationToken);
         if (checkResult == null) return NotFound();
 
+        // Пользователя грузим только в ветке подтверждения. Страница опрашивает этот эндпоинт раз в
+        // пару секунд, и почти всегда ответ - Pending: строка из БД там просто не нужна.
         if (checkResult.Status == Shared.Enums.YandexAuthQrStatus.Authorized && _yandexService.AuthorizedAccessToken is { } token)
         {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return Unauthorized();
+
             await SaveYandexTokenAsync(user, token);
         }
 

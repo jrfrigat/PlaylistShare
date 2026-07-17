@@ -30,7 +30,7 @@ public class PlaylistsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<YandexPlaylistShare>>>> GetMyPlaylists()
+    public async Task<ActionResult<ApiResponse<List<YandexPlaylistShare>>>> GetMyPlaylists(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         var user = await _userManager.FindByIdAsync(userId.ToString());
@@ -42,8 +42,8 @@ public class PlaylistsController : ControllerBase
         List<YandexPlaylistShare> result;
         try
         {
-            var (ownPlaylists, _) = await _yandexService.GetOwnFavoritesAsync(user);
-            var sharedPlaylists = await _sharedService.GetAllByUserAsync(userId);
+            var (ownPlaylists, _) = await _yandexService.GetOwnFavoritesAsync(user, cancellationToken);
+            var sharedPlaylists = await _sharedService.GetAllByUserAsync(userId, cancellationToken);
 
             // Index the user's shared playlists by (kind, ownerUid) once so the projection below is a
             // single dictionary lookup per playlist instead of two linear scans of the shared list.
@@ -68,7 +68,9 @@ public class PlaylistsController : ControllerBase
                 };
             }).ToList();
         }
-        catch (Exception ex)
+        // Отмена сюда попадать не должна: это не ошибка запроса к Яндексу, а ушедший клиент,
+        // которому 400 отдавать некому - пусть уходит наверх и станет 499.
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return BadRequest(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 400, Message = ex.Message }));
         }
@@ -77,13 +79,13 @@ public class PlaylistsController : ControllerBase
     }
 
     [HttpPost("share")]
-    public async Task<ActionResult<ApiResponse<SharedPlaylistDto>>> SharePlaylist([FromBody] SharePlaylistRequest request)
+    public async Task<ActionResult<ApiResponse<SharedPlaylistDto>>> SharePlaylist([FromBody] SharePlaylistRequest request, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null) return Unauthorized();
 
-        var playlist = await _yandexService.GetPlaylistAsync(user, request.OwnerUid, request.Kind);
+        var playlist = await _yandexService.GetPlaylistAsync(user, request.OwnerUid, request.Kind, cancellationToken);
         if (playlist == null)
             return BadRequest(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 404, Message = "Плейлист не найден" }));
 
@@ -101,7 +103,7 @@ public class PlaylistsController : ControllerBase
             RemovePermission = Shared.Enums.EditPermission.AddedByUserOnly,
         };
 
-        var result = await _sharedService.CreateAsync(userId, dto);
+        var result = await _sharedService.CreateAsync(userId, dto, cancellationToken);
         return Ok(ApiResponse<SharedPlaylistDto>.Ok(result));
     }
 }
