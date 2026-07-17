@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace PlaylistShare.Api.Entities;
 
 /// <summary>Пользователь приложения (расширяет IdentityUser).</summary>
+[Index(nameof(RefreshToken))]
 public class ApplicationUser : IdentityUser<Guid>
 {
     /// <summary>Идентификатор пользователя в Яндексе (если привязан).</summary>

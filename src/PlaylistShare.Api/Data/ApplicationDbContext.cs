@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PlaylistShare.Api.Entities;
@@ -20,111 +20,82 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<YandexAuthSession> YandexAuthSessions => Set<YandexAuthSession>();
 
+    // Таблицы, ключи, индексы, длины и внешние ключи заданы атрибутами на самих сущностях
+    // (Entities/*.cs). Ниже остаётся только то, для чего атрибутов в EF Core не существует:
+    //
+    // 1. OnDelete(DeleteBehavior.*) - поведение при удалении задаётся ТОЛЬКО через fluent API.
+    //    Вызовы HasOne/WithMany здесь нужны лишь чтобы адресовать нужную связь: сама связь и её
+    //    внешний ключ уже описаны атрибутами [ForeignKey]/[InverseProperty].
+    //    Значения не совпадают с конвенцией (обязательный FK по умолчанию Cascade, необязательный -
+    //    ClientSetNull), поэтому убрать их нельзя - схема изменится.
+    // 2. HasDefaultValue - значение по умолчанию на стороне БД атрибутом не выражается
+    //    ([DefaultValue] из System.ComponentModel в EF Core не читается).
+    /// <summary>
+    /// Здесь остаётся ТОЛЬКО то, чего нельзя выразить атрибутом на сущности: поведение при удалении
+    /// (аналога [DeleteBehavior] в EF Core не существует) и значение по умолчанию (нет и у него).
+    /// Всё остальное - таблицы, ключи, индексы, длины, обязательность, внешние ключи и парные
+    /// навигации - живёт атрибутами в Entities/. Не переносите это сюда обратно, но и не пытайтесь
+    /// "дочистить" оставшееся в атрибуты: их для этого нет.
+    /// Связи объявлены атрибутами, поэтому HasForeignKey тут не нужен - хватает HasOne/WithMany,
+    /// чтобы дотянуться до нужной связи и задать ей OnDelete.
+    /// </summary>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<SharedPlaylist>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.ShareToken).IsUnique();
-            entity.HasOne(e => e.Creator)
-                  .WithMany(u => u.OwnedPlaylists)
-                  .HasForeignKey(e => e.CreatorUserId)
-                  .OnDelete(DeleteBehavior.Restrict);
-            entity.Property(e => e.YandexPlaylistUuid).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.YandexPlaylistKind).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.YandexPlaylistOwnerUid).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.Title).IsRequired().HasMaxLength(255);
-        });
+        builder.Entity<SharedPlaylist>()
+               .HasOne(e => e.Creator)
+               .WithMany(u => u.OwnedPlaylists)
+               .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<UserSession>(entity =>
-        {
-            entity.HasKey(e => e.SessionId);
-            entity.Property(e => e.SessionId).HasMaxLength(449);
-            entity.HasIndex(e => e.AssociatedUserId);
-            entity.HasOne(e => e.User)
-                  .WithMany()
-                  .HasForeignKey(e => e.AssociatedUserId)
-                  .OnDelete(DeleteBehavior.SetNull);
-        });
+        builder.Entity<UserSession>()
+               .HasOne(e => e.User)
+               .WithMany()
+               .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<TrackAdditionLog>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.SharedPlaylistId, e.TrackId });
             entity.HasOne(e => e.SharedPlaylist)
                   .WithMany(sp => sp.TrackAdditionLogs)
-                  .HasForeignKey(e => e.SharedPlaylistId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.AddedByUser)
                   .WithMany()
-                  .HasForeignKey(e => e.AddedByUserId)
                   .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.Session)
                   .WithMany(s => s.TrackAdditionLogs)
-                  .HasForeignKey(e => e.SessionId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<TrackRemovalLog>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.SharedPlaylistId, e.TrackId });
             entity.HasOne(e => e.SharedPlaylist)
                   .WithMany()
-                  .HasForeignKey(e => e.SharedPlaylistId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.RemovedByUser)
                   .WithMany()
-                  .HasForeignKey(e => e.RemovedByUserId)
                   .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.Session)
                   .WithMany(s => s.TrackRemovalLogs)
-                  .HasForeignKey(e => e.SessionId)
                   .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        builder.Entity<ApplicationUser>(entity =>
-        {
-            entity.HasIndex(e => e.RefreshToken)
-                  .HasDatabaseName("IX_AspNetUsers_RefreshToken");
         });
 
         builder.Entity<FavoritePlaylist>(entity =>
         {
-            entity.HasKey(e => new { e.UserId, e.SharedPlaylistId });
             entity.HasOne(e => e.User)
                   .WithMany(u => u.FavoritePlaylists)
-                  .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.SharedPlaylist)
                   .WithMany()
-                  .HasForeignKey(e => e.SharedPlaylistId)
                   .OnDelete(DeleteBehavior.Cascade);
-            entity.Property(e => e.AddedAtUtc).IsRequired();
         });
-
 
         builder.Entity<YandexAuthSession>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id)
-                .ValueGeneratedOnAdd();
             entity.HasOne(e => e.User)
                   .WithMany()
-                  .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.SetNull);
-            entity.Property(e => e.QrCodeUrl)
-                .IsRequired()
-                .HasMaxLength(500);
-            entity.Property(e => e.ConfirmedAt)
-                .IsRequired(false);
             entity.Property(e => e.IsConfirmed)
-                .IsRequired()
-                .HasDefaultValue(false);
-            entity.HasIndex(e => e.UserId)
-                .HasDatabaseName("IX_YandexAuthSessions_UserId");
+                  .HasDefaultValue(false);
         });
     }
 }
