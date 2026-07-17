@@ -199,8 +199,6 @@ internal static class DekaTokens
         OutlinedBorder = "1px solid var(--flare-color-outline)",
         OutlinedRadius = "var(--flare-shape-small)",
         FilledBorderBottom = "1px solid var(--flare-color-outline)",
-        FocusBorder = "1px solid var(--flare-color-primary)",
-        FocusBorderBottom = "1px solid var(--flare-color-primary)",
         // Focus indicator (Flare 0.2.0, drawn by input.css on :focus-within as a layout-neutral box-shadow):
         // a full 1px primary ring inside the field well, matching the Deka look where the edge tints primary.
         FocusRing = "inset 0 0 0 1px var(--fc-main, var(--flare-color-primary))",

@@ -105,19 +105,14 @@
 
             <FlareHidden Below="Breakpoint.Md">
                 <!-- Громкость -->
-                @* mouseenter/mouseleave здесь - НЕ дубль триггера Flare, а обход его бага: панель
-                   лежит в DOM внутри обёртки, поэтому обёртка знает, что курсор внутри, даже когда
-                   он на слайдере. Flare этого не понимает и всё равно велит закрыться (см. ниже). *@
                 <div class="deka-player-volume"
-                     @onmouseenter="() => _volumeHovered = true"
-                     @onmouseleave="() => _volumeHovered = false"
                      @onwheel="OnVolumeHandleWheel"
                      @onclick="Swallow" @onclick:stopPropagation="true"
                      style="position: relative; display: flex; align-items: center;">
 
-                    @* Trigger=Hover вместо самодельных mouseenter/mouseleave: панель отстоит от
-                       кнопки на Offset, и наш mouseleave срабатывал, едва курсор шёл к слайдеру -
-                       до громкости было не дотянуться. У Flare для этого зазора есть HideDelay.
+                    @* Trigger=Hover, а не самодельные mouseenter/mouseleave: панель отстоит от кнопки
+                       на Offset, и свой mouseleave срабатывал бы, едва курсор пошёл к слайдеру - до
+                       громкости было не дотянуться. У Flare для этого зазора есть HideDelay.
                        Он же убирает второй клик по mute: backdrop, перехватывавший первый клик,
                        рисуется только когда триггер НЕ Hover.
                        @bind-Open обязателен и с этим триггером: FlarePopover контролируемый -
@@ -125,12 +120,7 @@
                        Без привязки событие улетает в никуда и панель не открывается вовсе.
                        MinWidth="auto" снимает штатные 192px панели: они рассчитаны на меню, а тут
                        вертикальный слайдер шириной 12px - панель выходила пустой коробкой. *@
-                    @* Offset=0 убирает зазор между кнопкой и панелью: пока его нет, курсор идёт с
-                       кнопки на слайдер, не покидая обёртку, и скрытие вообще не запускается.
-                       HideDelay=500 (штатные 120) - запас на диагональный уход и возврат. *@
-                    <FlarePopover Trigger="PopoverTrigger.Hover"
-                                  Open="_volumeIsOpen" OpenChanged="OnVolumeOpenChanged"
-                                  HideDelay="500" Offset="0"
+                    <FlarePopover Trigger="PopoverTrigger.Hover" @bind-Open="_volumeIsOpen"
                                   Placement="PopoverPlacement.Top" MinWidth="auto">
                         <AnchorContent>
                             <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? "volume_off" : "volume_up")"
@@ -192,8 +182,6 @@
 
     // Громкость: наведением заведует FlarePopover (Trigger=Hover), но состояние панели - наше.
     private bool _volumeIsOpen;
-    /// <summary>Курсор внутри блока громкости (кнопка или панель) - по нашим mouseenter/mouseleave.</summary>
-    private bool _volumeHovered;
     private double _volumeBeforeMute;
     private double _bufferSecond;
 
@@ -381,20 +369,6 @@
     private async Task ChangeVolume(double value)
     {
         await AudioPlayerService.SetVolumeAsync(value);
-    }
-
-    /// <summary>
-    /// Обход бага FlarePopover: его HandleMouseEnter выходит по условию `|| Open` РАНЬШЕ строки
-    /// `++_hoverGen`, а именно этот счётчик отменяет ждущее скрытие. Значит возврат курсора в
-    /// открытую панель таймер не сбрасывает, и она гаснет прямо под мышкой. Игнорируем команду
-    /// закрыться, пока курсор внутри блока громкости - открыть панель мы Flare по-прежнему даём.
-    /// Заведён issue popover-hover-reentry-does-not-cancel-hide; когда починят - убрать вместе с
-    /// _volumeHovered и вернуть @bind-Open.
-    /// </summary>
-    private void OnVolumeOpenChanged(bool open)
-    {
-        if (!open && _volumeHovered) return;
-        _volumeIsOpen = open;
     }
 
     private async Task ToggleMute()
