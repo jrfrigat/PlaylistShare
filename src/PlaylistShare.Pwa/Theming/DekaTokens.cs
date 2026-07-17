@@ -195,6 +195,9 @@ internal static class DekaTokens
 
     private static readonly InputTokens Input = new()
     {
+        // Появился в Flare 0.8.0: размер ведущей/замыкающей иконки поля, включая раскрывающий
+        // переключатель у date/time-пикеров - это одна и та же деталь поля, поэтому и токен один.
+        IconSize = "1.25rem",
         FilledBg = "var(--flare-color-surface-container-low)",
         OutlinedBorder = "1px solid var(--flare-color-outline)",
         OutlinedRadius = "var(--flare-shape-small)",
@@ -750,13 +753,19 @@ internal static class DekaTokens
         PanelGap = "1rem",
     };
 
-    private static readonly DropzoneTokens Dropzone = new()
+    // Flare 0.8.0 свёл FlareDropZone и FlareFileUpload в одно семейство, поэтому DropzoneTokens стал
+    // FileUploadTokens. Компонентов загрузки в приложении нет, но тема обязана задать все токены.
+    private static readonly FileUploadTokens FileUpload = new()
     {
         BorderWidth = "2px",
         HoverBg = "color-mix(in srgb, var(--flare-color-primary) 5%, var(--flare-color-surface))",
         DraggingBg = "color-mix(in srgb, var(--flare-color-primary) 10%, var(--flare-color-surface))",
         DraggingRingWidth = "2px",
         IconSize = "2.5rem",
+        // Три токена появились в 0.8.0: раньше эти значения были литералами в CSS компонента.
+        ZoneMinHeight = "10rem",
+        ZoneRadius = "var(--flare-shape-large)",
+        FileIconSize = "1.25rem",
     };
 
     private static readonly FormTokens Form = new()
@@ -878,7 +887,7 @@ internal static class DekaTokens
         AppBar = AppBar,
         Breadcrumb = Breadcrumb,
         DateTimePicker = DateTimePicker,
-        Dropzone = Dropzone,
+        FileUpload = FileUpload,
         Form = Form,
         Layout = Layout,
         Link = Link,

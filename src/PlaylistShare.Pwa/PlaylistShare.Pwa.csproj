@@ -12,8 +12,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.*" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.*" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.*" />
-    <PackageReference Include="Flare.Blazor" Version="0.7.0" />
-    <PackageReference Include="Flare.Components.QrCode" Version="0.7.0" />
+    <PackageReference Include="Flare.Blazor" Version="0.8.0" />
+    <PackageReference Include="Flare.Components.QrCode" Version="0.8.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
