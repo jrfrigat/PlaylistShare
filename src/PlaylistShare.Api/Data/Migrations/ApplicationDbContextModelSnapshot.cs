@@ -234,8 +234,7 @@ namespace PlaylistShare.Api.Data.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.HasIndex("RefreshToken")
-                        .HasDatabaseName("IX_AspNetUsers_RefreshToken");
+                    b.HasIndex("RefreshToken");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -255,7 +254,7 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.HasIndex("SharedPlaylistId");
 
-                    b.ToTable("FavoritePlaylists");
+                    b.ToTable("FavoritePlaylists", (string)null);
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.SharedPlaylist", b =>
@@ -325,7 +324,7 @@ namespace PlaylistShare.Api.Data.Migrations
                     b.HasIndex("ShareToken")
                         .IsUnique();
 
-                    b.ToTable("SharedPlaylists");
+                    b.ToTable("SharedPlaylists", (string)null);
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.TrackAdditionLog", b =>
@@ -342,6 +341,7 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.Property<string>("SessionId")
                         .IsRequired()
+                        .HasMaxLength(449)
                         .HasColumnType("nvarchar(449)");
 
                     b.Property<Guid>("SharedPlaylistId")
@@ -355,39 +355,9 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.HasIndex("AddedByUserId");
 
-                    b.HasIndex("SessionId");
-
                     b.HasIndex("SharedPlaylistId", "TrackId");
 
-                    b.ToTable("TrackAdditionLogs");
-                });
-
-            modelBuilder.Entity("PlaylistShare.Api.Entities.UserSession", b =>
-                {
-                    b.Property<string>("SessionId")
-                        .HasMaxLength(449)
-                        .HasColumnType("nvarchar(449)");
-
-                    b.Property<Guid?>("AssociatedUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ClientIpAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("FirstSeenUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("LastSeenUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("SessionId");
-
-                    b.HasIndex("AssociatedUserId");
-
-                    b.ToTable("UserSessions");
+                    b.ToTable("TrackAdditionLogs", (string)null);
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.YandexAuthSession", b =>
@@ -419,10 +389,9 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_YandexAuthSessions_UserId");
+                    b.HasIndex("UserId");
 
-                    b.ToTable("YandexAuthSessions");
+                    b.ToTable("YandexAuthSessions", (string)null);
                 });
 
             modelBuilder.Entity("TrackRemovalLog", b =>
@@ -439,6 +408,7 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.Property<string>("SessionId")
                         .IsRequired()
+                        .HasMaxLength(449)
                         .HasColumnType("nvarchar(449)");
 
                     b.Property<Guid>("SharedPlaylistId")
@@ -452,11 +422,9 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.HasIndex("RemovedByUserId");
 
-                    b.HasIndex("SessionId");
-
                     b.HasIndex("SharedPlaylistId", "TrackId");
 
-                    b.ToTable("TrackRemovalLogs");
+                    b.ToTable("TrackRemovalLogs", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -547,12 +515,6 @@ namespace PlaylistShare.Api.Data.Migrations
                         .HasForeignKey("AddedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("PlaylistShare.Api.Entities.UserSession", "Session")
-                        .WithMany("TrackAdditionLogs")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("PlaylistShare.Api.Entities.SharedPlaylist", "SharedPlaylist")
                         .WithMany("TrackAdditionLogs")
                         .HasForeignKey("SharedPlaylistId")
@@ -561,19 +523,7 @@ namespace PlaylistShare.Api.Data.Migrations
 
                     b.Navigation("AddedByUser");
 
-                    b.Navigation("Session");
-
                     b.Navigation("SharedPlaylist");
-                });
-
-            modelBuilder.Entity("PlaylistShare.Api.Entities.UserSession", b =>
-                {
-                    b.HasOne("PlaylistShare.Api.Entities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("AssociatedUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.YandexAuthSession", b =>
@@ -593,12 +543,6 @@ namespace PlaylistShare.Api.Data.Migrations
                         .HasForeignKey("RemovedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("PlaylistShare.Api.Entities.UserSession", "Session")
-                        .WithMany("TrackRemovalLogs")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("PlaylistShare.Api.Entities.SharedPlaylist", "SharedPlaylist")
                         .WithMany()
                         .HasForeignKey("SharedPlaylistId")
@@ -606,8 +550,6 @@ namespace PlaylistShare.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("RemovedByUser");
-
-                    b.Navigation("Session");
 
                     b.Navigation("SharedPlaylist");
                 });
@@ -622,13 +564,6 @@ namespace PlaylistShare.Api.Data.Migrations
             modelBuilder.Entity("PlaylistShare.Api.Entities.SharedPlaylist", b =>
                 {
                     b.Navigation("TrackAdditionLogs");
-                });
-
-            modelBuilder.Entity("PlaylistShare.Api.Entities.UserSession", b =>
-                {
-                    b.Navigation("TrackAdditionLogs");
-
-                    b.Navigation("TrackRemovalLogs");
                 });
 #pragma warning restore 612, 618
         }

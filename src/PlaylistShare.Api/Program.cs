@@ -117,7 +117,6 @@ public class Program
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddAuthorization();
         builder.Services.AddScoped<JwtService>();
-        builder.Services.AddScoped<UserSessionService>();
 
         // Data Protection key ring lives on a mounted volume (see docker-compose.yml), NOT in the
         // database. The path comes from DataProtection:KeysPath (env DataProtection__KeysPath, e.g.

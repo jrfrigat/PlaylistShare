@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PlaylistShare.Api.Data;
@@ -11,9 +12,11 @@ using PlaylistShare.Api.Data;
 namespace PlaylistShare.Api.Data.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDbContext))]
-    partial class PostgresDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717110825_DropUserSessions")]
+    partial class DropUserSessions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -252,7 +255,7 @@ namespace PlaylistShare.Api.Data.Migrations.Postgres
 
                     b.HasIndex("SharedPlaylistId");
 
-                    b.ToTable("FavoritePlaylists", (string)null);
+                    b.ToTable("FavoritePlaylists");
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.SharedPlaylist", b =>
@@ -322,7 +325,7 @@ namespace PlaylistShare.Api.Data.Migrations.Postgres
                     b.HasIndex("ShareToken")
                         .IsUnique();
 
-                    b.ToTable("SharedPlaylists", (string)null);
+                    b.ToTable("SharedPlaylists");
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.TrackAdditionLog", b =>
@@ -355,7 +358,7 @@ namespace PlaylistShare.Api.Data.Migrations.Postgres
 
                     b.HasIndex("SharedPlaylistId", "TrackId");
 
-                    b.ToTable("TrackAdditionLogs", (string)null);
+                    b.ToTable("TrackAdditionLogs");
                 });
 
             modelBuilder.Entity("PlaylistShare.Api.Entities.YandexAuthSession", b =>
@@ -389,7 +392,7 @@ namespace PlaylistShare.Api.Data.Migrations.Postgres
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("YandexAuthSessions", (string)null);
+                    b.ToTable("YandexAuthSessions");
                 });
 
             modelBuilder.Entity("TrackRemovalLog", b =>
@@ -422,7 +425,7 @@ namespace PlaylistShare.Api.Data.Migrations.Postgres
 
                     b.HasIndex("SharedPlaylistId", "TrackId");
 
-                    b.ToTable("TrackRemovalLogs", (string)null);
+                    b.ToTable("TrackRemovalLogs");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

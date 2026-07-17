@@ -15,6 +15,13 @@ public class TrackAdditionLog
     public string TrackId { get; set; } = null!;
     public Guid? AddedByUserId { get; set; }
     public DateTime AddedAtUtc { get; set; }
+
+    /// <summary>
+    /// HttpContext.Session.Id - им отличаем анонимов друг от друга (AddedByUserOnly).
+    /// Длину задаём явно: раньше её навязывал внешний ключ на UserSessions, и без неё колонка
+    /// стала бы nvarchar(max)/text - незачем переписывать журнал ради строки в 36 символов.
+    /// </summary>
+    [MaxLength(449)]
     public string SessionId { get; set; } = null!;
 
     [ForeignKey(nameof(SharedPlaylistId))]
@@ -23,8 +30,4 @@ public class TrackAdditionLog
 
     [ForeignKey(nameof(AddedByUserId))]
     public ApplicationUser? AddedByUser { get; set; }
-
-    [ForeignKey(nameof(SessionId))]
-    [InverseProperty(nameof(UserSession.TrackAdditionLogs))]
-    public UserSession Session { get; set; } = null!;
 }

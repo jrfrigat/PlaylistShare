@@ -17,7 +17,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<SharedPlaylist> SharedPlaylists => Set<SharedPlaylist>();
     public DbSet<TrackAdditionLog> TrackAdditionLogs => Set<TrackAdditionLog>();
     public DbSet<TrackRemovalLog> TrackRemovalLogs => Set<TrackRemovalLog>();
-    public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<YandexAuthSession> YandexAuthSessions => Set<YandexAuthSession>();
 
     // Таблицы, ключи, индексы, длины и внешние ключи заданы атрибутами на самих сущностях
@@ -48,11 +47,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
                .WithMany(u => u.OwnedPlaylists)
                .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<UserSession>()
-               .HasOne(e => e.User)
-               .WithMany()
-               .OnDelete(DeleteBehavior.SetNull);
-
         builder.Entity<TrackAdditionLog>(entity =>
         {
             entity.HasOne(e => e.SharedPlaylist)
@@ -60,9 +54,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.AddedByUser)
                   .WithMany()
-                  .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(e => e.Session)
-                  .WithMany(s => s.TrackAdditionLogs)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -73,9 +64,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.RemovedByUser)
                   .WithMany()
-                  .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(e => e.Session)
-                  .WithMany(s => s.TrackRemovalLogs)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

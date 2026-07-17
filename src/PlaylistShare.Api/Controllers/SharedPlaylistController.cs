@@ -14,7 +14,6 @@ public class SharedPlaylistController : ControllerBase
 {
     private readonly SharedPlaylistService _sharedService;
     private readonly YandexMusicService _yandexService;
-    private readonly UserSessionService _userSessionService;
     private readonly TrackAdditionLogService _trackAdditionLogService;
     private readonly TrackRemovalLogService _trackRemovalLogService;
 
@@ -22,14 +21,12 @@ public class SharedPlaylistController : ControllerBase
         SharedPlaylistService sharedService,
         YandexMusicService yandexService,
         TrackAdditionLogService trackAdditionLogService,
-        TrackRemovalLogService trackRemovalLogService,
-        UserSessionService userSessionService)
+        TrackRemovalLogService trackRemovalLogService)
     {
         _sharedService = sharedService;
         _yandexService = yandexService;
         _trackAdditionLogService = trackAdditionLogService;
         _trackRemovalLogService = trackRemovalLogService;
-        _userSessionService = userSessionService;
     }
 
     // GET /api/sharedplaylist/{token}
@@ -72,7 +69,7 @@ public class SharedPlaylistController : ControllerBase
             playlist,
             currentUserId,
             dto.Tracks.Select(t => t.TrackId).ToList(),
-            async ct => (await _userSessionService.GetOrCreateCurrentSessionAsync(currentUserId, ct)).SessionId,
+            _ => Task.FromResult(HttpContext.GetStableSessionId()),
             cancellationToken);
 
         return Ok(ApiResponse<YandexPlaylistData>.Ok(dto));
@@ -128,8 +125,7 @@ public class SharedPlaylistController : ControllerBase
         // Треки уже лежат в плейлисте Яндекса - отменить это мы не можем, поэтому журнал дописываем
         // без токена отмены. Иначе ушедший клиент оставил бы треки без записей о том, кто их добавил,
         // а по ним решается, кому можно их удалять (RemovePermission.AddedByUserOnly).
-        var session = await _userSessionService.GetOrCreateCurrentSessionAsync(currentUserId, CancellationToken.None);
-        var sessionId = session.SessionId;
+        var sessionId = HttpContext.GetStableSessionId();
         foreach (var trackId in request.TrackIds)
         {
             await _trackAdditionLogService.LogAdditionAsync(playlist.Id, trackId, currentUserId, sessionId, CancellationToken.None);
@@ -163,13 +159,12 @@ public class SharedPlaylistController : ControllerBase
         if (playlist == null)
             return NotFound(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 404, Message = "Плейлист не найден" }));
 
-        // Просмотр - предусловие правки (см. AddTracks). Проверяем до создания сессии: незачем
-        // заводить строку в БД тому, кому и смотреть-то нельзя.
+        // Просмотр - предусловие правки (см. AddTracks). Проверяем до обращения к сессии: незачем
+        // заводить сессию тому, кому и смотреть-то нельзя.
         if (!_sharedService.CanView(playlist, currentUserId))
             return Unauthorized(ApiResponse<object>.Fail(new ErrorResponse { StatusCode = 401, Message = "Недостаточно прав" }));
 
-        var session = await _userSessionService.GetOrCreateCurrentSessionAsync(currentUserId, cancellationToken);
-        var sessionId = session.SessionId;
+        var sessionId = HttpContext.GetStableSessionId();
 
         foreach (var trackId in request.TrackIds)
         {

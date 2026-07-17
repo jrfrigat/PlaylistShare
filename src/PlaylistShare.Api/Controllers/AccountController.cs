@@ -16,14 +16,12 @@ public class AccountController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly JwtService _jwtService;
-    private readonly UserSessionService _userSessionService;
 
-    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JwtService jwtService, UserSessionService userSessionService)
+    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JwtService jwtService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtService = jwtService;
-        _userSessionService = userSessionService;
     }
 
     [HttpPost("register")]
@@ -42,7 +40,7 @@ public class AccountController : ControllerBase
                 Message = string.Join(", ", result.Errors.Select(e => e.Description))
             }));
 
-        return await GenerateTokenResponse(user, cancellationToken);
+        return await GenerateTokenResponse(user);
     }
 
     [HttpPost("login")]
@@ -56,13 +54,11 @@ public class AccountController : ControllerBase
         if (!result.Succeeded)
             return Unauthorized(ApiResponse<LoginResponse>.Fail(new ErrorResponse { StatusCode = 401, Message = "Неверное имя пользователя или пароль" }));
 
-        return await GenerateTokenResponse(user, cancellationToken);
+        return await GenerateTokenResponse(user);
     }
 
-    private async Task<ActionResult<ApiResponse<LoginResponse>>> GenerateTokenResponse(ApplicationUser user, CancellationToken cancellationToken)
+    private async Task<ActionResult<ApiResponse<LoginResponse>>> GenerateTokenResponse(ApplicationUser user)
     {
-        await _userSessionService.GetOrCreateCurrentSessionAsync(user.Id, cancellationToken);
-
         var (token, refreshToken, expiration) = await _jwtService.GenerateTokenAsync(user);
         return Ok(ApiResponse<LoginResponse>.Ok(new LoginResponse
         {
@@ -80,6 +76,6 @@ public class AccountController : ControllerBase
         if (user == null)
             return Unauthorized(ApiResponse<LoginResponse>.Fail(new ErrorResponse { StatusCode = 401, Message = "Неверный или просроченный refresh token" }));
 
-        return await GenerateTokenResponse(user, cancellationToken);
+        return await GenerateTokenResponse(user);
     }
 }
