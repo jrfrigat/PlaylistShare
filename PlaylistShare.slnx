@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/PlaylistShare.Api.Tests/PlaylistShare.Api.Tests.csproj" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>

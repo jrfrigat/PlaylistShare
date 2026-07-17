@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<!-- MinVer тянет версию из git-тега, тестовой сборке это не нужно и только замедляет билд. -->
+		<MinVerSkip>true</MinVerSkip>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+		<PackageReference Include="xunit" Version="2.9.3" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+		<!-- Нужен только тестам CanRemoveTrackAsync: у TrackAdditionLogService нет интерфейса и нет
+		     virtual-методов, подменить его заглушкой нельзя, поэтому его настоящий экземпляр строится
+		     поверх InMemory-провайдера. Проверки прав из пункта CanView/CanPlay/CanAddTrack базу не
+		     трогают вообще. -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.9" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Тесты работают с HttpContext/ProblemDetails, а Microsoft.NET.Sdk сам по себе
+		     ASP.NET Core не подключает. -->
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<ProjectReference Include="..\..\src\PlaylistShare.Api\PlaylistShare.Api.csproj" />
+	</ItemGroup>
+
+</Project>
