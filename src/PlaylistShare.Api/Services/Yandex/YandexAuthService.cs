@@ -46,13 +46,14 @@ public class YandexAuthService
     }
 
     /// <summary>Возвращает действующую попытку входа пользователя или создаёт новую.</summary>
-    internal async Task<YandexAuthQr> GetQrOrGenerate(ApplicationUser user)
+    internal async Task<YandexAuthQr> GetQrOrGenerate(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         var cutoff = DateTime.UtcNow.Subtract(AttemptLifetime);
         var recent = await _dbContext.YandexAuthSessions
+            .AsNoTracking()
             .Where(s => s.UserId == user.Id && !s.IsConfirmed && s.CreatedAt > cutoff)
             .OrderByDescending(s => s.CreatedAt)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         // Переиспользуем существующую попытку, только если она ещё жива в кэше памяти.
         foreach (var session in recent)
@@ -63,17 +64,23 @@ public class YandexAuthService
             }
         }
 
-        return await GenerateQrAsync(user);
+        return await GenerateQrAsync(user, cancellationToken);
     }
 
     /// <summary>Создаёт новую попытку: запрашивает device-code у OAuth Яндекса и сохраняет её состояние.</summary>
-    internal async Task<YandexAuthQr> GenerateQrAsync(ApplicationUser user)
+    internal async Task<YandexAuthQr> GenerateQrAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         var client = new YandexMusicClient();
         DeviceCode code;
         try
         {
-            code = await client.Authentication.RequestDeviceCodeAsync();
+            code = await client.Authentication.RequestDeviceCodeAsync(cancellationToken: cancellationToken);
+        }
+        // Отмену пробрасываем как есть: обернув её в Exception, мы бы отдали клиенту 500 вместо 499.
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            client.Dispose();
+            throw;
         }
         catch
         {
@@ -90,7 +97,7 @@ public class YandexAuthService
         };
 
         _dbContext.YandexAuthSessions.Add(session);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         CacheAttempt(session.Id, new DeviceAttempt(client, code));
 
@@ -98,9 +105,9 @@ public class YandexAuthService
     }
 
     /// <summary>Опрашивает статус попытки один раз.</summary>
-    internal async Task<YandexAuthQrCheck?> CheckQrAsync(int sessionId)
+    internal async Task<YandexAuthQrCheck?> CheckQrAsync(int sessionId, CancellationToken cancellationToken = default)
     {
-        var session = await _dbContext.YandexAuthSessions.FindAsync(sessionId);
+        var session = await _dbContext.YandexAuthSessions.FindAsync([sessionId], cancellationToken);
         if (session is null)
             return null;
 
@@ -110,7 +117,14 @@ public class YandexAuthService
         OAuthToken? token;
         try
         {
-            token = await attempt.Client.Authentication.PollDeviceTokenAsync(attempt.Code.Code);
+            token = await attempt.Client.Authentication.PollDeviceTokenAsync(attempt.Code.Code, cancellationToken: cancellationToken);
+        }
+        // Ушедший клиент - не повод хоронить попытку входа: страницу опрашивают раз в пару секунд,
+        // и любой оборванный опрос иначе выбрасывал бы из кэша ещё живой device-code. Проверяем
+        // именно наш токен, чтобы таймаут самого HttpClient по-прежнему считался ошибкой.
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -127,11 +141,20 @@ public class YandexAuthService
 
         AuthorizedAccessToken = token.AccessToken;
 
-        session.IsConfirmed = true;
-        session.ConfirmedAt = DateTime.UtcNow;
+        // Отмечать сессию подтверждённой незачем и опасно: строку всё равно сносим следующей же
+        // командой, а SaveChanges между этим нет - значения никуда не сохранялись. При этом session
+        // получена через FindAsync, то есть отслеживается: присвоение помечало её Modified, а
+        // ExecuteDeleteAsync удаляет строку мимо трекера. Дальше контроллер сохраняет токен через
+        // UserManager, тот вызывает SaveChanges на ЭТОМ ЖЕ scoped-контексте (Identity делит его с
+        // нами), EF пробует UPDATE удалённой строки, получает 0 строк и бросает
+        // DbUpdateConcurrencyException - 500 сразу после успешного входа по QR.
+        //
+        // Дальше без токена отмены: код у Яндекса уже обменян на access-токен и повторно не
+        // опрашивается. Оборви мы уборку здесь - контроллер не успел бы сохранить токен, и
+        // подтверждённый вход пропал бы, заставляя пользователя проходить QR заново.
         await _dbContext.YandexAuthSessions
             .Where(t => t.UserId == session.UserId)
-            .ExecuteDeleteAsync();
+            .ExecuteDeleteAsync(CancellationToken.None);
 
         _cache.Remove(CacheKey(sessionId)); // disposes the cached client via the eviction callback
 
