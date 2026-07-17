@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using PlaylistShare.Api.Data;
 using PlaylistShare.Api.Entities;
+using PlaylistShare.Api.Extensions;
 using PlaylistShare.Api.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -172,6 +173,12 @@ public class Program
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+
+        // Единая обработка необработанных исключений: до неё они уходили клиенту голым 500 без тела
+        // и без записи в логах. AddProblemDetails нужен, чтобы и остальные ошибки конвейера
+        // (404, 415 и прочие) отвечали в том же формате, а не пустотой.
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
         builder.Services.AddOpenApi(options =>
         {
             // Advertise JWT Bearer in the OpenAPI doc so Swagger shows an "Authorize" button and sends
@@ -225,6 +232,10 @@ public class Program
                 }
             }
         }
+
+        // Первым в конвейере: он ловит только то, что упало НИЖЕ по цепочке, поэтому всё, что должно
+        // быть под его защитой, обязано регистрироваться после.
+        app.UseExceptionHandler();
 
         app.MapOpenApi();
         // The .NET OpenAPI package only serves the raw document (/openapi/v1.json); Swashbuckle's UI
