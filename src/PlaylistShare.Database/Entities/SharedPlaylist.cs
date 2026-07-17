@@ -10,6 +10,10 @@ namespace PlaylistShare.Database.Entities;
 [Index(nameof(ShareToken), IsUnique = true)]
 public class SharedPlaylist
 {
+    /// <summary>Предел длины названия. Один источник для колонки и для обрезки при создании
+    /// (название приходит из Яндекса и может быть длиннее - см. SharedPlaylistService.CreateAsync).</summary>
+    public const int TitleMaxLength = 255;
+
     [Key]
     public Guid Id { get; set; }
     public Guid CreatorUserId { get; set; }
@@ -27,7 +31,7 @@ public class SharedPlaylist
     public string YandexPlaylistOwnerUid { get; set; } = null!;
 
     [Required]
-    [MaxLength(255)]
+    [MaxLength(TitleMaxLength)]
     public string Title { get; set; } = null!;
 
     public string? Description { get; set; }

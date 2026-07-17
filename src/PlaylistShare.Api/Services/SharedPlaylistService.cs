@@ -27,7 +27,10 @@ public class SharedPlaylistService
             YandexPlaylistUuid = dto.YandexPlaylistUuid,
             YandexPlaylistKind = dto.YandexPlaylistKind,
             YandexPlaylistOwnerUid = dto.YandexPlaylistOwnerUid,
-            Title = dto.Title,
+            // Название приходит из Яндекса, а не от клиента, поэтому валидацией на границе его длину
+            // не поймать: слишком длинное имя роняло бы SaveChanges на колонке nvarchar(255).
+            // Обрезаем до лимита колонки (единый источник - SharedPlaylist.TitleMaxLength).
+            Title = Truncate(dto.Title, SharedPlaylist.TitleMaxLength),
             Description = dto.Description,
             CoverUrl = dto.CoverUrl,
             CreatedAt = DateTime.UtcNow,
@@ -162,6 +165,10 @@ public class SharedPlaylistService
         var playlist = await _db.SharedPlaylists.FindAsync([playlistId], cancellationToken);
         return playlist != null && playlist.CreatorUserId == userId;
     }
+
+    /// <summary>Обрезает строку до max символов; значение короче лимита возвращает как есть.</summary>
+    private static string Truncate(string value, int max) =>
+        value.Length <= max ? value : value[..max];
 
     private string GenerateToken()
     {
