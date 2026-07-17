@@ -131,23 +131,23 @@ public class SharedPlaylistCanRemoveTrackTests : IDisposable
     }
 
     /// <summary>
-    /// Оборотная сторона правила "тот же пользователь ИЛИ та же сессия": трек, добавленный другим
-    /// залогиненным пользователем ИЗ ЭТОЙ ЖЕ серверной сессии (общий браузер, предыдущий разлогинился),
-    /// считается своим. Раньше здесь было False - сверялся только AddedByUserId, и из-за этого свой же
-    /// трек нельзя было удалить после логина. Правило поменяли осознанно.
+    /// Общий компьютер: пользователь A залогинен и добавил трек, потом в том же браузере разлогинился
+    /// и зашёл B. Серверная сессия у браузера одна на всех, кто в нём побывал, поэтому совпадение
+    /// сессии тут есть - но трек добавлен из-под учётки A, и снять его может только A. Сессия чужую
+    /// учётку не перебивает: она лишь замена учётки для анонима.
     /// </summary>
     [Fact]
-    public async Task AddedByUserOnly_совпадение_сессии_даёт_авторизованному_трек_из_его_сессии()
+    public async Task AddedByUserOnly_совпадение_сессии_не_даёт_авторизованному_трек_чужой_учётки()
     {
         SeedAddition(addedByUserId: ThirdUserId, sessionId: OwnSession);
 
-        Assert.True(await CanRemove(NewPlaylist(EditPermission.AddedByUserOnly), OtherUserId));
+        Assert.False(await CanRemove(NewPlaylist(EditPermission.AddedByUserOnly), OtherUserId));
     }
 
     /// <summary>
-    /// Починенный баг: аноним добавил трек (в журнале AddedByUserId=null, SessionId=его), затем
-    /// залогинился в том же браузере. Совпадения по AddedByUserId нет, но сессия та же - трек его.
-    /// На старом XOR-предикате этот тест падал.
+    /// Обратная сторона того же правила и причина, по которой сессия вообще участвует: аноним добавил
+    /// трек (в журнале AddedByUserId=null, SessionId=его), затем залогинился в том же браузере.
+    /// Совпадения по AddedByUserId нет, но добавление анонимное и сессия та же - трек его.
     /// </summary>
     [Fact]
     public async Task AddedByUserOnly_залогинившийся_удаляет_трек_добавленный_им_же_анонимно()
@@ -204,15 +204,16 @@ public class SharedPlaylistCanRemoveTrackTests : IDisposable
     }
 
     /// <summary>
-    /// Аноним сверяется только по SessionId, поэтому строка, добавленная залогиненным пользователем
-    /// из той же сессии, для анонима всё равно "своя". Фиксируем как есть: сессия одна и та же.
+    /// Та же дыра, мягче: залогиненный добавил трек и разлогинился в том же браузере. Сессия совпала,
+    /// но добавление сделано из-под учётки, а у анонима её нет - предъявить ему нечего. Учётка сильнее
+    /// сессии, поэтому разлогин отбирает право снять свой же трек, и это правильный размен.
     /// </summary>
     [Fact]
-    public async Task AddedByUserOnly_аноним_удаляет_трек_добавленный_из_его_сессии_залогиненным()
+    public async Task AddedByUserOnly_аноним_не_удаляет_трек_добавленный_из_его_сессии_залогиненным()
     {
         SeedAddition(addedByUserId: ThirdUserId, sessionId: OwnSession);
 
-        Assert.True(await CanRemove(NewPlaylist(EditPermission.AddedByUserOnly), null));
+        Assert.False(await CanRemove(NewPlaylist(EditPermission.AddedByUserOnly), null));
     }
 
     // ---------- Область поиска в журнале ----------

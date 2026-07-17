@@ -29,41 +29,48 @@ public class TrackAdditionLogService
     }
 
     /// <summary>
-    /// Трек добавлен тем же пользователем ИЛИ из той же сессии. Предикат обязан совпадать с
+    /// Трек добавлен этим же человеком? Предикат обязан совпадать с
     /// <see cref="GetTrackIdsAddedByUserOrSessionAsync"/> - меняя одно, меняйте и второе.
     ///
-    /// Проверка userId != null внутри скобки обязательна, НЕ упрощать до
-    /// "l.AddedByUserId == userId || l.SessionId == sessionId": у анонима userId равен null, и тогда
-    /// первое сравнение выродилось бы в "AddedByUserId == null", то есть совпало бы со ВСЕМИ
-    /// анонимными добавлениями любых чужих сессий - любой аноним удалял бы чужие треки.
+    /// Правило: учётка опознаёт человека надёжно, сессия - только слабый заменитель для АНОНИМА,
+    /// у которого учётки нет. Поэтому совпадение сессии засчитывается лишь для треков, добавленных
+    /// анонимно (AddedByUserId == null). Если трек добавлен из-под учётки, снять его может только
+    /// эта учётка: сессия чужую учётку не перебивает никогда. Иначе на общем компьютере хватило бы
+    /// разлогиниться и зайти под собой, чтобы получить чужие треки - серверная сессия у браузера
+    /// одна на всех, кто в нём побывал.
     ///
-    /// Сравнение по сессии намеренно работает и для авторизованного: аноним добавил трек, потом
-    /// залогинился - трек остаётся его, потому что сессия та же. Обратное тоже следует отсюда:
-    /// разлогинившись в том же браузере, пользователь всё ещё видит свои добавления как свои.
+    /// Проверка userId != null внутри первой скобки обязательна, НЕ упрощать до
+    /// "l.AddedByUserId == userId": у анонима userId равен null, сравнение выродилось бы в
+    /// "AddedByUserId == null" и совпало бы со ВСЕМИ анонимными добавлениями любых чужих сессий.
+    ///
+    /// Вторая скобка сохраняет нужный случай: аноним добавил трек, потом залогинился - трек остаётся
+    /// его, потому что добавлен он был анонимно и из этой же сессии.
     /// SessionId - серверный HttpContext.Session.Id, подделать его клиент не может.
     /// </summary>
     public async Task<bool> IsTrackAddedByCurrentUserOrSessionAsync(Guid sharedPlaylistId, string trackId, Guid? userId, string sessionId, CancellationToken cancellationToken = default)
     {
         return await _db.TrackAdditionLogs
             .AnyAsync(l => l.SharedPlaylistId == sharedPlaylistId && l.TrackId == trackId &&
-                ((userId != null && l.AddedByUserId == userId) || l.SessionId == sessionId), cancellationToken);
+                ((userId != null && l.AddedByUserId == userId) ||
+                 (l.AddedByUserId == null && l.SessionId == sessionId)), cancellationToken);
     }
 
     /// <summary>
     /// Пакетный аналог <see cref="IsTrackAddedByCurrentUserOrSessionAsync"/>: все треки плейлиста,
-    /// добавленные этим пользователем или из этой сессии, одним запросом. Предикат тот же, только без
-    /// фильтра по TrackId - вызывающий сверяется с множеством в памяти, вместо того чтобы ходить в
-    /// журнал за каждым треком по отдельности.
+    /// добавленные этим же человеком, одним запросом. Предикат тот же, только без фильтра по TrackId -
+    /// вызывающий сверяется с множеством в памяти, вместо того чтобы ходить в журнал за каждым треком
+    /// по отдельности.
     ///
-    /// Про userId != null внутри скобки см. IsTrackAddedByCurrentUserOrSessionAsync: без неё аноним
-    /// получил бы все чужие анонимные добавления. Не упрощать.
+    /// Про смысл обеих скобок см. IsTrackAddedByCurrentUserOrSessionAsync: учётка опознаёт человека,
+    /// сессия - лишь замена учётки для анонима, поэтому чужую учётку она не перебивает. Не упрощать.
     /// </summary>
     public async Task<HashSet<string>> GetTrackIdsAddedByUserOrSessionAsync(Guid sharedPlaylistId, Guid? userId, string sessionId, CancellationToken cancellationToken = default)
     {
         var trackIds = await _db.TrackAdditionLogs
             .AsNoTracking()
             .Where(l => l.SharedPlaylistId == sharedPlaylistId &&
-                ((userId != null && l.AddedByUserId == userId) || l.SessionId == sessionId))
+                ((userId != null && l.AddedByUserId == userId) ||
+                 (l.AddedByUserId == null && l.SessionId == sessionId)))
             .Select(l => l.TrackId)
             .Distinct()
             .ToListAsync(cancellationToken);

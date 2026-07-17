@@ -36,10 +36,13 @@ public class SharedPlaylistGetRemovableTrackIdsTests : IDisposable
     private const string TrackForeign = "track-foreign";
     /// <summary>Добавлен анонимом из ЧУЖОЙ сессии - тоже ничей (сторож наивного OR, см. SeedMixedJournal).</summary>
     private const string TrackAnonForeign = "track-anon-foreign";
+    /// <summary>Добавлен ЧУЖОЙ учёткой из OwnSession - ничей: сессия чужую учётку не перебивает.</summary>
+    private const string TrackForeignUserOwnSession = "track-foreign-user-own-session";
     /// <summary>Трек, которого нет в журнале вовсе.</summary>
     private const string TrackUnlogged = "track-unlogged";
 
-    private static readonly string[] AllTracks = [TrackOwnUser, TrackOwnSession, TrackForeign, TrackAnonForeign, TrackUnlogged];
+    private static readonly string[] AllTracks =
+        [TrackOwnUser, TrackOwnSession, TrackForeign, TrackAnonForeign, TrackForeignUserOwnSession, TrackUnlogged];
 
     /// <summary>Вид пользователя: xunit не умеет класть Guid? в InlineData, поэтому передаём признак.</summary>
     public enum Actor { Creator, Authorized, Anonymous }
@@ -104,9 +107,11 @@ public class SharedPlaylistGetRemovableTrackIdsTests : IDisposable
 
     /// <summary>
     /// Журнал со смесью владельцев: каждый случай предиката разведён по своему треку. TrackOwnUser
-    /// ловится только совпадением пользователя, TrackOwnSession - только совпадением сессии, а
-    /// TrackAnonForeign не должен достаться никому: он и есть сторож наивного OR (у анонима
-    /// "AddedByUserId == userId" выродилось бы в "== null" и подцепило бы его).
+    /// ловится только совпадением пользователя, TrackOwnSession - только совпадением сессии, а два
+    /// трека не должны достаться никому, и каждый сторожит свою ошибку. TrackAnonForeign - сторож
+    /// наивного OR: у анонима "AddedByUserId == userId" выродилось бы в "== null" и подцепило бы его.
+    /// TrackForeignUserOwnSession - сторож общего компьютера: сессия та же, но добавлен он из-под
+    /// чужой учётки, и засчитывать совпадение сессии тут нельзя ни авторизованному, ни анониму.
     /// </summary>
     private void SeedMixedJournal()
     {
@@ -114,6 +119,7 @@ public class SharedPlaylistGetRemovableTrackIdsTests : IDisposable
         SeedAddition(TrackOwnSession, addedByUserId: null, sessionId: OwnSession);
         SeedAddition(TrackForeign, addedByUserId: ThirdUserId, sessionId: ForeignSession);
         SeedAddition(TrackAnonForeign, addedByUserId: null, sessionId: ForeignSession);
+        SeedAddition(TrackForeignUserOwnSession, addedByUserId: ThirdUserId, sessionId: OwnSession);
         // TrackUnlogged не засеваем намеренно.
     }
 
@@ -194,9 +200,12 @@ public class SharedPlaylistGetRemovableTrackIdsTests : IDisposable
 
     // ---------- Раздача признака внутри AddedByUserOnly ----------
 
-    /// <summary>Авторизованному засчитываются и свои добавления, и добавления из его сессии.</summary>
+    /// <summary>
+    /// Авторизованному засчитываются свои добавления по учётке и АНОНИМНЫЕ добавления из его сессии.
+    /// TrackForeignUserOwnSession в набор не попадает: сессия та же, но учётка чужая.
+    /// </summary>
     [Fact]
-    public async Task AddedByUserOnly_авторизованный_получает_треки_по_пользователю_и_по_сессии()
+    public async Task AddedByUserOnly_авторизованный_получает_свои_треки_и_анонимные_из_своей_сессии()
     {
         SeedMixedJournal();
 
@@ -204,11 +213,11 @@ public class SharedPlaylistGetRemovableTrackIdsTests : IDisposable
     }
 
     /// <summary>
-    /// Аноним получает только свою сессию. TrackAnonForeign - тоже анонимное добавление, но из чужой
-    /// сессии: он не должен попасть в набор ни при каких обстоятельствах.
+    /// Аноним получает только анонимные добавления своей сессии. TrackAnonForeign анонимный, но из
+    /// чужой сессии; TrackForeignUserOwnSession из его сессии, но под чужой учёткой - оба мимо.
     /// </summary>
     [Fact]
-    public async Task AddedByUserOnly_аноним_получает_только_треки_своей_сессии()
+    public async Task AddedByUserOnly_аноним_получает_только_анонимные_треки_своей_сессии()
     {
         SeedMixedJournal();
 
