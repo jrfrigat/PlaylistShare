@@ -113,12 +113,48 @@ public class SharedPlaylistService
         {
             EditPermission.Everyone => true,
             EditPermission.AuthorizedOnly => currentUserId.HasValue,
-            EditPermission.AddedByUserOnly when currentUserId.HasValue =>
+            EditPermission.AddedByUserOnly =>
                 await _trackLogService.IsTrackAddedByCurrentUserOrSessionAsync(playlist.Id, trackId, currentUserId, sessionId, cancellationToken),
-            EditPermission.AddedByUserOnly when !currentUserId.HasValue =>
-                await _trackLogService.IsTrackAddedByCurrentUserOrSessionAsync(playlist.Id, trackId, null, sessionId, cancellationToken),
             _ => false
         };
+    }
+
+    /// <summary>
+    /// Пакетный аналог <see cref="CanRemoveTrackAsync"/>: возвращает подмножество trackIds, которые
+    /// текущий пользователь вправе удалить. Набор правил обязан совпадать с CanRemoveTrackAsync
+    /// ветка в ветку - меняя одно, меняйте и второе.
+    ///
+    /// Считаем пачкой, а не вызовом CanRemoveTrackAsync в цикле, потому что цикл дал бы по запросу к
+    /// журналу на каждый трек: в реальных плейлистах их сотни, и один показ страницы стоил бы сотен
+    /// запросов. Everyone / AuthorizedOnly / Nobody отвечают одинаково для всех треков - на этих
+    /// ветках в БД не идём совсем; только AddedByUserOnly тянет журнал плейлиста ОДНИМ запросом и
+    /// дальше раздаёт признак в памяти.
+    ///
+    /// sessionIdFactory, а не готовый sessionId: сессия нужна только ветке AddedByUserOnly, а её
+    /// получение само стоит запросов - на остальных ветках её не трогаем.
+    /// </summary>
+    public async Task<HashSet<string>> GetRemovableTrackIdsAsync(
+        SharedPlaylist playlist,
+        Guid? currentUserId,
+        IReadOnlyCollection<string> trackIds,
+        Func<CancellationToken, Task<string>> sessionIdFactory,
+        CancellationToken cancellationToken = default)
+    {
+        if (currentUserId == playlist.CreatorUserId) return trackIds.ToHashSet();
+        return playlist.RemovePermission switch
+        {
+            EditPermission.Everyone => trackIds.ToHashSet(),
+            EditPermission.AuthorizedOnly => currentUserId.HasValue ? trackIds.ToHashSet() : new HashSet<string>(),
+            EditPermission.AddedByUserOnly =>
+                await FilterAddedByAsync(playlist.Id, trackIds, currentUserId, await sessionIdFactory(cancellationToken), cancellationToken),
+            _ => new HashSet<string>()
+        };
+    }
+
+    private async Task<HashSet<string>> FilterAddedByAsync(Guid playlistId, IReadOnlyCollection<string> trackIds, Guid? userId, string sessionId, CancellationToken cancellationToken)
+    {
+        var addedByMe = await _trackLogService.GetTrackIdsAddedByUserOrSessionAsync(playlistId, userId, sessionId, cancellationToken);
+        return trackIds.Where(addedByMe.Contains).ToHashSet();
     }
 
     public async Task<bool> IsCreatorAsync(Guid playlistId, Guid userId, CancellationToken cancellationToken = default)

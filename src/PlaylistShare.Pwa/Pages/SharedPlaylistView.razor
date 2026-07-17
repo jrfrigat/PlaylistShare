@@ -160,7 +160,7 @@
                                        IsCurrentTrack="@(AudioPlayerService.CurrentTrackId == track.TrackId)"
                                        AddedByName="@(_trackAdditions.TryGetValue(track.TrackId, out var n) ? n : null)" />
                         </div>
-                        @if (_canRemove)
+                        @if (_removableTrackIds.Contains(track.TrackId))
                         {
                             <div class="deka-track-remove">
                                 <FlareIconButton Icon="more_vert" Size="ButtonSize.Sm" OnClick="() => OnRemoveTrack(track)" AriaLabel="Удалить трек" />
@@ -191,8 +191,12 @@
     private bool _canPlay;
     /// <summary>Пользователь имеет право добавления треков в плейлист.</summary>
     private bool _canAdd;
-    /// <summary>Пользователь имеет право удаления треков из плейлиста.</summary>
-    private bool _canRemove;
+    /// <summary>
+    /// Id треков, которые пользователю разрешено удалить. Приходит готовым с сервера вместе с
+    /// треками: право на удаление зависит от того, кто добавил трек (RemovePermission.AddedByUserOnly),
+    /// и на клиенте не вычисляется.
+    /// </summary>
+    private HashSet<string> _removableTrackIds = new();
     /// <summary>Пользователь авторизован из под учетной записи.</summary>
     private bool _isAuthenticated;
     /// <summary>Текущий ID пользователя, если авторизован.</summary>
@@ -294,7 +298,6 @@
         {
             _isCreator = false;
             _canAdd = false;
-            _canRemove = false;
             _canPlay = false;
         }
         else
@@ -305,9 +308,8 @@
             || _playlist.AddPermission == EditPermission.Everyone
             || (_playlist.AddPermission == EditPermission.AuthorizedOnly && _isAuthenticated);
 
-            _canRemove = _isCreator
-            || _playlist.RemovePermission == EditPermission.Everyone
-            || (_playlist.RemovePermission == EditPermission.AuthorizedOnly && _isAuthenticated);
+            // Право на удаление тут не считаем: его на каждый трек отдаёт сервер в
+            // YandexPlaylistData.RemovableTrackIds (см. _removableTrackIds).
 
             _canPlay = _isCreator
             || _playlist.PlayPermission == ViewPermission.Everyone
@@ -359,6 +361,7 @@
             if (response?.Success == true && response.Data != null)
             {
                 _tracks = response.Data.Tracks;
+                _removableTrackIds = response.Data.RemovableTrackIds;
                 _existingTrackIds = _tracks.Select(t => t.TrackId).ToHashSet();
                 _playlistDurationMs = _tracks.Sum(t => t.DurationMs);
                 _playlistTrackCount = _tracks.Count();

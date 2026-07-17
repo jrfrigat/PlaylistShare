@@ -68,6 +68,13 @@ public class SharedPlaylistController : ControllerBase
         if (dto == null)
             return NotFound(ApiResponse<YandexPlaylistData>.Fail(new ErrorResponse { StatusCode = 404, Message = "Плейлист не найден в Яндекс.Музыке" }));
 
+        dto.RemovableTrackIds = await _sharedService.GetRemovableTrackIdsAsync(
+            playlist,
+            currentUserId,
+            dto.Tracks.Select(t => t.TrackId).ToList(),
+            async ct => (await _userSessionService.GetOrCreateCurrentSessionAsync(currentUserId, ct)).SessionId,
+            cancellationToken);
+
         return Ok(ApiResponse<YandexPlaylistData>.Ok(dto));
     }
 
