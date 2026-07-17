@@ -38,5 +38,14 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\PlaylistShare.Shared\PlaylistShare.Shared.csproj" />
+		<!--
+			Наборы миграций. Api их код не вызывает, но ссылки обязаны быть: MigrationsAssembly
+			грузит сборку по имени через Assembly.Load, а тот ищет её в deps.json. Без
+			ProjectReference сборки там не окажется и Database.Migrate() на старте упадёт с
+			FileNotFoundException, даже если dll лежит рядом с Api.dll.
+			PlaylistShare.Database подтягивается транзитивно через них.
+		-->
+		<ProjectReference Include="..\PlaylistShare.Database.SqlServer\PlaylistShare.Database.SqlServer.csproj" />
+		<ProjectReference Include="..\PlaylistShare.Database.Postgres\PlaylistShare.Database.Postgres.csproj" />
 	</ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PlaylistShare.Api.Entities;
+using PlaylistShare.Database.Entities;
 using PlaylistShare.Api.Services;
 using PlaylistShare.Shared;
 using PlaylistShare.Shared.Auth;

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+		Набор миграций SqlServer. Существует отдельной сборкой только ради MigrationsAssembly:
+		так у каждого провайдера свой набор миграций и свой снапшот при одном ApplicationDbContext.
+		Ссылка идёт СЮДА из PlaylistShare.Api, а не наоборот: Api грузит эту сборку по имени через
+		Assembly.Load, а тот резолвится через deps.json - без ProjectReference файл рядом с Api.dll
+		не помог бы.
+	-->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- IDesignTimeDbContextFactory. PrivateAssets: инструмент разработчика, в прод не едет. -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\PlaylistShare.Database\PlaylistShare.Database.csproj" />
+	</ItemGroup>
+
+</Project>

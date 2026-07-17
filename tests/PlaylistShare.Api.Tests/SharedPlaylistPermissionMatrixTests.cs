@@ -1,4 +1,4 @@
-using PlaylistShare.Api.Entities;
+using PlaylistShare.Database.Entities;
 using PlaylistShare.Api.Services;
 using PlaylistShare.Shared.Enums;
 using Xunit;

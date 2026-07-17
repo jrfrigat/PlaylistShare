@@ -15,6 +15,9 @@ services:
       # docker-compose.postgres.yml overlay (run-docker-compose-postgres.bat), which overrides these.
       - Database__Provider=${DB_PROVIDER:-SqlServer}
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+      # Optional query retries (EnableRetryOnFailure). 0 = off = previous behaviour.
+      - Database__MaxRetryCount=${DB_MAX_RETRY_COUNT:-0}
+      - Database__MaxRetryDelay=${DB_MAX_RETRY_DELAY:-30}
       - Jwt__Key=${JWT_KEY}
       # Data Protection key ring lives on the mounted volume, not in the database.
       - DataProtection__KeysPath=/keys

@@ -1,5 +1,9 @@
 <Solution>
-  <Folder Name="/src/" />
+  <Folder Name="/src/">
+    <Project Path="src/PlaylistShare.Database.Postgres/PlaylistShare.Database.Postgres.csproj" />
+    <Project Path="src/PlaylistShare.Database.SqlServer/PlaylistShare.Database.SqlServer.csproj" />
+    <Project Path="src/PlaylistShare.Database/PlaylistShare.Database.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PlaylistShare.Api.Tests/PlaylistShare.Api.Tests.csproj" />
   </Folder>

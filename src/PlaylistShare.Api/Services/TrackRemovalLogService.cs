@@ -1,4 +1,5 @@
-﻿using PlaylistShare.Api.Data;
+﻿using PlaylistShare.Database;
+using PlaylistShare.Database.Entities;
 
 public class TrackRemovalLogService
 {

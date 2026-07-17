@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
-using PlaylistShare.Api.Entities;
+using PlaylistShare.Database.Entities;
 using YandexMusic;
 
 namespace PlaylistShare.Api.Services;

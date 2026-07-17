@@ -8,6 +8,10 @@ WORKDIR /repo
 # Directory.Build.props must be present so the projects pick up <TargetFramework>.
 COPY ["Directory.Build.props", "./"]
 COPY ["src/PlaylistShare.Shared/PlaylistShare.Shared.csproj", "src/PlaylistShare.Shared/"]
+# Сборки миграций: Api ссылается на них ради MigrationsAssembly, restore без них не пройдёт.
+COPY ["src/PlaylistShare.Database/PlaylistShare.Database.csproj", "src/PlaylistShare.Database/"]
+COPY ["src/PlaylistShare.Database.SqlServer/PlaylistShare.Database.SqlServer.csproj", "src/PlaylistShare.Database.SqlServer/"]
+COPY ["src/PlaylistShare.Database.Postgres/PlaylistShare.Database.Postgres.csproj", "src/PlaylistShare.Database.Postgres/"]
 COPY ["src/PlaylistShare.Api/PlaylistShare.Api.csproj", "src/PlaylistShare.Api/"]
 RUN dotnet restore "src/PlaylistShare.Api/PlaylistShare.Api.csproj"
 

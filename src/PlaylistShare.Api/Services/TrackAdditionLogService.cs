@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PlaylistShare.Api.Data;
-using PlaylistShare.Api.Entities;
+using PlaylistShare.Database;
+using PlaylistShare.Database.Entities;
 
 namespace PlaylistShare.Api.Services;
 

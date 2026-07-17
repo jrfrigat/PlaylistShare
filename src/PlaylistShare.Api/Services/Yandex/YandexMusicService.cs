@@ -1,4 +1,4 @@
-using PlaylistShare.Api.Entities;
+using PlaylistShare.Database.Entities;
 using PlaylistShare.Api.Extensions;
 using PlaylistShare.Shared.Enums;
 using PlaylistShare.Shared.Yandex;

@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using PlaylistShare.Api.Data;
-using PlaylistShare.Api.Entities;
 using PlaylistShare.Api.Extensions;
 using PlaylistShare.Api.Services;
+using PlaylistShare.Database;
+using PlaylistShare.Database.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -26,23 +26,11 @@ public class Program
         // Add services to the container.
         JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
-        // DbContext. The provider is selectable via Database:Provider (env Database__Provider):
-        // "SqlServer" (default) or "Postgres". Each provider has its own DbContext subclass carrying a
-        // provider-specific EF Core migration set (Data/Migrations vs Data/Migrations/Postgres); the app
-        // always injects ApplicationDbContext, which is mapped to the active one.
-        var dbProvider = builder.Configuration["Database:Provider"] ?? "SqlServer";
-        var usePostgres = string.Equals(dbProvider, "Postgres", StringComparison.OrdinalIgnoreCase);
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-        if (usePostgres)
-        {
-            builder.Services.AddDbContext<PostgresDbContext>(options => options.UseNpgsql(connectionString));
-            builder.Services.AddScoped<ApplicationDbContext>(sp => sp.GetRequiredService<PostgresDbContext>());
-        }
-        else
-        {
-            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-        }
+        // DbContext. Провайдер задаётся через Database:Provider (env Database__Provider):
+        // "SqlServer" (по умолчанию) или "Postgres". Контекст один на оба: набор миграций каждому
+        // даёт своя сборка (см. UseConnection), а не свой подкласс контекста.
+        var dbConnection = builder.Configuration.GetDBConnection();
+        builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseConnection(dbConnection));
         // Identity
         builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
         {
@@ -57,24 +45,30 @@ public class Program
 
         // Session store (distributed cache), kept in the same database as the chosen provider so
         // session ids survive an API restart, exactly as on SQL Server.
-        if (usePostgres)
+        // Ветвление явное и без "иначе SqlServer": неизвестный провайдер тут - та же ошибка
+        // конфигурации, что и в UseConnection, и падать она должна так же громко.
+        if (DBConnectionExtensions.Is(dbConnection.Provider, DBConnectionExtensions.Postgres))
         {
             builder.Services.AddDistributedPostgreSqlCache(options =>
             {
-                options.ConnectionString = connectionString;
+                options.ConnectionString = dbConnection.ConnectionString;
                 options.SchemaName = "public";
                 options.TableName = "SessionCache";
                 options.CreateInfrastructure = true; // auto-create the cache table (no EF migration for it)
             });
         }
-        else
+        else if (DBConnectionExtensions.Is(dbConnection.Provider, DBConnectionExtensions.SqlServer))
         {
             builder.Services.AddDistributedSqlServerCache(options =>
             {
-                options.ConnectionString = connectionString;
+                options.ConnectionString = dbConnection.ConnectionString;
                 options.SchemaName = "dbo";
                 options.TableName = "SessionCache";
             });
+        }
+        else
+        {
+            throw DBConnectionExtensions.UnsupportedProvider(dbConnection.Provider);
         }
 
         builder.Services.AddSession(options =>
@@ -208,11 +202,15 @@ public class Program
         // Apply pending EF Core migrations on startup so a fresh deployment self-provisions its schema
         // without a manual `dotnet ef database update`. Retried so the API can start before the database
         // container is ready (Docker) and wait for it instead of crash-looping.
+        //
+        // Этот цикл НЕ дублирует Database:MaxRetryCount (EnableRetryOnFailure) и не заменяется им.
+        // EnableRetryOnFailure - стратегия поверх УЖЕ ОТКРЫТОГО соединения: она ретраит запросы по
+        // транзиентным кодам ошибок провайдера. Пока контейнер БД не поднялся, соединение не
+        // устанавливается вовсе, и до стратегии дело не доходит - Migrate() падает целиком.
+        // Цикл ниже закрывает именно окно старта БД; они дополняют друг друга, а не спорят.
         using (var scope = app.Services.CreateScope())
         {
-            var db = usePostgres
-                ? scope.ServiceProvider.GetRequiredService<PostgresDbContext>()
-                : scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             const int maxAttempts = 12;
             for (var attempt = 1; ; attempt++)

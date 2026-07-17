@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using PlaylistShare.Api.Data;
-using PlaylistShare.Api.Entities;
+using PlaylistShare.Database;
+using PlaylistShare.Database.Entities;
 using PlaylistShare.Shared.Enums;
 using PlaylistShare.Shared.Yandex;
 using YandexMusic;
