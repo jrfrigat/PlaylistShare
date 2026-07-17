@@ -5,6 +5,54 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-17
+
+A backend release. Most of it is invisible from the outside - the data layer moved into its own
+projects, the model is configured with attributes, requests are validated, and errors are logged
+instead of vanishing. The visible part is access control: editing a shared playlist now needs the
+right to view it, and a shared computer no longer lets one person touch another's tracks.
+
+### Added
+
+- **Requests are validated at the boundary** - a value that would not fit the database is rejected
+  with a 400 instead of failing deep inside a save.
+- **Unhandled errors now carry a trace id** and are written to the log. Before, an unexpected error
+  reached the client as an empty 500 and left nothing behind to trace it by.
+- **The database connection can retry** on a transient failure (`Database:MaxRetryCount` /
+  `Database:MaxRetryDelay`, both off by default, so nothing changes unless you set them).
+
+### Changed
+
+- **The database model and migrations moved into their own projects** (`PlaylistShare.Database` plus a
+  migration project per provider). There is now one `DbContext` instead of a subclass per provider,
+  and the provider is chosen by configuration. An unknown provider name now fails loudly at startup
+  instead of quietly falling back to SQL Server.
+- **The EF model is configured with attributes on the entities** rather than in `OnModelCreating`.
+- **Removed the `UserSessions` table.** Nothing read it, and it was gaining a row on every request
+  because the session id was never stable. The track logs keep the session id as a plain value.
+- **Requests are cancelled properly** - if the caller goes away, the work against the database and
+  Yandex stops instead of running to completion.
+- Updated Flare from 0.6.0 to **0.8.0**.
+
+### Fixed
+
+- **A 500 right after signing in with QR.** The sign-in row was marked confirmed and then deleted in
+  the same step, and the next save tried to update a row that was already gone.
+- **A playlist title longer than 255 characters crashed creation.** Titles come from Yandex, not from
+  the client, so they are now truncated to the column length instead of failing the save.
+- **"Only who added it can remove it" now works for anonymous listeners.** The session id used to
+  change on every request, so the match never held; it is stable now.
+- Removed dead code (an unused request type that was never wired to anything).
+
+### Security
+
+- **Editing a shared playlist now requires the right to view it.** With view limited to signed-in
+  users but adding open to everyone, a stranger with the link could change a playlist they were not
+  even allowed to open.
+- **A shared browser session no longer unlocks someone else's track.** On a shared computer the next
+  person to sign in could remove the previous one's track, because a session match beat a different
+  account. A session now only counts for tracks that were added anonymously.
+
 ## [1.1.0] - 2026-07-17
 
 A player release: the mini player is half the height it was, the progress bar is a thin line at its
