@@ -1,7 +1,7 @@
 @using PlaylistShare.Shared.Yandex
 
 <div class="deka-entity-card" @onclick="HandleClick">
-    <FlareAvatar Size="AvatarSize.Xl" Src="@Item.CoverUrl.FormatCoverUrl(Size, Size)" Alt="@Item.Name" FallbackIcon="album" Class="deka-entity-card-cover" />
+    <FlareAvatar Size="AvatarSize.Xl" Src="@Item.CoverUrl.FormatCoverUrl(Size, Size)" Alt="@Item.Name" FallbackIcon="@MaterialDesign3Icons.Regular.Album" Class="deka-entity-card-cover" />
     <FlareText Typo="TypographyScale.BodySmall" Weight="FontWeight.SemiBold" Align="TextAlign.Center" Class="deka-entity-card-title">@Item.Name</FlareText>
 </div>
 

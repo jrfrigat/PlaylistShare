@@ -23,7 +23,7 @@
     {
         <section class="deka-section">
             <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-section-heading">
-                <FlareIcon Name="favorite" SizePx="20" Color="FlareColor.Primary" />
+                <FlareIconView Value="@MaterialDesign3Icons.Regular.Favorite" SizePx="20" Color="FlareColor.Primary" />
                 <FlareText Typo="TypographyScale.TitleLarge">Избранное</FlareText>
             </FlareStack>
             <div class="deka-card-grid">
@@ -38,7 +38,7 @@
                             else
                             {
                                 <div class="deka-tile-cover-placeholder">
-                                    <FlareIcon Name="library_music" SizePx="36" />
+                                    <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" SizePx="36" />
                                 </div>
                             }
                             <div class="deka-tile-cover-shade"></div>
@@ -49,7 +49,7 @@
                             <FlareText Typo="TypographyScale.BodySmall" Class="deka-tile-owner-name">@playlist.Creator?.UserName</FlareText>
                         </FlareStack>
                         <div class="deka-tile-action" @onclick:stopPropagation="true">
-                            <FlareIconButton Icon="favorite"
+                            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Favorite"
                                               Color="FlareColor.Error"
                                               AriaLabel="Удалить из избранного"
                                               OnClick="@(() => RemoveFromFavorites(playlist))" />
@@ -66,7 +66,7 @@
             <FlareText Typo="TypographyScale.HeadlineMedium">Мои плейлисты</FlareText>
         </div>
         <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-sync-indicator">
-            <FlareIcon Name="schedule" SizePx="17" />
+            <FlareIconView Value="@MaterialDesign3Icons.Regular.Schedule" SizePx="17" />
             <span>Синхронизировано</span>
         </FlareStack>
     </FlareStack>
@@ -93,12 +93,12 @@
                         else
                         {
                             <div class="deka-tile-cover-placeholder">
-                                <FlareIcon Name="library_music" SizePx="36" />
+                                <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" SizePx="36" />
                             </div>
                         }
                         <div class="deka-tile-cover-shade"></div>
                         <FlareStack Row Gap="FlareSpacing.XXSmall" Align="FlareAlignItems.Center" Class="deka-tile-count">
-                            <FlareIcon Name="music_note" SizePx="13" />
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.MusicNote" SizePx="13" />
                             <span>@playlist.TrackCount</span>
                         </FlareStack>
                     </div>
@@ -107,7 +107,7 @@
                         @(playlist.IsShared ? "Расшарен" : "Не расшарен")
                     </FlareText>
                     <div class="deka-tile-action" @onclick:stopPropagation="true">
-                        <FlareIconButton Icon="ios_share"
+                        <FlareIconButton Icon="@MaterialDesign3Icons.Regular.IosShare"
                                           AriaLabel="Поделиться"
                                           OnClick="@(() => SharePlaylist(playlist))" />
                     </div>

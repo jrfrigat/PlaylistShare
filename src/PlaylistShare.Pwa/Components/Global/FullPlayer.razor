@@ -15,13 +15,13 @@
 
         <div class="deka-full-player-content">
             <FlareStack Row Align="FlareAlignItems.Center" Justify="FlareJustifyContent.SpaceBetween" Class="deka-full-player-header">
-                <FlareIconButton Icon="expand_more" Variant="ButtonVariant.Tonal" Color="@_accent"
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.KeyboardArrowDown" Variant="ButtonVariant.Tonal" Color="@_accent"
                                  Shape="ButtonShape.Circular" AriaLabel="Свернуть" OnClick="Close" />
                 <FlareStack Gap="FlareSpacing.None" Align="FlareAlignItems.Center">
                     <FlareText Typo="TypographyScale.LabelSmall" Color="@_accent">СЛУШАЕМ ПЛЕЙЛИСТ</FlareText>
                     <FlareText Typo="TypographyScale.BodyMedium" Color="@_accent">@Context</FlareText>
                 </FlareStack>
-                <FlareIconButton Icon="graphic_eq" Variant="ButtonVariant.Tonal" Color="@_accent"
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.GraphicEq" Variant="ButtonVariant.Tonal" Color="@_accent"
                                  Shape="ButtonShape.Circular" AriaLabel="Скоро будет доступно" OnClick="Noop" />
             </FlareStack>
 
@@ -46,15 +46,17 @@
                 </FlareStack>
 
                 <FlareStack Row Align="FlareAlignItems.Center" Justify="FlareJustifyContent.SpaceBetween" Class="deka-full-player-transport">
-                    <FlareIconButton Icon="shuffle" Variant="ButtonVariant.Text" Color="@_accent" OnClick="Noop" />
-                    <FlareIconButton Icon="skip_previous" Variant="ButtonVariant.Text" Size="ButtonSize.Lg" Color="@_accent"
+                    <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Shuffle" Variant="ButtonVariant.Text" Color="@_accent" OnClick="Noop" />
+                    <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipPrevious" Variant="ButtonVariant.Text" Size="ButtonSize.Lg" Color="@_accent"
                                      Disabled="@(!AudioPlayerService.HasPrevious)" OnClick="@(() => AudioPlayerService.PlayPreviousAsync())" />
-                    <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? "pause" : "play_arrow")"
+                    @* Play/pause берём Filled-вариантом каталога напрямую (MaterialDesign3Icons.Filled) -
+                       он рисует залитый глиф сам; прежний FILL-трюк deka.css на webfont-span'е больше не нужен. *@
+                    <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? MaterialDesign3Icons.Filled.Pause : MaterialDesign3Icons.Filled.PlayArrow)"
                                      Variant="ButtonVariant.Filled" Color="@_accent" Shape="ButtonShape.Circular"
                                      Size="ButtonSize.Xl" Class="deka-play-toggle deka-play-toggle--filled" OnClick="TogglePlay" />
-                    <FlareIconButton Icon="skip_next" Variant="ButtonVariant.Text" Size="ButtonSize.Lg" Color="@_accent"
+                    <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipNext" Variant="ButtonVariant.Text" Size="ButtonSize.Lg" Color="@_accent"
                                      Disabled="@(!AudioPlayerService.HasNext)" OnClick="@(() => AudioPlayerService.PlayNextAsync())" />
-                    <FlareIconButton Icon="repeat" Variant="ButtonVariant.Text" Color="@_accent" OnClick="Noop" />
+                    <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Repeat" Variant="ButtonVariant.Text" Color="@_accent" OnClick="Noop" />
                 </FlareStack>
             </div>
         </div>

@@ -24,7 +24,7 @@
                 {
                     @if (AppBar.ShowBack)
                     {
-                        <FlareIconButton Icon="arrow_back" Variant="ButtonVariant.Text"
+                        <FlareIconButton Icon="@MaterialDesign3Icons.Regular.ArrowBack" Variant="ButtonVariant.Text"
                                          OnClick="OnAppBarBack" AriaLabel="Назад" Class="deka-mobile-back" />
                     }
                     <span class="deka-mobile-appbar-title" title="@AppBar.Title">@AppBar.Title</span>
@@ -78,17 +78,17 @@
             <AuthorizeView>
                 <Authorized>
                     <FlareNavLink Href="/my-playlists">
-                        <Icon><FlareIcon Name="queue_music" /></Icon>
+                        <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></Icon>
                         <ChildContent>Плейлисты</ChildContent>
                     </FlareNavLink>
                     <FlareNavLink Href="/search">
-                        <Icon><FlareIcon Name="search" /></Icon>
+                        <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" /></Icon>
                         <ChildContent>Поиск</ChildContent>
                     </FlareNavLink>
                 </Authorized>
                 <NotAuthorized>
                     <FlareNavLink Href="/login">
-                        <Icon><FlareIcon Name="login" /></Icon>
+                        <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Login" /></Icon>
                         <ChildContent>Вход</ChildContent>
                     </FlareNavLink>
                 </NotAuthorized>

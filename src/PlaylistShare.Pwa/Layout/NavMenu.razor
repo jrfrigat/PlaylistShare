@@ -12,17 +12,17 @@
         <AuthorizeView>
             <Authorized>
                 <FlareNavLink Href="/my-playlists">
-                    <Icon><FlareIcon Name="queue_music" /></Icon>
+                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></Icon>
                     <ChildContent>Мои плейлисты</ChildContent>
                 </FlareNavLink>
                 <FlareNavLink Href="/search">
-                    <Icon><FlareIcon Name="search" /></Icon>
+                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" /></Icon>
                     <ChildContent>Поиск</ChildContent>
                 </FlareNavLink>
             </Authorized>
             <NotAuthorized>
                 <FlareNavLink Href="/" Match="NavMatchMode.Exact">
-                    <Icon><FlareIcon Name="home" /></Icon>
+                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Home" /></Icon>
                     <ChildContent>Главная</ChildContent>
                 </FlareNavLink>
             </NotAuthorized>
@@ -39,7 +39,7 @@
             </Authorized>
             <NotAuthorized>
                 <FlareNavLink Href="/login">
-                    <Icon><FlareIcon Name="login" /></Icon>
+                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Login" /></Icon>
                     <ChildContent>Вход</ChildContent>
                 </FlareNavLink>
             </NotAuthorized>

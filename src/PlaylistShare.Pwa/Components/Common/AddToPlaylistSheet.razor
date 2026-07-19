@@ -26,7 +26,7 @@
     {
         <div class="deka-add-sheet-empty">
             <div class="deka-add-sheet-empty-icon">
-                <FlareIcon Name="playlist_add" SizePx="26" />
+                <FlareIconView Value="@MaterialDesign3Icons.Regular.PlaylistAdd" SizePx="26" />
             </div>
             <FlareText Typo="TypographyScale.TitleSmall">Пока некуда добавлять</FlareText>
             <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">
@@ -47,7 +47,7 @@
                     else
                     {
                         <div class="deka-add-sheet-row-cover-fallback">
-                            <FlareIcon Name="library_music" SizePx="20" />
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" SizePx="20" />
                         </div>
                     }
                     <FlareStack Gap="FlareSpacing.None" Class="min-width-0 flex-grow-1 deka-add-sheet-row-text">
@@ -61,11 +61,11 @@
                         }
                         else if (row.Has)
                         {
-                            <FlareIcon Name="check" SizePx="18" />
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.Check" SizePx="18" />
                         }
                         else
                         {
-                            <FlareIcon Name="add" SizePx="18" />
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.Add" SizePx="18" />
                         }
                     </div>
                 </button>

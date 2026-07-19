@@ -44,7 +44,7 @@
         <FlareStack Gap="FlareSpacing.XSmall" Row Align="FlareAlignItems.Center" Class="deka-player-row">
             <!-- Кнопки управления -->
             <div class="deka-player-controls" @onclick="Swallow" @onclick:stopPropagation="true">
-                <FlareIconButton Icon="skip_previous"
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipPrevious"
                                  Variant="ButtonVariant.Text"
                                  Size="ButtonSize.Sm"
                                  Color="FlareColor.Default"
@@ -58,7 +58,8 @@
                     }
 
                     <div class="deka-player-cover-overlay">
-                        <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? "pause" : "play_arrow")"
+                        @* Play/pause берём Filled-вариантом каталога напрямую - залитый глиф без FILL-трюка deka.css. *@
+                        <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? MaterialDesign3Icons.Filled.Pause : MaterialDesign3Icons.Filled.PlayArrow)"
                                          Variant="ButtonVariant.Filled"
                                          Color="FlareColor.Primary"
                                          Shape="ButtonShape.Circular"
@@ -68,7 +69,7 @@
                     </div>
                 </div>
 
-                <FlareIconButton Icon="skip_next"
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipNext"
                                  Variant="ButtonVariant.Text"
                                  Size="ButtonSize.Sm"
                                  Color="FlareColor.Default"
@@ -123,7 +124,7 @@
                     <FlarePopover Trigger="PopoverTrigger.Hover" @bind-Open="_volumeIsOpen"
                                   Placement="PopoverPlacement.Top" MinWidth="auto">
                         <AnchorContent>
-                            <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? "volume_off" : "volume_up")"
+                            <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? MaterialDesign3Icons.Regular.VolumeOff : MaterialDesign3Icons.Regular.VolumeUp)"
                                              Variant="ButtonVariant.Text"
                                              Size="ButtonSize.Sm"
                                              Color="FlareColor.Default"

@@ -294,19 +294,16 @@
 
 .deka-btn-secondary:hover { background: var(--flare-color-surface-container-highest); }
 
-/* Кнопки play/pause: заполненные (FILL 1) иконки Material Symbols. По умолчанию тема
-   рисует их контурными (FILL 0), из-за чего значок на цветной кнопке выглядит "полым"/
-   прозрачным внутри. Глобальный класс (не scoped) достаёт глиф внутри FlareIconButton. */
-.deka-play-toggle .material-symbols-rounded {
-    font-variation-settings: "FILL" 1, "GRAD" 0, "opsz" 24, "wght" 400;
-}
-
 /* Заполненные (Filled) кнопки play/pause: значок красим в контрастный on-цвет.
-   Тема отдаёт глифу цвет primary - совпадающий с фоном кнопки, из-за чего иконка
-   "сливается". Берём локальный --fc-on (у dynamic-color кнопки - контраст к акценту
-   обложки), с откатом на on-primary темы. !important перебивает внутреннее правило Flare. */
-.deka-play-toggle--filled .material-symbols-rounded {
+   Variant=Filled даёт кнопке фон-акцент, но тема красит и SVG-глиф тем же акцентом
+   (как раньше красила webfont-глиф), из-за чего иконка "сливается" с фоном. Берём
+   локальный --fc-on (у dynamic-color кнопки - контраст к акценту обложки), с откатом на
+   on-primary темы. !important перебивает внутреннее правило Flare. Селектор теперь бьёт
+   по инлайновому SVG иконки Flare 0.10, а не по прежнему webfont-span'у: задаём и color
+   (на случай fill=currentColor), и fill (на случай прямой заливки path'а). */
+.deka-play-toggle--filled svg {
     color: var(--fc-on, var(--flare-color-on-primary)) !important;
+    fill: var(--fc-on, var(--flare-color-on-primary)) !important;
 }
 
 /* Прежний глобальный фикс центрирования глифа в icon-only кнопках убран: Flare 0.1.9

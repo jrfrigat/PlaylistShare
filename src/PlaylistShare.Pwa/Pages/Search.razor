@@ -23,7 +23,7 @@
         @if (_hasBackLink)
         {
             <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="GoBack" Class="deka-search-back">
-                <LeadingIcon><FlareIcon Name="arrow_back" /></LeadingIcon>
+                <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.ArrowBack" /></LeadingIcon>
                 <ChildContent>Назад в "@_backName"</ChildContent>
             </FlareButton>
         }
@@ -38,11 +38,11 @@
                 Variant="InputVariant.Outlined"
                 Placeholder="Трек, альбом, исполнитель или плейлист"
                 Class="mb-3">
-        <AdornmentStart><FlareIcon Name="search" Color="FlareColor.Secondary" /></AdornmentStart>
+        <AdornmentStart><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" Color="FlareColor.Secondary" /></AdornmentStart>
         <AdornmentEnd>
             @if (!string.IsNullOrEmpty(_query))
             {
-                <FlareIconButton Icon="close" Size="ButtonSize.Sm" OnClick="ClearSearch" AriaLabel="Очистить" />
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Close" Size="ButtonSize.Sm" OnClick="ClearSearch" AriaLabel="Очистить" />
             }
         </AdornmentEnd>
     </FlareField>
@@ -61,7 +61,7 @@
     @if (_drill != null)
     {
         <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="BackFromDrill" Class="deka-search-back">
-            <LeadingIcon><FlareIcon Name="arrow_back" /></LeadingIcon>
+            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.ArrowBack" /></LeadingIcon>
             <ChildContent>К результатам</ChildContent>
         </FlareButton>
         <FlareText Typo="TypographyScale.TitleLarge" Class="mb-2">@_drill.Label</FlareText>
@@ -129,7 +129,7 @@
     else if (string.IsNullOrWhiteSpace(_query))
     {
         <div class="deka-search-empty">
-            <FlareIcon Name="search" SizePx="36" />
+            <FlareIconView Value="@MaterialDesign3Icons.Regular.Search" SizePx="36" />
             <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
                 Начните вводить название трека, альбома, исполнителя или плейлиста
             </FlareText>
@@ -487,7 +487,7 @@
         </div>
         @if (_hasBackLink)
         {
-            <FlareIconButton Icon="@(_addToTrackIds.Contains(track.TrackId) ? "check" : "add")"
+            <FlareIconButton Icon="@(_addToTrackIds.Contains(track.TrackId) ? MaterialDesign3Icons.Regular.Check : MaterialDesign3Icons.Regular.Add)"
                              Color="@(_addToTrackIds.Contains(track.TrackId) ? FlareColor.Primary : FlareColor.Default)"
                              Disabled="@_busyTrackIds.Contains(track.TrackId)"
                              OnClick="() => ToggleAddToAsync(track)"
@@ -495,7 +495,7 @@
         }
         else
         {
-            <FlareIconButton Icon="playlist_add" OnClick="() => OpenAddSheet(track)" AriaLabel="Добавить в плейлист" />
+            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.PlaylistAdd" OnClick="() => OpenAddSheet(track)" AriaLabel="Добавить в плейлист" />
         }
     </FlareStack>;
 
@@ -506,7 +506,7 @@
         {
             <FlareField TValue="string" @bind-Value="_trackFilter"
                         Variant="InputVariant.Outlined" Placeholder="Фильтр треков..." Class="deka-search-filter">
-                <AdornmentStart><FlareIcon Name="filter_list" Color="FlareColor.Secondary" /></AdornmentStart>
+                <AdornmentStart><FlareIconView Value="@MaterialDesign3Icons.Regular.FilterList" Color="FlareColor.Secondary" /></AdornmentStart>
             </FlareField>
         }
         <FlareStack Gap="FlareSpacing.XSmall">

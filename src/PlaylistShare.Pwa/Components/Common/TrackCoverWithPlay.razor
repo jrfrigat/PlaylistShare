@@ -13,7 +13,8 @@
     @if (CanPlay)
     {
         <div class="deka-track-cover-overlay @(_isHovered || IsCurrentTrackPlaying ? "deka-track-cover-overlay--visible" : "")">
-            <FlareIconButton Icon="@(IsCurrentTrackPlaying ? "pause" : "play_arrow")"
+            @* Play/pause берём Filled-вариантом каталога напрямую - залитый глиф без FILL-трюка deka.css. *@
+            <FlareIconButton Icon="@(IsCurrentTrackPlaying ? MaterialDesign3Icons.Filled.Pause : MaterialDesign3Icons.Filled.PlayArrow)"
                              Variant="ButtonVariant.Text" Color="FlareColor.Default" Size="ButtonSize.Lg"
                              Class="deka-play-toggle" OnClick="OnPlayClick" />
         </div>

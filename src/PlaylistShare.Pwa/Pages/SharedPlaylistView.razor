@@ -35,7 +35,7 @@
        показываем только на десктопе (>=960 = Below Md), где мобильного хедера нет. *@
     <FlareHidden Below="Breakpoint.Md">
         <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="GoBack" Class="deka-back-btn">
-            <LeadingIcon><FlareIcon Name="arrow_back" /></LeadingIcon>
+            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.ArrowBack" /></LeadingIcon>
             <ChildContent>Назад</ChildContent>
         </FlareButton>
     </FlareHidden>
@@ -65,7 +65,7 @@
             else
             {
                 <div class="deka-playlist-cover deka-playlist-cover--fallback deka-playlist-cover--lg">
-                    <FlareIcon Icon="library_music" />
+                    <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" />
                 </div>
             }
 
@@ -98,7 +98,7 @@
             @if (_canAdd)
             {
                 <FlareButton Variant="ButtonVariant.Tonal" OnClick="GoToAddTracks">
-                    <LeadingIcon><FlareIcon Icon="add" /></LeadingIcon>
+                    <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.Add" /></LeadingIcon>
                     <ChildContent>Добавить</ChildContent>
                 </FlareButton>
             }
@@ -106,19 +106,19 @@
             @* Icon-кнопки держим одной группой, чтобы они не разрывались между рядами
                (share то в 1-м ряду, то во 2-м в зависимости от ширины) и шли ровным блоком. *@
             <div class="deka-playlist-icon-actions">
-                <FlareIconButton Icon="ios_share" Variant="ButtonVariant.Tonal" OnClick="SharePlaylist" AriaLabel="Поделиться" />
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.IosShare" Variant="ButtonVariant.Tonal" OnClick="SharePlaylist" AriaLabel="Поделиться" />
 
                 <FlareIconButton Href="@($"https://music.yandex.ru/playlists/{_playlist?.YandexPlaylistUuid}")"
                                  Target="_blank"
                                  Variant="ButtonVariant.Tonal"
                                  AriaLabel="Открыть в Яндекс.Музыке">
-                    <FlareIcon Icon="@CustomIcons.YandexMusic" />
+                    <FlareIconView Value="@CustomIcons.YandexMusic" />
                 </FlareIconButton>
 
                 @* Избранное перенесено из убранного баннера владельца - для не-создателей. *@
                 @if (!_isCreator && _playlist != null)
                 {
-                    <FlareIconButton Icon="@(_isFavorite ? "star" : "star_border")"
+                    <FlareIconButton Icon="@(_isFavorite ? MaterialDesign3Icons.Filled.Star : MaterialDesign3Icons.Regular.Star)"
                                      Variant="ButtonVariant.Tonal"
                                      Color="FlareColor.Warning"
                                      OnClick="ToggleFavorite"
@@ -128,7 +128,7 @@
 
                 @if (_isCreator && _isAuthenticated)
                 {
-                    <FlareIconButton Icon="settings" Variant="ButtonVariant.Tonal" OnClick="OpenPermissionsDialog" AriaLabel="Настройки доступа" />
+                    <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Settings" Variant="ButtonVariant.Tonal" OnClick="OpenPermissionsDialog" AriaLabel="Настройки доступа" />
                 }
             </div>
         </div>
@@ -148,7 +148,7 @@
             {
                 <FlareField TValue="string" @bind-Value="_trackFilter"
                             Variant="InputVariant.Outlined" Placeholder="Поиск трека..." Class="deka-playlist-filter">
-                    <AdornmentStart><FlareIcon Name="search" Color="FlareColor.Secondary" /></AdornmentStart>
+                    <AdornmentStart><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" Color="FlareColor.Secondary" /></AdornmentStart>
                 </FlareField>
             }
             <FlareStack Gap="FlareSpacing.XSmall">
@@ -163,7 +163,7 @@
                         @if (_removableTrackIds.Contains(track.TrackId))
                         {
                             <div class="deka-track-remove">
-                                <FlareIconButton Icon="more_vert" Size="ButtonSize.Sm" OnClick="() => OnRemoveTrack(track)" AriaLabel="Удалить трек" />
+                                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.MoreVert" Size="ButtonSize.Sm" OnClick="() => OnRemoveTrack(track)" AriaLabel="Удалить трек" />
                             </div>
                         }
                     </FlareStack>

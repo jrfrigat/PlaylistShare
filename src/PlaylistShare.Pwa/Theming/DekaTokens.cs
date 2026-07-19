@@ -199,9 +199,12 @@ internal static class DekaTokens
         // переключатель у date/time-пикеров - это одна и та же деталь поля, поэтому и токен один.
         IconSize = "1.25rem",
         FilledBg = "var(--flare-color-surface-container-low)",
-        OutlinedBorder = "1px solid var(--flare-color-outline)",
+        // Flare 0.9.0: границы поля стали ТОЛЬКО цветом (толщину/стиль рисует input.css сам),
+        // поэтому OutlinedBorder/FilledBorderBottom/HoverBorderBottom переименованы в *Color и
+        // отдают лишь цвет - без "1px solid".
+        BorderColor = "var(--flare-color-outline)",
         OutlinedRadius = "var(--flare-shape-small)",
-        FilledBorderBottom = "1px solid var(--flare-color-outline)",
+        BorderBottomColor = "var(--flare-color-outline)",
         // Focus indicator (Flare 0.2.0, drawn by input.css on :focus-within as a layout-neutral box-shadow):
         // a full 1px primary ring inside the field well, matching the Deka look where the edge tints primary.
         FocusRing = "inset 0 0 0 1px var(--fc-main, var(--flare-color-primary))",
@@ -209,7 +212,7 @@ internal static class DekaTokens
         FocusOutlineOffset = "0",
         // Deka fields are uniformly bordered - hover must NOT recolor just the bottom edge (Material
         // filled-underline behavior), so match the resting outline. Only focus tints (the FocusRing above).
-        HoverBorderBottom = "1px solid var(--flare-color-outline)",
+        HoverBorderBottomColor = "var(--flare-color-outline)",
         HoverStateLayer = "transparent",
         Padding = "0.875rem 1rem",
         PlaceholderColor = "var(--flare-color-on-surface-variant)",
@@ -271,6 +274,9 @@ internal static class DekaTokens
         PanelPaddingBlock = "0.375rem",
         ItemHeight = "2.75rem",
         ItemPaddingBlock = "0.5rem",
+        // Dense-варианты появились required в 0.9.0: компактное меню сжимает вертикальный паддинг
+        // и зазор иконка-текст. Меню приложение не рисует, значения - просто ужатые обычные.
+        ItemPaddingBlockDense = "0.375rem",
         ItemGapBetween = "0.125rem",
         ItemRadius = "var(--flare-shape-small)",
         ItemRadiusEnd = "var(--flare-shape-small)",
@@ -290,6 +296,7 @@ internal static class DekaTokens
         PanelBg = "var(--flare-color-surface-container)",
         ItemPaddingInline = "0.875rem",
         ItemGap = "0.75rem",
+        ItemGapDense = "0.5rem",
         ItemIconSize = "1.25rem",
         ItemFocusRingColor = "var(--flare-color-primary)",
         ItemFocusRingThickness = "2px",
@@ -326,18 +333,56 @@ internal static class DekaTokens
     // Collaboration toggle: accent track when on.
     private static readonly SwitchTokens Switch = new()
     {
-        TrackWidth = "46px",
-        TrackHeight = "27px",
+        // Ramp по размерам (Flare 0.9.0): 8 геометрических членов (ширина/высота дорожки, размеры
+        // ползунка off/on и нажатых, сдвиги off/on-left) стали шкалой Xs..Xl вместо одиночных.
+        // Тумблер совместного доступа рисуется только в Md, поэтому Md держим ровно прежним
+        // (46x27px дорожка, ползунок 21px, нажатый 23px, off-left 3px, on-left calc(100% - 1.5rem)),
+        // а соседние размеры разведены пропорционально. on-left = calc(100% - (ползунок + off-left)),
+        // чтобы вставка ползунка справа оставалась симметричной левой.
+        TrackWidthXs = "36px",
+        TrackWidthSm = "41px",
+        TrackWidthMd = "46px",
+        TrackWidthLg = "52px",
+        TrackWidthXl = "58px",
+        TrackHeightXs = "20px",
+        TrackHeightSm = "24px",
+        TrackHeightMd = "27px",
+        TrackHeightLg = "31px",
+        TrackHeightXl = "34px",
         TrackOffBg = "var(--flare-color-outline)",
         TrackOnBg = "var(--fc-main, var(--flare-color-primary))",
         TrackBorder = "none",
         TrackHoverBorderColor = "transparent",
-        ThumbOffSize = "1.3125rem",
-        ThumbOnSize = "1.3125rem",
-        ThumbPressedOffSize = "1.4375rem",
-        ThumbPressedOnSize = "1.4375rem",
-        ThumbOffLeft = "0.1875rem",
-        ThumbOnLeft = "calc(100% - 1.5rem)",
+        ThumbOffSizeXs = "1rem",
+        ThumbOffSizeSm = "1.1875rem",
+        ThumbOffSizeMd = "1.3125rem",
+        ThumbOffSizeLg = "1.5rem",
+        ThumbOffSizeXl = "1.625rem",
+        ThumbOnSizeXs = "1rem",
+        ThumbOnSizeSm = "1.1875rem",
+        ThumbOnSizeMd = "1.3125rem",
+        ThumbOnSizeLg = "1.5rem",
+        ThumbOnSizeXl = "1.625rem",
+        ThumbPressedOffSizeXs = "1.125rem",
+        ThumbPressedOffSizeSm = "1.3125rem",
+        ThumbPressedOffSizeMd = "1.4375rem",
+        ThumbPressedOffSizeLg = "1.625rem",
+        ThumbPressedOffSizeXl = "1.75rem",
+        ThumbPressedOnSizeXs = "1.125rem",
+        ThumbPressedOnSizeSm = "1.3125rem",
+        ThumbPressedOnSizeMd = "1.4375rem",
+        ThumbPressedOnSizeLg = "1.625rem",
+        ThumbPressedOnSizeXl = "1.75rem",
+        ThumbOffLeftXs = "0.125rem",
+        ThumbOffLeftSm = "0.1875rem",
+        ThumbOffLeftMd = "0.1875rem",
+        ThumbOffLeftLg = "0.1875rem",
+        ThumbOffLeftXl = "0.25rem",
+        ThumbOnLeftXs = "calc(100% - 1.125rem)",
+        ThumbOnLeftSm = "calc(100% - 1.375rem)",
+        ThumbOnLeftMd = "calc(100% - 1.5rem)",
+        ThumbOnLeftLg = "calc(100% - 1.6875rem)",
+        ThumbOnLeftXl = "calc(100% - 1.875rem)",
         ThumbOffColor = "#fff",
         ThumbOnColor = "#fff",
         ThumbStateOffColor = "#fff",
@@ -379,10 +424,37 @@ internal static class DekaTokens
     private static readonly BadgeTokens Badge = new()
     {
         Radius = "var(--flare-shape-full)",
-        MinWidth = "1rem",
-        Height = "1rem",
-        DotSize = "0.375rem",
-        PaddingX = "0.25rem",
+        // Ramp по размерам (Flare 0.9.0): бокс/точка/лейбл стали шкалой Xs..Xl вместо одиночных
+        // MinWidth/Height/DotSize/PaddingX. Md держим ровно прежним видом (16px бокс, 6px точка,
+        // 4px паддинг), шкала расходится в обе стороны по дефолтам changelog: бокс 12/14/16/20/24,
+        // точка 4/5/6/8/10, лейбл 9/10/11/12/14px. Бейджей приложение пока не рисует, но члены
+        // required - значения обязаны быть заданы.
+        MinWidthXs = "0.75rem",
+        MinWidthSm = "0.875rem",
+        MinWidthMd = "1rem",
+        MinWidthLg = "1.25rem",
+        MinWidthXl = "1.5rem",
+        HeightXs = "0.75rem",
+        HeightSm = "0.875rem",
+        HeightMd = "1rem",
+        HeightLg = "1.25rem",
+        HeightXl = "1.5rem",
+        DotSizeXs = "0.25rem",
+        DotSizeSm = "0.3125rem",
+        DotSizeMd = "0.375rem",
+        DotSizeLg = "0.5rem",
+        DotSizeXl = "0.625rem",
+        PaddingXXs = "0.1875rem",
+        PaddingXSm = "0.25rem",
+        PaddingXMd = "0.25rem",
+        PaddingXLg = "0.3125rem",
+        PaddingXXl = "0.375rem",
+        // Новый в 0.9.0: кегль текста бейджа-лейбла (9/10/11/12/14px).
+        LabelSizeXs = "0.5625rem",
+        LabelSizeSm = "0.625rem",
+        LabelSizeMd = "0.6875rem",
+        LabelSizeLg = "0.75rem",
+        LabelSizeXl = "0.875rem",
         Offset = "0.375rem",
         DotOffset = "0",
     };
@@ -776,6 +848,11 @@ internal static class DekaTokens
     private static readonly LayoutTokens Layout = new()
     {
         AppBarHeight = "64px",
+        // Required с 0.9.0: сжатая высота и фон app bar у FlareLayout. Наш мобильный хедер - свой
+        // литеральный div, а не layout-app bar, поэтому значения нейтральные: 48px (как AppBar.HeightDense)
+        // и поверхность из семантической роли.
+        AppBarHeightDense = "48px",
+        AppBarBg = "var(--flare-color-surface)",
         ContentPadding = "34px 40px",
         ContentPaddingMobile = "20px 18px",
         DrawerRailWidth = "3.5rem",

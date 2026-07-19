@@ -21,7 +21,7 @@
                     {
                         <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
                             <div class="account-badge account-badge--connected">
-                                <FlareIcon Icon="check" />
+                                <FlareIconView Value="@MaterialDesign3Icons.Regular.Check" />
                             </div>
                             <FlareStack Gap="FlareSpacing.None" Class="account-info">
                                 <FlareText Typo="TypographyScale.TitleMedium">Подключено</FlareText>
@@ -34,7 +34,7 @@
                     {
                         <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
                             <div class="account-badge account-badge--disconnected">
-                                <FlareIcon Icon="schedule" />
+                                <FlareIconView Value="@MaterialDesign3Icons.Regular.Schedule" />
                             </div>
                             <FlareStack Gap="FlareSpacing.None" Class="account-info">
                                 <FlareText Typo="TypographyScale.TitleMedium">Не подключено</FlareText>
@@ -54,13 +54,13 @@
                 <FlareCardContent>
                     <FlareStack Row Gap="FlareSpacing.Small">
                         <FlareChip Label="Авто" Selected="@(ThemeService.Mode == ThemeMode.Auto)" OnClick="@(() => SetMode(ThemeMode.Auto))" Class="theme-mode-chip">
-                            <LeadingIcon><FlareIcon Icon="brightness_auto" /></LeadingIcon>
+                            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.BrightnessAuto" /></LeadingIcon>
                         </FlareChip>
                         <FlareChip Label="Светлая" Selected="@(ThemeService.Mode == ThemeMode.Light)" OnClick="@(() => SetMode(ThemeMode.Light))" Class="theme-mode-chip">
-                            <LeadingIcon><FlareIcon Icon="light_mode" /></LeadingIcon>
+                            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.LightMode" /></LeadingIcon>
                         </FlareChip>
                         <FlareChip Label="Тёмная" Selected="@(ThemeService.Mode == ThemeMode.Dark)" OnClick="@(() => SetMode(ThemeMode.Dark))" Class="theme-mode-chip">
-                            <LeadingIcon><FlareIcon Icon="dark_mode" /></LeadingIcon>
+                            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.DarkMode" /></LeadingIcon>
                         </FlareChip>
                     </FlareStack>
                     <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary" Class="mt-3">"Авто" следует системным настройкам устройства.</FlareText>

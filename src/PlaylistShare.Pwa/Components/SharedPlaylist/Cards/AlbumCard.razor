@@ -1,7 +1,7 @@
 @using PlaylistShare.Shared.Yandex
 
 <div class="deka-entity-card" @onclick="HandleClick">
-    <FlareAvatar Size="AvatarSize.Xl" Shape="AvatarShape.Rounded" Src="@Item.CoverUrl.FormatCoverUrl(Size, Size)" Alt="@Item.Title" FallbackIcon="album" Class="deka-entity-card-cover" />
+    <FlareAvatar Size="AvatarSize.Xl" Shape="AvatarShape.Rounded" Src="@Item.CoverUrl.FormatCoverUrl(Size, Size)" Alt="@Item.Title" FallbackIcon="@MaterialDesign3Icons.Regular.Album" Class="deka-entity-card-cover" />
     <FlareText Typo="TypographyScale.BodySmall" Weight="FontWeight.SemiBold" Align="TextAlign.Center" Class="deka-entity-card-title">@Item.Title</FlareText>
     <FlareText Typo="TypographyScale.LabelSmall" Align="TextAlign.Center" Color="FlareColor.Secondary" Class="deka-entity-card-subtitle">
         @string.Join(", ", Item.Artists.Select(a => a.Name))
