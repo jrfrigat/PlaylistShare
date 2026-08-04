@@ -15,7 +15,7 @@
     <PackageReference Include="Flare.Blazor" Version="0.10.0" />
     <PackageReference Include="Flare.Components.QrCode" Version="0.10.0" />
     <PackageReference Include="Flare.Icons.MaterialDesign3.Svg" Version="0.10.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
   </ItemGroup>
 
   <ItemGroup>
