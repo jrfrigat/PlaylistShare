@@ -80,13 +80,9 @@ yarn-error.log*
 **/compressed/
 
 ## AI tooling (local only - not published) ##
-.claude-flow/
 .claude/
 CLAUDE.md
-.swarm/
 .mcp.json
-ruvector.db
-*.jsonl
 /src/PlaylistShare.Api/appsettings.Production.json
 
 # ASP.NET Data Protection key ring (dev writes it to the API content root; secrets - never commit)
