@@ -48,6 +48,9 @@ internal static class DekaTokens
         Large = "22px",
         ExtraLarge = "26px",
         Full = "9999px",
+        // Переход формы (кнопка в выбранное состояние, FAB в развёрнутый): идёт на пружине.
+        MorphDuration = "var(--flare-motion-duration-spring-fast)",
+        MorphEasing = "var(--flare-motion-easing-spring-fast)",
     };
 
     // Soft, diffuse, large-blur shadows with a big negative spread - matching the mock's card/sheet/
@@ -76,6 +79,15 @@ internal static class DekaTokens
         EasingDecelerate = "cubic-bezier(0, 0, 0, 1)",
         EasingAccelerate = "cubic-bezier(0.3, 0, 1, 1)",
         EasingEmphasized = "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        // Пружина: её просит морфинг формы (ShapeTokens.Morph*) и раскрывающиеся панели. Эталонные
+        // темы задают её длинным linear(...) из 33 точек; у Deka вся моторика - короткие кривые, так
+        // что пружина здесь тоже кривая с небольшим перелётом, а не табличная аппроксимация.
+        EasingSpring = "cubic-bezier(0.32, 1.4, 0.5, 1)",
+        EasingSpringFast = "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        EasingSpringSlow = "cubic-bezier(0.3, 1.25, 0.45, 1)",
+        DurationSpring = "300ms",
+        DurationSpringFast = "250ms",
+        DurationSpringSlow = "400ms",
     };
 
     // Subtler than a typical MD state-layer scale - the mock's interactions are simple scale/color-shifts.
@@ -93,6 +105,13 @@ internal static class DekaTokens
         FocusLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-focus-opacity) * 100%), transparent)",
         PressedLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-pressed-opacity) * 100%), transparent)",
         DraggedLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-dragged-opacity) * 100%), transparent)",
+        // Выбранное - единственное состояние, которое держится, поэтому оно красится акцентом, а не
+        // currentColor: так выбранная строка/вкладка читается как выбор, а не как наведение. Пары
+        // "выбрано + наведение" и "фокус + наведение" - отдельные токены, иначе две полупрозрачные
+        // заливки складывались бы и давали цвет, которого в языке нет.
+        SelectedLayer = "color-mix(in srgb, var(--flare-color-primary) calc(var(--flare-state-selected-opacity) * 100%), transparent)",
+        SelectedHoverLayer = "color-mix(in srgb, var(--flare-color-primary) 18%, transparent)",
+        FocusHoverLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-focus-opacity) * 100%), transparent)",
     };
 
     // 2px-base spacing ramp (0/2/4/6/8/10/12/16/20/24/32/48/64px).
@@ -155,6 +174,40 @@ internal static class DekaTokens
         LabelMd = T("1rem", "700", "1.3", "0em"),
         LabelLg = T("1rem", "700", "1.3", "0em"),
         LabelXl = T("1.0625rem", "700", "1.3", "0em"),
+        // Выключенная кнопка гаснет прозрачностью, отдельной заливки поверх неё Deka не кладёт.
+        DisabledLayer = "transparent",
+        DisabledOpacity = "var(--flare-state-disabled-opacity)",
+        // Обводка у Deka - волосяная линия на всех размерах: она нужна только outlined-кнопке, а та
+        // в макете нигде не растёт до размеров, где 1px начал бы выглядеть ниткой.
+        OutlineWidthXs = "1px",
+        OutlineWidthSm = "1px",
+        OutlineWidthMd = "1px",
+        OutlineWidthLg = "1px",
+        OutlineWidthXl = "1px",
+        // Кнопка-переключатель (Flare 0.16.0): выбор у Deka - смена цвета, а не формы, поэтому
+        // выбранные радиусы повторяют обычные Radius*, включая явно квадратную форму.
+        SelectedRadiusXs = "var(--flare-shape-small)",
+        SelectedRadiusSm = "var(--flare-shape-small)",
+        SelectedRadiusMd = "var(--flare-shape-medium)",
+        SelectedRadiusLg = "var(--flare-shape-medium)",
+        SelectedRadiusXl = "var(--flare-shape-medium)",
+        SelectedRadiusSquare = "var(--flare-shape-extra-small)",
+        // Выбранное состояние по всему языку одно: контейнер акцента и акцентный текст на нём -
+        // ровно то, чем макет красит активную вкладку фильтра.
+        SelectedBg = "var(--flare-color-primary-container)",
+        SelectedColor = "var(--flare-color-primary)",
+        ElevatedSelectedBg = "var(--flare-color-primary-container)",
+        ElevatedSelectedColor = "var(--flare-color-primary)",
+        FilledSelectedBg = "var(--flare-color-primary)",
+        FilledSelectedColor = "var(--flare-color-on-primary)",
+        TonalSelectedBg = "var(--flare-color-primary)",
+        TonalSelectedColor = "var(--flare-color-on-primary)",
+        OutlinedSelectedBg = "var(--flare-color-primary-container)",
+        OutlinedSelectedColor = "var(--flare-color-primary)",
+        // Невыбранный filled-переключатель не должен читаться как залитая кнопка действия, поэтому
+        // он садится на нейтральный контейнер и приглушённый текст.
+        FilledUnselectedBg = "var(--flare-color-surface-container-high)",
+        FilledUnselectedColor = "var(--flare-color-on-surface-variant)",
     };
 
     private static readonly CardTokens Card = new()
@@ -219,6 +272,7 @@ internal static class DekaTokens
         DisabledBg = "color-mix(in srgb, var(--flare-color-on-surface) 4%, transparent)",
         DisabledIndicator = "color-mix(in srgb, var(--flare-color-on-surface) 38%, transparent)",
         ErrorHoverIndicator = "color-mix(in srgb, var(--flare-color-on-surface) 8%, var(--flare-color-error))",
+        DisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     // Sidebar nav chips: rounded, active = primary-container fill with primary text.
@@ -231,6 +285,7 @@ internal static class DekaTokens
         IndicatorRadius = "var(--flare-shape-small)",
         ActiveIndicator = "var(--flare-color-primary-container)",
         ActiveLeftBar = "none",
+        LinkDisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     // Mobile bottom nav: low-container bar, primary active tint, faint inactive.
@@ -249,6 +304,7 @@ internal static class DekaTokens
         IndicatorBg = "transparent",
         IndicatorRadius = "var(--flare-shape-small)",
         IndicatorSize = "0",
+        ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     // Bottom sheets (share / add-to-playlist) + dialogs use the extra-large 26px radius.
@@ -301,6 +357,7 @@ internal static class DekaTokens
         ItemFocusRingColor = "var(--flare-color-primary)",
         ItemFocusRingThickness = "2px",
         ItemFocusRingOffset = "-2px",
+        ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     private static readonly ChipTokens Chip = new()
@@ -328,6 +385,12 @@ internal static class DekaTokens
         FilledFg = "var(--flare-color-on-primary)",
         TrackBg = "transparent",
         PillRadius = "var(--flare-shape-full)",
+        // Вторичный ряд вкладок (вложенная навигация) приложением не рисуется: индикатор тоньше
+        // основного 3px, активный текст - обычный on-surface, без акцента.
+        SecondaryIndicatorThickness = "2px",
+        SecondaryActiveColor = "var(--flare-color-on-surface)",
+        TabDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        ScrollDisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     // Collaboration toggle: accent track when on.
@@ -393,6 +456,10 @@ internal static class DekaTokens
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
+        // Фокус тумблера у Deka - только обводка выше, ореола вокруг ползунка нет ни в одном
+        // положении, поэтому обе тени пустые.
+        FocusShadowOff = "none",
+        FocusShadowOn = "none",
         TrackHoverOffBg = "var(--flare-switch-track-off-bg)",
         TrackHoverOnBg = "var(--flare-switch-track-on-bg)",
         HoverShadowOff = "none",
@@ -536,12 +603,33 @@ internal static class DekaTokens
 
     // ----- component tokens the app doesn't render: neutral, on-brand via --flare-* roles ------------
 
+    // Flare 0.16.0 развёл у группы кнопок две модели вместо одной: STANDARD - отдельные кнопки через
+    // зазор (форму держит сама кнопка), CONNECTED - сшитый сегментированный контроль. Прежние
+    // Gap/Overlap/OuterRadius/InnerRadius были описанием только второй; connected-значения перенесены
+    // как были, standard получает зазор в 0.5rem на всех размерах.
     private static readonly ButtonGroupTokens ButtonGroup = new()
     {
-        Gap = "0",
-        Overlap = "-1px",
-        OuterRadius = "var(--flare-shape-small)",
-        InnerRadius = "0",
+        StandardGapXs = "var(--flare-spacing-4)",
+        StandardGapSm = "var(--flare-spacing-4)",
+        StandardGapMd = "var(--flare-spacing-4)",
+        StandardGapLg = "var(--flare-spacing-4)",
+        StandardGapXl = "var(--flare-spacing-4)",
+        ConnectedGap = "0",
+        ConnectedOverlap = "-1px",
+        ConnectedOuterRadius = "var(--flare-shape-small)",
+        // Выбор у Deka не меняет форму сегмента, поэтому и выбранный, и нажатый радиусы смотрят
+        // туда же, куда обычный внутренний: шов остаётся плоским.
+        ConnectedSelectedRadius = "0",
+        ConnectedInnerRadiusXs = "0",
+        ConnectedInnerRadiusSm = "0",
+        ConnectedInnerRadiusMd = "0",
+        ConnectedInnerRadiusLg = "0",
+        ConnectedInnerRadiusXl = "0",
+        ConnectedPressedRadiusXs = "0",
+        ConnectedPressedRadiusSm = "0",
+        ConnectedPressedRadiusMd = "0",
+        ConnectedPressedRadiusLg = "0",
+        ConnectedPressedRadiusXl = "0",
         ZActive = "1",
     };
 
@@ -566,27 +654,12 @@ internal static class DekaTokens
         TriggerRadiusXl = new() { TopLeft = "0.75rem", BottomLeft = "0.75rem", TopRight = "var(--flare-btn-radius-xl-top-right)", BottomRight = "var(--flare-btn-radius-xl-bottom-right)" },
     };
 
+    // В 0.16.0 у сегментированной группы осталась только сама рамка: высота, паддинги, форма и
+    // краска сегмента переехали в ButtonTokens (переключатель - это кнопка с выбранным состоянием),
+    // поэтому прежние Height*/Padding*/Radius*/Rest*/Selected* отсюда убраны, а их роль играют
+    // Button.Height*, Button.PaddingInline*, Button.SelectedRadius* и Button.Selected*.
     private static readonly ToggleButtonTokens ToggleButton = new()
     {
-        HeightXs = "1.75rem",
-        HeightSm = "2rem",
-        HeightMd = "2.5rem",
-        HeightLg = "3rem",
-        HeightXl = "3.5rem",
-        PaddingXs = "0.5rem",
-        PaddingSm = "0.75rem",
-        PaddingMd = "1rem",
-        PaddingLg = "1.5rem",
-        PaddingXl = "2rem",
-        Gap = "0.375rem",
-        Radius = "var(--flare-shape-small)",
-        RadiusSelectedSm = "var(--flare-shape-small)",
-        RadiusSelectedMd = "var(--flare-shape-medium)",
-        RadiusSelectedLg = "var(--flare-shape-medium)",
-        RestBg = "var(--flare-color-surface-container-high)",
-        RestColor = "var(--flare-color-on-surface-variant)",
-        SelectedBg = "var(--flare-color-primary-container)",
-        SelectedColor = "var(--flare-color-primary)",
         GroupBorder = "1px solid var(--flare-color-outline)",
         GroupRadius = "var(--flare-shape-small)",
         GroupRadiusVertical = "var(--flare-shape-small)",
@@ -603,6 +676,7 @@ internal static class DekaTokens
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
+        DisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     private static readonly RadioTokens Radio = new()
@@ -610,6 +684,11 @@ internal static class DekaTokens
         Size = "1.25rem",
         StateLayerHover = "color-mix(in srgb, var(--flare-color-on-surface) 8%, transparent)",
         StateLayerHoverChecked = "color-mix(in srgb, var(--flare-color-primary) 8%, transparent)",
+        // Фокус как у чекбокса: обводка, а не ореол-тень.
+        FocusOutline = "2px solid var(--flare-color-primary)",
+        FocusOutlineOffset = "2px",
+        FocusShadow = "none",
+        DisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     private static readonly SliderTokens Slider = new()
@@ -672,6 +751,10 @@ internal static class DekaTokens
         StopSize = "4px",
         ValueBg = "var(--flare-color-inverse-surface)",
         ValueColor = "var(--flare-color-inverse-on-surface)",
+        // Выключенный слайдер: дорожка и заливка гаснут до нейтрального, ручка - общей прозрачностью.
+        DisabledOpacity = "var(--flare-state-disabled-opacity)",
+        DisabledActiveColor = "color-mix(in srgb, var(--flare-color-on-surface) calc(var(--flare-state-disabled-opacity) * 100%), transparent)",
+        DisabledInactiveColor = "color-mix(in srgb, var(--flare-color-on-surface) 12%, transparent)",
     };
 
     private static readonly DataGridTokens DataGrid = new()
@@ -692,7 +775,10 @@ internal static class DekaTokens
         FilterGroupRail = "3px",
         ActiveCellOutline = "2px solid var(--flare-color-primary)",
         ColumnPickerMinWidth = "160px",
-        RowSelectedHoverPct = "18%",
+        // Диапазон ячеек (выделение мышью по-экселевски) - не то же самое, что выбранная строка,
+        // поэтому у него своя краска, а не общий SelectedLayer. Прежний RowSelectedHoverPct в
+        // 0.16.0 убран: пара "выбрано + наведение" переехала в общий StateTokens.SelectedHoverLayer.
+        RangeLayer = "color-mix(in srgb, var(--flare-color-primary) 14%, transparent)",
         RowEditingPct = "6%",
         LoadingVeilPct = "55%",
         LoadingDim = "0.6",
@@ -724,6 +810,7 @@ internal static class DekaTokens
         Radius = "var(--flare-shape-small)",
         BorderColor = "var(--flare-color-outline-variant)",
         ActiveColor = "var(--flare-color-primary)",
+        BtnDisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     private static readonly TimelineTokens Timeline = new()
@@ -863,6 +950,7 @@ internal static class DekaTokens
     {
         FocusRingWidth = "2px",
         HoverOpacity = "0.8",
+        DisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
     private static readonly OtpTokens Otp = new()
@@ -903,7 +991,92 @@ internal static class DekaTokens
     {
         CellPaddingH = "1rem",
         CellPaddingV = "0.75rem",
-        StripeOpacity = "4%",
+    };
+
+    // Полоска чётных строк переехала из TableTokens.StripeOpacity в общий StripeTokens: таблица,
+    // грид и список понимают под "полосатым" одно и то же, и у языка на это один ответ. Прежние 4%
+    // сохранены, только теперь это целиком краска, а не одна прозрачность.
+    private static readonly StripeTokens Stripe = new()
+    {
+        Background = "color-mix(in srgb, var(--flare-color-on-surface) 4%, transparent)",
+    };
+
+    // Минимальная цель для пальца: ядро читает её только внутри @media (pointer: coarse).
+    private static readonly TouchTokens Touch = new()
+    {
+        TargetMin = "48px",
+    };
+
+    private static readonly ListTokens List = new()
+    {
+        Bg = "var(--flare-color-surface)",
+        Radius = "var(--flare-shape-medium)",
+        Divider = "1px solid var(--flare-color-outline-variant)",
+        ItemHeight = "3.5rem",
+        ItemHeightTwoLine = "4.5rem",
+        ItemHeightDense = "3rem",
+        ItemHeightTwoLineDense = "3.5rem",
+        ItemPaddingBlock = "var(--flare-spacing-6)",
+        ItemPaddingBlockDense = "var(--flare-spacing-3)",
+        ItemPaddingInline = "var(--flare-spacing-8)",
+        ItemGap = "var(--flare-spacing-6)",
+        ItemContentGap = "var(--flare-spacing-1)",
+        // Строки у Deka скруглены, а не разделены линейкой во всю ширину.
+        ItemRadius = "var(--flare-shape-small)",
+        ItemLabelFont = "var(--flare-typescale-title-small-font)",
+        ItemLabelSize = "var(--flare-typescale-title-small-size)",
+        ItemColor = "var(--flare-color-on-surface)",
+        ItemTrailingColor = "var(--flare-color-on-surface-variant2)",
+        ItemSelectedBg = "var(--flare-color-primary-container)",
+        ItemSelectedColor = "var(--flare-color-primary)",
+        ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
+    };
+
+    private static readonly AccordionTokens Accordion = new()
+    {
+        Border = "1px solid var(--flare-color-outline-variant)",
+        Radius = "var(--flare-shape-medium)",
+        PanelDivider = "1px solid var(--flare-color-outline-variant)",
+        HeaderBg = "var(--flare-color-surface)",
+        HeaderColor = "var(--flare-color-on-surface)",
+        HeaderPaddingBlock = "var(--flare-spacing-8)",
+        HeaderPaddingInline = "var(--flare-spacing-12)",
+        HeaderGap = "var(--flare-spacing-4)",
+        HeaderLabelFont = "var(--flare-typescale-title-small-font)",
+        HeaderLabelSize = "var(--flare-typescale-title-small-size)",
+        HeaderLabelWeight = "var(--flare-typescale-title-small-weight)",
+        HeaderDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        IconSize = "1.25rem",
+        BodyPaddingBlock = "var(--flare-spacing-8)",
+        BodyPaddingInline = "var(--flare-spacing-12)",
+        BodyColor = "var(--flare-color-on-surface-variant)",
+        ContentMaxHeight = "2000px",
+    };
+
+    private static readonly CollapseTokens Collapse = new()
+    {
+        HeaderBg = "transparent",
+        HeaderColor = "var(--flare-color-on-surface)",
+        HeaderRadius = "var(--flare-shape-small)",
+        HeaderPaddingBlock = "var(--flare-spacing-6)",
+        HeaderPaddingInline = "var(--flare-spacing-8)",
+        HeaderGap = "var(--flare-spacing-4)",
+        HeaderLabelFont = "var(--flare-typescale-title-small-font)",
+        HeaderLabelSize = "var(--flare-typescale-title-small-size)",
+        HeaderLabelWeight = "var(--flare-typescale-title-small-weight)",
+        HeaderDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        IconColor = "var(--flare-color-on-surface-variant)",
+    };
+
+    private static readonly SplitterTokens Splitter = new()
+    {
+        GutterSize = "0.5rem",
+        GripThickness = "2px",
+        GripLength = "1.75rem",
+        Color = "var(--flare-color-outline-variant)",
+        HoverColor = "color-mix(in srgb, var(--flare-color-primary) 24%, transparent)",
+        IconSize = "1.125rem",
+        IconColor = "var(--flare-color-on-surface-variant)",
     };
 
     private static readonly TimePickerTokens TimePicker = new()
@@ -975,6 +1148,12 @@ internal static class DekaTokens
         Skeleton = Skeleton,
         Table = Table,
         TimePicker = TimePicker,
+        Stripe = Stripe,
+        Touch = Touch,
+        List = List,
+        Accordion = Accordion,
+        Collapse = Collapse,
+        Splitter = Splitter,
 
         // Custom vars for surfaces the standard role set doesn't cover: the frosted mini-player/full-player
         // bar ("glass") and the gradient logo mark / avatar swatches ("accent-strong" as the gradient's
