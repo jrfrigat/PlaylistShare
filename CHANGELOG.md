@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-08-22
+
+A maintenance release. Nothing changes on screen: the dependencies are current again, and the PWA
+builds from source, which it had stopped doing.
+
+### Changed
+
+- **Every package updated to its current release.** Flare 0.10.0 to **0.17.1**, ASP.NET Core, EF Core
+  and the SQL Server cache 10.0.9 to **10.0.11**, YandexMusic 0.2.0 to **0.3.0**,
+  System.IdentityModel.Tokens.Jwt 8.19.1 to **8.22.0**. On the test side, Microsoft.NET.Test.Sdk
+  17.14.1 to **18.9.0** and xunit.runner.visualstudio 3.1.5 to **4.0.0**; in CI, actions/setup-dotnet
+  5 to **6**.
+
+### Fixed
+
+- **The PWA compiles again.** The Deka theme states every design token itself, so a Flare update that
+  renames or adds a required one breaks the build until the theme answers it. The update to Flare
+  0.15.0 was merged without that, leaving the project not compiling, and 0.17.1 moved more tokens
+  still. The theme now supplies all of them: the segmented control keeps only its container tokens
+  (a toggle reads the button's own geometry and paint now), the button group states its standalone
+  and its seamed model separately, the row stripe and the selected-and-hovered layer became
+  language-wide instead of per-component, and the list, accordion, collapse, splitter and
+  touch-target sections exist for the first time. The look is unchanged: selection is still a colour
+  change rather than a shape one, focus is still an outline rather than a halo, and a striped row
+  keeps its former 4%.
+
 ## [1.2.1] - 2026-07-19
 
 ### Changed
