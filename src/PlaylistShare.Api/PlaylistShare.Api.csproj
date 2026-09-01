@@ -32,8 +32,8 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
 		<!-- YandexMusic client (https://www.nuget.org/packages/YandexMusic). Source lives at
 		     C:\Job\Projects\FrigaT\YandexMusic; improvements there ship as new package versions. -->
-		<PackageReference Include="YandexMusic" Version="0.3.0" />
-		<PackageReference Include="YandexMusic.DependencyInjection" Version="0.3.0" />
+		<PackageReference Include="YandexMusic" Version="0.6.0" />
+		<PackageReference Include="YandexMusic.DependencyInjection" Version="0.6.0" />
 	</ItemGroup>
 
 	<ItemGroup>
