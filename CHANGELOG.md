@@ -5,6 +5,50 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-08
+
+A platform release: Flare 0.17.1 to 0.33.0. The app's own markup barely moved - the framework beneath
+it did, and the visible half of those sixteen framework releases arrives here: scrollbars that belong
+to the dark theme, fields that line up, popovers that cannot be clipped, and the right on-screen
+keyboard on a phone.
+
+### Changed
+
+- **Flare 0.17.1 to 0.33.0, YandexMusic 0.3.0 to 0.6.0, MinVer 7.0.0 to 8.0.0.** The remaining packages
+  were checked against NuGet and are already at their current release. YandexMusic's one breaking
+  change - the real-time Ynison client leaving for its own package - does not touch this app, which
+  uses only the REST client; MinVer 8's one breaking change is a hard failure on the retired
+  `MinVerDefaultPreReleasePhase`, which this repo never set.
+- **The Deka theme answers Flare's new token contracts.** A theme built from scratch must state every
+  token the library declares, and 0.18 through 0.32 added seven records: a border scale (Deka keeps
+  hairlines on outline-variant and reserves the 2px emphasis step for selection), a scrollbar scale
+  (a muted on-surface thumb over a transparent track), icon-swap motion riding Deka's fast spring,
+  overlay measurements (2rem of air, 1.5rem on a phone, 75% of the screen for a panel), and the drag,
+  chart and gauge palettes composed from Deka's own semantic roles. The input well gained the field
+  family's height ramp - medium stays the 52px the field already rendered, so nothing moves on screen -
+  and the nav slots renamed in 0.25.0 are migrated (`IconContent`, `HeaderContent`, `FooterContent`):
+  left under their old names, the nav icons would have silently stopped rendering, because a renamed
+  slot is not a build error.
+
+### Fixed
+
+- **Scrollbars are painted by the theme.** On the dark Deka page the system scrollbar was the
+  lightest, loudest thing on screen; it is now a muted thumb that firms up on hover, over a track
+  that lets the surface beneath it keep its own tone.
+- **Fields line up, and each lost 4px of phantom height.** Every control in the field family is one
+  height per size now - a chevron or a trailing icon no longer pushes its well taller than the text
+  field beside it - and the empty helper-text row that added height to every field with no helper,
+  error or counter is gone.
+- **Popovers escape their containers.** The share popover and the volume panel are placed in viewport
+  coordinates and promoted to the browser's top layer, so a card or a dialog edge can no longer clip
+  them, and they flip to the opposite side and clamp to the screen instead of hanging off it.
+- **A dialog taller than the window keeps its title and actions reachable**: the panel is capped to
+  the viewport and its content region scrolls.
+- **A phone asks for the right keyboard and gets finger-sized targets.** Text fields derive
+  `inputmode` from their type - the sign-up email field now offers the email keyboard - and the dense
+  chrome, from small buttons to row-shaped items, grows to the touch-target minimum on a coarse
+  pointer.
+
 ## [1.2.2] - 2026-08-22
 
 A maintenance release. Nothing changes on screen: the dependencies are current again, and the PWA
