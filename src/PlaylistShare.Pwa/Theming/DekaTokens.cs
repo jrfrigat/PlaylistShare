@@ -132,6 +132,178 @@ internal static class DekaTokens
         S32 = "4rem",
     };
 
+    // ----- scales added after the mock was authored ---------------------------------------------------
+
+    // Правила-разделители (Flare 0.22.0): язык Deka рисит их волосяной линией на outline-variant, а
+    // 2px - ширина выделения (Card.SelectedBorder, рамка чекбокса), поэтому emphasis-шаг равен ей.
+    private static readonly BorderTokens Border = new()
+    {
+        Width = "1px",
+        WidthEmphasis = "2px",
+        Style = "solid",
+        Divider = "var(--flare-border-width) var(--flare-border-style) var(--flare-color-outline-variant)",
+        Outline = "var(--flare-border-width) var(--flare-border-style) var(--flare-color-outline)",
+    };
+
+    // Скроллбары красит тема (Flare 0.24.0): Deka тёмный, системный светлый скроллбар был бы самым
+    // громким элементом экрана. Ползунок - on-surface на низкой прозрачности, как всякий покойный
+    // интерактив языка, трек прозрачен, чтобы поверхность под ним держала свой тон.
+    private static readonly ScrollbarTokens Scrollbar = new()
+    {
+        Width = "thin",
+        Size = "8px",
+        Thumb = "color-mix(in srgb, var(--flare-color-on-surface) 28%, transparent)",
+        ThumbHover = "color-mix(in srgb, var(--flare-color-on-surface) 45%, transparent)",
+        Track = "transparent",
+        Radius = "var(--flare-shape-full)",
+    };
+
+    // Морфинг иконок (Flare 0.18.0): моторика Deka - короткие пружины, и смена глифа едет на быстрой.
+    private static readonly IconTokens Icon = new()
+    {
+        MorphDuration = "var(--flare-motion-duration-spring-fast)",
+        MorphEasing = "var(--flare-motion-easing-spring-fast)",
+        MorphScale = "0.6",
+        MorphRotate = "90deg",
+    };
+
+    // Drag-and-drop (Flare 0.32.0): приложение не переупорядочивает перетаскиванием, значения - по
+    // семантическим ролям, как у эталонных тем.
+    private static readonly DragTokens Drag = new()
+    {
+        SourceOpacity = "0.4",
+        PreviewElevation = "var(--flare-elevation-4)",
+        PreviewOpacity = "1",
+        ZoneActiveBackground = "color-mix(in srgb, var(--flare-color-primary) calc(var(--flare-state-dragged-opacity) * 100%), transparent)",
+        ZoneActiveOutline = "var(--flare-color-primary)",
+        IndicatorColor = "var(--flare-color-primary)",
+    };
+
+    // Плавающие панели и то, сколько экрана они занимают (Flare 0.32.0): Deka мобильна и держит панель
+    // ближе к краю, чем MD3, - 2rem воздуха (1.5rem на телефоне) и 75% экрана панелью.
+    private static readonly OverlayTokens Overlay = new()
+    {
+        ViewportInset = "2rem",
+        ViewportInsetCompact = "1.5rem",
+        PanelMaxBlockSize = "75dvh",
+    };
+
+    // Графики приложение не рисует, но токены обязательны (Flare 0.24+). Категориальная палитра -
+    // из собственных ролей Deka по рецепту MD3 (три источника x четыре тональных обработки), геометрия
+    // нейтральная; радиус - своя шкала формы.
+    private static readonly ChartTokens Chart = new()
+    {
+        Series1 = "var(--flare-color-primary)",
+        Series2 = "var(--flare-color-tertiary)",
+        Series3 = "var(--flare-color-secondary)",
+        Series4 = "color-mix(in srgb, var(--flare-color-primary) 50%, var(--flare-color-tertiary))",
+        Series5 = "color-mix(in srgb, var(--flare-color-secondary) 50%, var(--flare-color-tertiary))",
+        Series6 = "color-mix(in srgb, var(--flare-color-primary) 50%, var(--flare-color-secondary))",
+        Series7 = "color-mix(in srgb, var(--flare-color-primary) 65%, var(--flare-color-on-surface))",
+        Series8 = "color-mix(in srgb, var(--flare-color-tertiary) 65%, var(--flare-color-on-surface))",
+        Series9 = "color-mix(in srgb, var(--flare-color-secondary) 65%, var(--flare-color-on-surface))",
+        Series10 = "color-mix(in srgb, var(--flare-color-primary) 55%, var(--flare-color-surface))",
+        Series11 = "color-mix(in srgb, var(--flare-color-tertiary) 55%, var(--flare-color-surface))",
+        Series12 = "color-mix(in srgb, var(--flare-color-secondary) 55%, var(--flare-color-surface))",
+
+        LineWidth = "2",
+        LineCap = "round",
+        PointRadius = "2.5",
+        PointOpacity = "0.6",
+        BubbleMinRadius = "4",
+        BubbleMaxRadius = "24",
+        BarRadius = "2",
+        AreaOpacity = "0.35",
+        RadarFillOpacity = "0.2",
+        WedgeOpacity = "0.7",
+        SliceStrokeColor = "var(--flare-color-surface)",
+        SliceStrokeWidth = "1.5",
+
+        RampColor = "var(--flare-color-primary)",
+        RampMinOpacity = "0.12",
+        RampMaxOpacity = "1",
+        CellRadius = "2",
+        CellGap = "2",
+        CellHoverOpacity = "0.85",
+
+        GridColor = "var(--flare-color-outline-variant)",
+        GridWidth = "0.5",
+        GridDash = "none",
+        GridMinorColor = "color-mix(in srgb, var(--flare-color-outline-variant) 45%, transparent)",
+        GridMinorWidth = "0.5",
+        LabelColor = "var(--flare-color-on-surface-variant)",
+        LabelSize = "9px",
+        ValueColor = "var(--flare-color-on-surface-variant)",
+        ValueOnFillColor = "var(--flare-color-surface)",
+        ValueSize = "8px",
+        AxisTitleColor = "var(--flare-color-on-surface-variant)",
+        AxisTitleSize = "10px",
+
+        Surface = "var(--flare-color-surface)",
+        Radius = "var(--flare-shape-medium)",
+        BorderWidth = "1px",
+        BorderColor = "var(--flare-color-outline-variant)",
+        Padding = "var(--flare-spacing-8)",
+        Gap = "var(--flare-spacing-4)",
+
+        LegendGap = "var(--flare-spacing-6)",
+        LegendItemGap = "var(--flare-spacing-3)",
+        LegendDotSize = "0.625rem",
+        LegendDotRadius = "var(--flare-shape-full)",
+        LegendSize = "var(--flare-typescale-label-small-size)",
+        LegendColor = "var(--flare-color-on-surface-variant)",
+        LegendOffOpacity = "0.4",
+
+        TrendWidth = "1.5",
+        TrendDash = "5 4",
+        TrendOpacity = "0.7",
+        AnnotationColor = "var(--flare-color-error)",
+        AnnotationWidth = "1.5",
+        AnnotationDash = "4 3",
+        AnnotationBandOpacity = "0.12",
+        AnnotationArrowSize = "7",
+        AnnotationPointRadius = "3.5",
+
+        LineDashDashed = "calc(var(--flare-chart-line-width) * 2) calc(var(--flare-chart-line-width) * 3)",
+        LineDashDotted = "0.1 calc(var(--flare-chart-line-width) * 3)",
+        LineDashDashDot = "calc(var(--flare-chart-line-width) * 2) calc(var(--flare-chart-line-width) * 3)" +
+                          " 0.1 calc(var(--flare-chart-line-width) * 3)",
+
+        ZoomSelectionFill = "color-mix(in srgb, var(--flare-color-primary) 16%, transparent)",
+        ZoomSelectionStroke = "var(--flare-color-primary)",
+    };
+
+    // Гейджи приложение не рисует; значения - по семантическим ролям (Flare 0.26.0). Безразмерные
+    // величины - единицы viewBox (гейдж 200 широкий и масштабируется в контейнер).
+    private static readonly GaugeTokens Gauge = new()
+    {
+        TrackColor = "var(--flare-color-surface-container-highest)",
+        TrackWidth = "14",
+        TrackCap = "round",
+        FillColor = "var(--flare-color-primary)",
+        FillWidth = "14",
+        NeedleColor = "var(--flare-color-on-surface)",
+        NeedleWidth = "3",
+        NeedleLength = "0.78",
+        PivotColor = "var(--flare-color-on-surface)",
+        PivotRadius = "5",
+        TickColor = "var(--flare-color-outline)",
+        TickWidth = "1.5",
+        TickLength = "7",
+        TickMinorColor = "var(--flare-color-outline-variant)",
+        TickMinorWidth = "1",
+        TickMinorLength = "4",
+        TickGap = "5",
+        LabelColor = "var(--flare-color-on-surface-variant)",
+        LabelSize = "9",
+        ValueColor = "var(--flare-color-on-surface)",
+        ValueSize = "var(--flare-typescale-headline-small-size)",
+        ValueWeight = "500",
+        BandOpacity = "0.55",
+        TargetColor = "var(--flare-color-on-surface)",
+        TargetWidth = "2.5",
+    };
+
     // ----- component tokens the mock actively styles -------------------------------------------------
 
     private static readonly ButtonTokens Button = new()
@@ -267,7 +439,21 @@ internal static class DekaTokens
         // filled-underline behavior), so match the resting outline. Only focus tints (the FocusRing above).
         HoverBorderBottomColor = "var(--flare-color-outline)",
         HoverStateLayer = "transparent",
-        Padding = "0.875rem 1rem",
+        // Паддинги по размерам (Flare 0.22.0): Md - прежний единственный Padding ("0.875rem 1rem"),
+        // соседние шаги расходятся от него.
+        PaddingXs = "0.1875rem 0.5rem",
+        PaddingSm = "0.375rem 0.625rem",
+        PaddingMd = "0.875rem 1rem",
+        PaddingLg = "1.125rem 1.125rem",
+        PaddingXl = "1.375rem 1.25rem",
+        // Высоты колодца (Flare 0.27.0): Md = 52px - фактическая высота, которую поле Deka рисовало
+        // и раньше (паддинг 14px + строка BodyMedium 22.5px + рамки), так что переход на шкалу ничего
+        // не сдвигает. Шкала расходится в обе стороны с сохранением порядка.
+        HeightXs = "1.875rem",
+        HeightSm = "2.25rem",
+        HeightMd = "3.25rem",
+        HeightLg = "3.75rem",
+        HeightXl = "4.25rem",
         PlaceholderColor = "var(--flare-color-on-surface-variant)",
         DisabledBg = "color-mix(in srgb, var(--flare-color-on-surface) 4%, transparent)",
         DisabledIndicator = "color-mix(in srgb, var(--flare-color-on-surface) 38%, transparent)",
@@ -305,6 +491,8 @@ internal static class DekaTokens
         IndicatorRadius = "var(--flare-shape-small)",
         IndicatorSize = "0",
         ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        // Прибитая панель поверх контента (Flare 0.19.0): над содержимым, под слоем оверлеев.
+        ZIndex = "1100",
     };
 
     // Bottom sheets (share / add-to-playlist) + dialogs use the extra-large 26px radius.
@@ -318,6 +506,10 @@ internal static class DekaTokens
     {
         Width = "360px",
         MiniWidth = "72px",
+        // Края панели (Flare 0.22.0): постоянный drawer отделяется от контента волосяной линией -
+        // тот же приём, что у списков и аккордеонов Deka, а не тоном поверхности, как у MD3.
+        Border = "1px solid var(--flare-color-outline-variant)",
+        SectionBorder = "1px solid var(--flare-color-outline-variant)",
     };
 
     private static readonly MenuTokens Menu = new()
@@ -841,13 +1033,11 @@ internal static class DekaTokens
     private static readonly TreeTokens Tree = new()
     {
         ToggleHoverBg = "color-mix(in srgb, var(--flare-color-on-surface) 12%, transparent)",
-        DropInsideBg = "color-mix(in srgb, var(--flare-color-primary) 12%, transparent)",
         Indent = "var(--flare-spacing-12)",
         ToggleSize = "1.5rem",
         IconSize = "1.25rem",
         SelectedBg = "color-mix(in srgb, var(--flare-color-primary) 16%, transparent)",
         SelectedColor = "var(--flare-color-primary)",
-        DropIndicatorColor = "var(--flare-color-primary)",
     };
 
     private static readonly CalendarTokens Calendar = new()
@@ -899,6 +1089,9 @@ internal static class DekaTokens
         HeightDense = "3rem",
         PaddingX = "0.5rem",
         TitlePaddingX = "0.75rem",
+        // Край бара (Flare 0.22.0): мобильный хедер у Deka - собственная разметка приложения, поэтому
+        // значение нейтральное: без линии, тон поверхности сам отделяет хром от контента.
+        Border = "none",
     };
 
     private static readonly BreadcrumbTokens Breadcrumb = new()
@@ -925,6 +1118,14 @@ internal static class DekaTokens
         ZoneMinHeight = "10rem",
         ZoneRadius = "var(--flare-shape-large)",
         FileIconSize = "1.25rem",
+        // Строки очереди загрузки (Flare 0.25.0): приложение файлов не грузит, значения - по
+        // семантическим ролям; успех у Deka - своя роль Success, а не заимствованный tertiary.
+        RowGap = "var(--flare-spacing-2)",
+        RowRadius = "var(--flare-shape-small)",
+        RowActiveBg = "color-mix(in srgb, var(--flare-color-primary) 8%, transparent)",
+        RowSuccessBg = "color-mix(in srgb, var(--flare-color-success) 8%, transparent)",
+        RowErrorBg = "color-mix(in srgb, var(--flare-color-error) 8%, transparent)",
+        RowErrorColor = "var(--flare-color-error)",
     };
 
     private static readonly FormTokens Form = new()
@@ -944,6 +1145,10 @@ internal static class DekaTokens
         ContentPaddingMobile = "20px 18px",
         DrawerRailWidth = "3.5rem",
         DrawerWidth = "15.5rem",
+        // Края шелла (Flare 0.22.0): app bar приложением не рисуется ("none"), а drawer шелла
+        // отделяется той же волосяной линией, что и компонентный DrawerTokens.Border выше.
+        AppBarBorder = "none",
+        DrawerBorder = "1px solid var(--flare-color-outline-variant)",
     };
 
     private static readonly LinkTokens Link = new()
@@ -1050,7 +1255,6 @@ internal static class DekaTokens
         BodyPaddingBlock = "var(--flare-spacing-8)",
         BodyPaddingInline = "var(--flare-spacing-12)",
         BodyColor = "var(--flare-color-on-surface-variant)",
-        ContentMaxHeight = "2000px",
     };
 
     private static readonly CollapseTokens Collapse = new()
@@ -1099,6 +1303,8 @@ internal static class DekaTokens
         Motion = Motion,
         State = State,
         Spacing = Spacing,
+        Border = Border,
+        Scrollbar = Scrollbar,
 
         Badge = Badge,
         Alert = Alert,
@@ -1115,11 +1321,15 @@ internal static class DekaTokens
         Slider = Slider,
         Input = Input,
         Dialog = Dialog,
+        Drag = Drag,
         Drawer = Drawer,
         Snackbar = Snackbar,
         Tooltip = Tooltip,
+        Overlay = Overlay,
         Popover = Popover,
         DataGrid = DataGrid,
+        Chart = Chart,
+        Gauge = Gauge,
         Card = Card,
         Avatar = Avatar,
         Progress = Progress,
@@ -1146,6 +1356,7 @@ internal static class DekaTokens
         Scrim = Scrim,
         ScrollTop = ScrollTop,
         Skeleton = Skeleton,
+        Icon = Icon,
         Table = Table,
         TimePicker = TimePicker,
         Stripe = Stripe,

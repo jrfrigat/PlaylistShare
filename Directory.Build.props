@@ -27,6 +27,6 @@
   <!-- Only .csproj projects consume MinVer; the docker-compose.dcproj is not an SDK project and must
        not get a PackageReference (it would fail NuGet restore on the net10.0 target framework). -->
   <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
-    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 </Project>

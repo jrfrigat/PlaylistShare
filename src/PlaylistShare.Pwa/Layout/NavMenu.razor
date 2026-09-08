@@ -1,35 +1,35 @@
 <FlareNavMenu AriaLabel="Основная навигация">
-    <Header>
+    <HeaderContent>
         <a href="/" class="deka-nav-brand">
             <span class="deka-nav-brand-mark">
                 <DekaMark Size="20" />
             </span>
             <span class="deka-nav-brand-name">PlaylistShare</span>
         </a>
-    </Header>
+    </HeaderContent>
 
     <ChildContent>
         <AuthorizeView>
             <Authorized>
                 <FlareNavLink Href="/my-playlists">
-                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></Icon>
+                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></IconContent>
                     <ChildContent>Мои плейлисты</ChildContent>
                 </FlareNavLink>
                 <FlareNavLink Href="/search">
-                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" /></Icon>
+                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" /></IconContent>
                     <ChildContent>Поиск</ChildContent>
                 </FlareNavLink>
             </Authorized>
             <NotAuthorized>
                 <FlareNavLink Href="/" Match="NavMatchMode.Exact">
-                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Home" /></Icon>
+                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Home" /></IconContent>
                     <ChildContent>Главная</ChildContent>
                 </FlareNavLink>
             </NotAuthorized>
         </AuthorizeView>
     </ChildContent>
 
-    <Footer>
+    <FooterContent>
         <AuthorizeView>
             <Authorized>
                 <a href="/profile" class="deka-nav-account">
@@ -39,12 +39,12 @@
             </Authorized>
             <NotAuthorized>
                 <FlareNavLink Href="/login">
-                    <Icon><FlareIconView Value="@MaterialDesign3Icons.Regular.Login" /></Icon>
+                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Login" /></IconContent>
                     <ChildContent>Вход</ChildContent>
                 </FlareNavLink>
             </NotAuthorized>
         </AuthorizeView>
-    </Footer>
+    </FooterContent>
 </FlareNavMenu>
 
 @code {
