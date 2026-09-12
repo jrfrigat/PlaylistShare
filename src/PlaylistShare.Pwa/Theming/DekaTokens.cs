@@ -556,6 +556,11 @@ internal static class DekaTokens
     {
         Radius = "var(--flare-shape-medium)",
         Height = "2rem",
+        // Required с 0.35.0: раньше заливка чипа была литералом в стилях. Приложение рисует только
+        // outlined-чип ("кем добавлен трек"), так что эти два - контейнеры под стать карточкам:
+        // filled на ступень выше поверхности, elevated на ступень ниже (он несёт ещё и тень).
+        FilledBg = "var(--flare-color-surface-container-high)",
+        ElevatedBg = "var(--flare-color-surface-container-low)",
     };
 
     // Search filter tabs: pill track, active = solid accent with on-primary text.
@@ -583,6 +588,12 @@ internal static class DekaTokens
         SecondaryActiveColor = "var(--flare-color-on-surface)",
         TabDisabledOpacity = "var(--flare-state-disabled-opacity)",
         ScrollDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        // Required с 0.35.0: до этого высота, минимальная ширина и боковые поля вкладки были
+        // литералами в tabs.css. Значения ровно те, что стояли там (padding-inline = spacing-10,
+        // высоту и ширину диктовал сам лейбл), поэтому пилюли фильтра поиска не сдвинулись.
+        TabHeight = "auto",
+        TabMinWidth = "0",
+        TabPaddingInline = "var(--flare-spacing-10)",
     };
 
     // Collaboration toggle: accent track when on.
@@ -759,13 +770,16 @@ internal static class DekaTokens
         CircularWidthXl = "6px",
         CircularCap = "round",
         CircularGap = "4px",
-        WavyEnabled = "0",
-        WavyHeight = "10px",
-        WaveLength = "40px",
-        WaveAmplitude = "3px",
-        WaveSpeed = "1s",
-        RingWaves = "8",
-        RingWaveAmplitude = "1.6",
+        // Волна уехала в 0.34.0 туда, где она и придумана - в пакет MD3 Expressive; семь её членов
+        // (WavyEnabled/WavyHeight/WaveLength/WaveAmplitude/WaveSpeed/RingWaves/RingWaveAmplitude)
+        // из ProgressTokens убраны. Deka волну и не рисовала (WavyEnabled стоял в 0).
+        // Взамен required стали тайминги неопределённого прогресса - раньше они были литералами в
+        // progress.css. Значения оставлены теми же, что рисовал компонент, чтобы спиннер привязки
+        // Яндекса и списков крутился ровно как крутился.
+        LinearIndeterminateDuration = "1500ms",
+        LinearIndeterminateEasing = "var(--flare-motion-easing-standard)",
+        CircularIndeterminateRotationDuration = "1400ms",
+        CircularIndeterminateProgressDuration = "1400ms",
     };
 
     private static readonly FabTokens Fab = new()

@@ -17,7 +17,7 @@
 
     @if (_favoritesLoading)
     {
-        <FlareProgress Variant="ProgressVariant.Circular" />
+        <FlareProgressCircular />
     }
     else if (_favorites.Any())
     {
@@ -73,7 +73,7 @@
 
     @if (_playlistsLoading)
     {
-        <FlareProgress Variant="ProgressVariant.Circular" />
+        <FlareProgressCircular />
     }
     else if (!_playlists.Any())
     {

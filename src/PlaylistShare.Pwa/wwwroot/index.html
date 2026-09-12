@@ -211,7 +211,11 @@
         <span class="dismiss">x</span>
     </div>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
-    <script src="_content/Flare.Components/js/flare-bootstrap.js"></script>
+    <!-- data-default-* обязательны с Flare 0.35.0: скрипт больше не угадывает тему сам, и без них
+         первый кадр приходит нетемизированным, пока не загрузится .NET. Значения - id темы и
+         палитры, которые регистрирует Program.cs (DekaTheme.ThemeId / DekaPalette.Id). -->
+    <script src="_content/Flare.Components/js/flare-bootstrap.js"
+            data-default-theme="deka" data-default-palette="deka"></script>
     <script src="js/hscroll.js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <!-- Регистрацию service worker и проверку обновлений выполняет Flare VersionCheckService

@@ -50,7 +50,7 @@
                         <div style="font-size:13px;color:var(--flare-color-on-surface-variant)">Статус: @_qrStatusText</div>
                         @if (_qrWaiting)
                         {
-                            <div style="margin-top:14px"><FlareProgress Variant="ProgressVariant.Circular" Size="TrackSize.Sm" /></div>
+                            <div style="margin-top:14px"><FlareProgressCircular Size="TrackSize.Sm" /></div>
                         }
                         @if (_qrError != null)
                         {
@@ -59,7 +59,7 @@
                     }
                     else
                     {
-                        <FlareProgress Variant="ProgressVariant.Circular" />
+                        <FlareProgressCircular />
                     }
                 </div>
             }
