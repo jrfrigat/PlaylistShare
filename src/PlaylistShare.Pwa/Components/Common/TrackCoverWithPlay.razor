@@ -2,13 +2,16 @@
 @using PlaylistShare.Shared.DTO
 @using PlaylistShare.Shared.Yandex
 @inject IAudioPlayerService AudioPlayerService
+@implements IDisposable
 
 <div @onmouseenter="HandleMouseEnter"
      @onmouseleave="HandleMouseLeave"
      class="deka-track-cover"
      style="width: @(Width)px; height: @(Height)px;">
 
-    <FlareImage Src="@Track?.CoverUri.FormatCoverUrl(Width, Height)" Height="@($"{Height}px")" Width="@($"{Width}px")" BorderRadius="var(--flare-shape-small)" Style="display: block;" />
+    @* Lazy: браузер сам не запросит обложку, пока строка не подошла к экрану. Без него плейлист на
+       сотни треков дёргал столько же запросов в первую же отрисовку. *@
+    <FlareImage Src="@Track?.CoverUri.FormatCoverUrl(Width, Height)" Height="@($"{Height}px")" Width="@($"{Width}px")" BorderRadius="var(--flare-shape-small)" Style="display: block;" Lazy="true" />
 
     @if (CanPlay)
     {
@@ -88,5 +91,16 @@
     private void OnPlayerStateChanged()
     {
         InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Отписка от плеера. До виртуализации обложки жили ровно столько же, сколько страница, и
+    /// отсутствие отписки просто не было заметно. Теперь Virtualize создаёт и уничтожает строки на
+    /// каждой прокрутке: без этого каждая уехавшая обложка оставляла бы за собой живой обработчик,
+    /// который на каждый тик плеера дёргает StateHasChanged у уничтоженного компонента.
+    /// </summary>
+    public void Dispose()
+    {
+        AudioPlayerService.OnStateChanged -= OnPlayerStateChanged;
     }
 }

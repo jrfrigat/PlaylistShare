@@ -146,15 +146,27 @@
         {
             @if (_tracks.Count > 8)
             {
-                <FlareField TValue="string" @bind-Value="_trackFilter"
+                <FlareField TValue="string" @bind-Value="_trackFilter" @bind-Value:after="ApplyTrackFilter"
                             Variant="InputVariant.Outlined" Placeholder="Поиск трека..." Class="deka-playlist-filter">
                     <AdornmentStart><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" Color="FlareColor.Secondary" /></AdornmentStart>
                 </FlareField>
             }
-            <FlareStack Gap="FlareSpacing.XSmall">
-                @foreach (var track in FilteredTracks)
-                {
-                    <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.XSmall">
+            @* Виртуализация списка: в DOM живут только видимые строки плюс буфер. Штатный Virtualize
+               скроллится вместе со страницей - ему не нужен свой контейнер с фиксированной высотой,
+               в отличие от FlareVirtualList/FlareList/FlareDataGrid, которые виртуализируют только
+               внутри собственной прокрутки (у FlareDataGrid ещё и Virtual включается лишь когда у
+               него есть Height, то есть при прокрутке страницей он не рециклит строки вовсе).
+               ItemSize обязан совпадать с реальным шагом строки, иначе полоса прокрутки прыгает.
+               Замерено в браузере: 73px = строка 69 + зазор 4. Строка выходит 69, а не 62, из-за
+               обёртки обложки: .deka-track-cover - inline-block, и её блок-родитель добавляет снизу
+               место под нижние выносные (50px обложки живут в 57px строки). Шаг одинаков для всех
+               вариантов строки - и с чипом "кем добавлен", и с кнопкой удаления.
+               Строку-обёртку рисуем литеральным div, а не FlareStack: scoped-CSS страницы вешает
+               свой атрибут только на СВОЮ разметку, на корень дочернего компонента он не попадает,
+               и правило для класса на FlareStack молча не применилось бы. *@
+            <div class="deka-track-list">
+                <Virtualize Items="@_filteredTracks" Context="track" ItemSize="73" OverscanCount="6">
+                    <div class="deka-track-row-wrap">
                         <div class="deka-track-row-item">
                             <TrackItem Track="@track" PlaylistShareToken="@Token" CanPlay="@_canPlay"
                                        IsCurrentTrack="@(AudioPlayerService.CurrentTrackId == track.TrackId)"
@@ -166,10 +178,10 @@
                                 <FlareIconButton Icon="@MaterialDesign3Icons.Regular.MoreVert" Size="ButtonSize.Sm" OnClick="() => OnRemoveTrack(track)" AriaLabel="Удалить трек" />
                             </div>
                         }
-                    </FlareStack>
-                }
-            </FlareStack>
-            @if (!string.IsNullOrWhiteSpace(_trackFilter) && !FilteredTracks.Any())
+                    </div>
+                </Virtualize>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_trackFilter) && _filteredTracks.Count == 0)
             {
                 <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="pa-4 text-center">
                     В плейлисте нет треков по запросу "@_trackFilter"
@@ -217,13 +229,22 @@
     private List<YandexTrack> _tracks = new();
     /// <summary>Текст фильтра по трекам плейлиста (клиентский поиск по названию/исполнителю).</summary>
     private string _trackFilter = "";
-    /// <summary>Треки плейлиста с учётом фильтра.</summary>
-    private IEnumerable<YandexTrack> FilteredTracks =>
-        string.IsNullOrWhiteSpace(_trackFilter)
-            ? _tracks
+    /// <summary>
+    /// Треки плейлиста с учётом фильтра - готовый список, а не ленивый запрос. Virtualize берёт
+    /// источник по индексу и спрашивает его Count на каждую прокрутку: ленивый Where пересчитывал бы
+    /// весь фильтр на каждом кадре. Пересоздаём его (ApplyTrackFilter) при смене фильтра и при любом
+    /// изменении _tracks, а не мутируем на месте - иначе Virtualize не заметит смены источника.
+    /// </summary>
+    private List<YandexTrack> _filteredTracks = new();
+
+    /// <summary>Пересобирает <see cref="_filteredTracks"/> под текущий текст фильтра.</summary>
+    private void ApplyTrackFilter() =>
+        _filteredTracks = string.IsNullOrWhiteSpace(_trackFilter)
+            ? new List<YandexTrack>(_tracks)
             : _tracks.Where(t =>
                 t.Title.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase) ||
-                t.Artists.Any(a => a.Name.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase)));
+                t.Artists.Any(a => a.Name.Contains(_trackFilter, StringComparison.InvariantCultureIgnoreCase)))
+                .ToList();
     /// <summary>
     /// Словарь trackId -> имя пользователя, добавившего трек.
     /// </summary>
@@ -361,6 +382,7 @@
             if (response?.Success == true && response.Data != null)
             {
                 _tracks = response.Data.Tracks;
+                ApplyTrackFilter();
                 _removableTrackIds = response.Data.RemovableTrackIds;
                 _existingTrackIds = _tracks.Select(t => t.TrackId).ToHashSet();
                 _playlistDurationMs = _tracks.Sum(t => t.DurationMs);
@@ -422,6 +444,7 @@
             {
                 Snackbar.Show("Трек удалён", SnackbarSeverity.Success);
                 _tracks.Remove(track);
+                ApplyTrackFilter(); // источник для Virtualize пересоздаём, а не правим на месте
                 _existingTrackIds.Remove(track.TrackId);
                 _playlistDurationMs -= track.DurationMs;
                 _playlistTrackCount -= 1;

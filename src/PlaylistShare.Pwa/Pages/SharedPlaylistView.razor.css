@@ -139,3 +139,15 @@
 .deka-track-remove {
     flex: none;
 }
+
+/* Ряд виртуализованного списка. Раньше это был FlareStack Row с Gap=XSmall внутри внешнего
+   FlareStack с таким же зазором; теперь ряд - литеральный div, а зазор между рядами живёт в его
+   margin-bottom, а не во флекс-gap контейнера. Причина в Virtualize: он кладёт в контейнер ещё две
+   распорки, и флекс-gap добавлял бы зазор на их границах - шаг строки переставал бы совпадать с
+   ItemSize, а по нему Virtualize считает высоту распорок. Так шаг ровно 73px: 69 + 4. */
+.deka-track-row-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--flare-spacing-2);
+    margin-bottom: var(--flare-spacing-2);
+}
