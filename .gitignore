@@ -87,3 +87,6 @@ CLAUDE.md
 
 # ASP.NET Data Protection key ring (dev writes it to the API content root; secrets - never commit)
 dp-keys/
+
+AGENTS.md
+.codex/

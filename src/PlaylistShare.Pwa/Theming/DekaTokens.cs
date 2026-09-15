@@ -11,38 +11,58 @@ namespace PlaylistShare.Pwa.Theming;
 /// </summary>
 internal static class DekaTokens
 {
-    private const string FontStack = "'Onest', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+    private const string JakartaStack = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+    private const string InterStack = "'Inter', system-ui, -apple-system, sans-serif";
 
     // ----- Базовые шкалы (Core Scales) -----------------------------------------------------------------
 
     private static readonly TypographyTokens Typography = new()
     {
-        DisplayLarge = T("2.5rem", "800", "1.05", "-0.025em"),      // 40px - hero заголовок плейлиста
-        DisplayMedium = T("2rem", "800", "1.1", "-0.02em"),         // 32px - "Мои плейлисты"
-        DisplaySmall = T("1.75rem", "800", "1.15", "-0.02em"),      // 28px - заголовки поиска / фонотеки
-        HeadlineLarge = T("1.625rem", "800", "1.2", "-0.02em"),     // 26px - экран авторизации
-        HeadlineMedium = T("1.4375rem", "800", "1.25", "-0.01em"),  // 23px - модальные окна комнат
-        HeadlineSmall = T("1.3125rem", "800", "1.3", "-0.01em"),    // 21px - заголовки секций треков
-        TitleLarge = T("1.1875rem", "700", "1.3", "0em"),           // 19px - заголовки шторки шеринга
-        TitleMedium = T("1rem", "700", "1.4", "0em"),               // 16px - заголовки карточек плейлистов
-        TitleSmall = T("0.9375rem", "700", "1.4", "0em"),           // 15px - названия треков
-        BodyLarge = T("1rem", "500", "1.5", "0em"),                 // 16px - кнопки, основной текст
-        BodyMedium = T("0.9375rem", "500", "1.5", "0em"),           // 15px - имена исполнителей, вторичный текст
-        BodySmall = T("0.875rem", "500", "1.4", "0em"),             // 14px - подсказки, хронометраж
-        LabelLarge = T("0.8125rem", "700", "1.3", "0.04em"),        // 13px - верхние надписи (eyebrows), вкладки
-        LabelMedium = T("0.8125rem", "600", "1.3", "0em"),          // 13px - чипы, элементы навигации
-        LabelSmall = T("0.6875rem", "600", "1.3", "0.02em"),        // 11px - бейджи качества (Lossless / HQ)
+        // ── Plus Jakarta Sans ─────────────────────────────────────────────
+        // display-hero (48px / 56px / -0.03em / 800)
+        DisplayLarge = T("3rem", "800", "1.17", "-0.03em"),
+        // промежуточный вариант, в макете не встречается — на всякий случай
+        DisplayMedium = T("2.25rem", "800", "1.20", "-0.025em"),
+        // headline-lg (32px / 40px / -0.02em / 700)
+        DisplaySmall = T("2rem", "700", "1.25", "-0.02em"),
+
+        // headline-lg (32px / 40px / -0.02em / 700)
+        HeadlineLarge = T("2rem", "700", "1.25", "-0.02em"),
+        // headline-lg-mobile (26px / 32px / -0.015em / 700)
+        HeadlineMedium = T("1.625rem", "700", "1.23", "-0.015em"),
+        // headline-md (22px / 28px / -0.01em / 600)
+        HeadlineSmall = T("1.375rem", "600", "1.27", "-0.01em"),
+
+        // headline-sm (18px / 24px / 600)
+        TitleLarge = T("1.125rem", "600", "1.33", "0em"),
+        TitleMedium = T("1rem", "600", "1.40", "0em"),
+        TitleSmall = T("0.875rem", "600", "1.40", "0em"),
+
+        // body-lg (16px / 24px / 400)
+        BodyLarge = T("1rem", "400", "1.50", "0em"),
+        // body-md (14px / 20px / 400)
+        BodyMedium = T("0.875rem", "400", "1.43", "0em"),
+        // body-sm (12px / 16px / 400)
+        BodySmall = T("0.75rem", "400", "1.33", "0em"),
+
+        // ── Inter ─────────────────────────────────────────────────────────
+        // label-md (13px / 18px / 0.01em / 600) — в макете используется Inter
+        LabelLarge = T("0.8125rem", "700", "1.38", "0.01em", InterStack),
+        // label-md baseline
+        LabelMedium = T("0.8125rem", "600", "1.38", "0.01em", InterStack),
+        // label-sm (11px / 14px / 0.04em / 500)
+        LabelSmall = T("0.6875rem", "500", "1.27", "0.04em", InterStack),
     };
 
     // Мягкие скругления макета (10px для мелких элементов, 18-22px для карточек, 26px для шторки/плеера)
     private static readonly ShapeTokens Shape = new()
     {
         None = "0px",
-        ExtraSmall = "10px",
-        Small = "14px",
-        Medium = "18px",
-        Large = "22px",
-        ExtraLarge = "26px",
+        ExtraSmall = "0.125rem",
+        Small = "0.375rem",
+        Medium = "0.5rem",
+        Large = "0.75rem",
+        ExtraLarge = "1rem",
         Full = "9999px",
         MorphDuration = "var(--flare-motion-duration-spring-fast)",
         MorphEasing = "var(--flare-motion-easing-spring-fast)",
@@ -52,11 +72,16 @@ internal static class DekaTokens
     private static readonly ElevationTokens Elevation = new()
     {
         Level0 = "none",
-        Level1 = "0 2px 8px -4px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.15)",
-        Level2 = "0 6px 20px -14px rgba(0,0,0,.50)",
-        Level3 = "0 10px 28px -12px rgba(0,0,0,.55)",
-        Level4 = "0 16px 40px -12px rgba(0,0,0,.60)",
-        Level5 = "0 20px 50px -12px rgba(0,0,0,.70)",
+        // shadow-sm (чипы, мелкие бейджи)
+        Level1 = "0 1px 2px 0 rgba(0,0,0,0.05)",
+        // shadow (сайдбар, хедер, footer)
+        Level2 = "0 1px 8px rgba(0,0,0,0.5)",
+        // shadow-md (кнопки, hover-элементы)
+        Level3 = "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
+        // карточки / hover карточек
+        Level4 = "0 8px 30px rgba(0,0,0,0.5)",
+        // главный баннер интеграции
+        Level5 = "0 8px 32px rgba(0,0,0,0.5)",
     };
 
     // Плавная музыкальная моторика с пружинами
@@ -299,7 +324,7 @@ internal static class DekaTokens
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
-        FilledHoverShadow = "0 10px 24px -10px color-mix(in srgb, var(--flare-color-primary) 65%, transparent)",
+        FilledHoverShadow = "0 4px 20px rgba(160,120,255,0.35)",
         IconSizeXs = "1.125rem",
         IconSizeSm = "1.125rem",
         IconSizeMd = "1.25rem",
@@ -409,16 +434,16 @@ internal static class DekaTokens
 
     private static readonly NavTokens Nav = new()
     {
-        ActiveWeight = "700",
+        ActiveWeight = "600",
         BadgeWeight = "600",
         RailLabelLineHeight = "1.15",
-        ItemRadius = "var(--flare-shape-small)",
-        IndicatorRadius = "var(--flare-shape-small)",
+        ItemRadius = "var(--flare-shape-medium)",
+        IndicatorRadius = "var(--flare-shape-medium)",
         ActiveIndicator = "var(--flare-color-primary-container)",
         ActiveLeftBar = "none",
         LinkDisabledOpacity = "var(--flare-state-disabled-opacity)",
         IconSize = "1.5rem",
-        ItemHeight = "3.5rem",
+        ItemHeight = "3rem",
     };
 
     private static readonly BottomNavTokens BottomNav = new()
@@ -452,8 +477,8 @@ internal static class DekaTokens
     {
         Width = "360px",
         MiniWidth = "72px",
-        Border = "1px solid var(--flare-color-outline-variant)",
-        SectionBorder = "1px solid var(--flare-color-outline-variant)",
+        Border = "none",
+        SectionBorder = "none",
     };
 
     private static readonly MenuTokens Menu = new()
@@ -1049,7 +1074,7 @@ internal static class DekaTokens
         DrawerRailWidth = "3.5rem",
         DrawerWidth = "15.5rem",
         AppBarBorder = "none",
-        DrawerBorder = "1px solid var(--flare-color-outline-variant)",
+        DrawerBorder = "none",
         AppBarShadow = "none",
     };
 
@@ -1283,15 +1308,23 @@ internal static class DekaTokens
         // Кастомные переменные для музыкального плеера и акцентных градиентов
         Extended = new Dictionary<string, string>
         {
-            ["--deka-accent-strong"] = "oklch(0.480 0.220 293)", // Глубокий стоп для неонового фиолетового градиента
-            ["--deka-glass"] = "oklch(0.180 0.010 286 / 0.75)",  // Тёмное матовое обсидиановое стекло (вместо белого)
+            // Глубокий стоп градиента — совпадает с primary-container #a078ff / inverse-primary #6d3bd7
+            ["--deka-accent-strong"] = "oklch(0.50 0.220 293)",        // #6d3bd7
+
+            // Матовое обсидиановое стекло — соответствует bg-surface-container-lowest/95 из макета
+            ["--deka-glass"] = "oklch(0.16 0.008 286 / 0.95)", // #0e0e13 @ 95%
+
+            // Чуть более прозрачное — для хедера (bg-surface-container-lowest/80)
+            ["--deka-glass-header"] = "oklch(0.16 0.008 286 / 0.80)",
+
+            // Тот же акцент, что и --flare-color-primary (лаванда #d0bcff)
             ["--deka-gradient-accent"] = "linear-gradient(150deg, var(--flare-color-primary), var(--deka-accent-strong))",
         },
     };
 
-    private static TypeStyle T(string size, string weight, string lineHeight, string spacing) => new()
+    private static TypeStyle T(string size, string weight, string lineHeight, string spacing, string family = JakartaStack) => new()
     {
-        FontFamily = FontStack,
+        FontFamily = family,
         FontWeight = weight,
         FontSize = size,
         LineHeight = lineHeight,

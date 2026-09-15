@@ -1,43 +1,103 @@
 <FlareNavMenu AriaLabel="Основная навигация">
+
     <HeaderContent>
-        <a href="/" class="deka-nav-brand">
-            <span class="deka-nav-brand-mark">
-                <DekaMark Size="20" />
-            </span>
-            <span class="deka-nav-brand-name">PlaylistShare</span>
-        </a>
+        <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center">
+            <FlareIconView Size="2rem"
+                           Color="@FlareColor.Primary"
+                           Value="PlaylistShare.Pwa.CustomIcons.PlaylistShare" />
+            <FlareText Typo="TypographyScale.HeadlineSmall"
+                       Color="@FlareColor.Primary">
+                PlaylistShare
+            </FlareText>
+        </FlareStack>
     </HeaderContent>
 
     <ChildContent>
-        <AuthorizeView>
-            <Authorized>
+        <FlareStack Gap="FlareSpacing.Medium">
+
+            @* ── Основные разделы ───────────────────────────────────────── *@
+            <FlareStack Gap="FlareSpacing.XSmall">
                 <FlareNavLink Href="/search">
                     <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" /></IconContent>
                     <ChildContent>Поиск</ChildContent>
                 </FlareNavLink>
 
                 <FlareNavLink Href="/my-playlists">
-                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></IconContent>
-                    <ChildContent>Мои плейлисты</ChildContent>
+                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" /></IconContent>
+                    <ChildContent>Моя фонотека</ChildContent>
                 </FlareNavLink>
-            </Authorized>
-            <NotAuthorized>
-                <FlareNavLink Href="/" Match="NavMatchMode.Exact">
-                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Home" /></IconContent>
-                    <ChildContent>Главная</ChildContent>
-                </FlareNavLink>
-            </NotAuthorized>
-        </AuthorizeView>
+            </FlareStack>
+
+            @* ── Плейлисты друзей ───────────────────────────────────────── *@
+            <FlareStack Gap="FlareSpacing.XSmall">
+                    <FlareText Typo="TypographyScale.LabelSmall"
+                               Color="@FlareColor.OnSurfaceVariant2">
+                        ПЛЕЙЛИСТЫ ДРУЗЕЙ
+                    </FlareText>
+            </FlareStack>
+
+            @* ── Кнопки действий ────────────────────────────────────────── *@
+            <FlareStack Gap="FlareSpacing.XXSmall">
+                <FlareButton Variant="ButtonVariant.Filled"
+                             Size="ButtonSize.Sm"
+                             Typo="TypographyScale.LabelMedium"
+                             FullWidth>
+                    <LeadingIcon>
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.AddCircle" />
+                    </LeadingIcon>
+                    <ChildContent>
+                        Создать плейлист
+                    </ChildContent>
+                </FlareButton>
+
+                <FlareButton Variant="ButtonVariant.Text"
+                             Size="ButtonSize.Sm"
+                             Typo="TypographyScale.LabelSmall"
+                             FullWidth
+                             Color="@FlareColor.OnSurfaceVariant">
+                    <LeadingIcon>
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.Link" />
+                    </LeadingIcon>
+                    <ChildContent>
+                        Присоединиться по ссылке
+                    </ChildContent>
+                </FlareButton>
+            </FlareStack>
+        </FlareStack>
     </ChildContent>
 
     <FooterContent>
         <AuthorizeView>
             <Authorized>
-                <a href="/profile" class="deka-nav-account">
-                    <FlareAvatar Text="@InitialOf(context.User.Identity?.Name)" Size="AvatarSize.Sm" />
-                    <span class="deka-nav-account-name">@(context.User.Identity?.Name ?? "Профиль")</span>
-                </a>
+                <FlareCard Variant="CardVariant.Filled">
+                    <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.XSmall">
+
+                        <FlareAvatar Text="@InitialOf(context.User.Identity?.Name)"
+                                        Size="AvatarSize.Sm"
+                                        Shape="AvatarShape.Rounded" />
+
+                        <FlareStack Gap="FlareSpacing.None">
+                            <FlareText Typo="TypographyScale.LabelMedium"
+                                       Color="@FlareColor.OnSurface">
+                                @(context.User.Identity?.Name ?? "Профиль")
+                            </FlareText>
+                            <FlareText Typo="TypographyScale.LabelSmall"
+                                       Color="@FlareColor.Secondary">
+                                В сети
+                            </FlareText>
+                        </FlareStack>
+
+                        <FlareSpacer />
+
+                        <FlareIconButton Icon="FlareIcons.Settings"
+                                         Href="/profile"
+                                         Size="ButtonSize.Sm"
+                                         Color="@FlareColor.OnSurfaceVariant"
+                                         AriaLabel="Настройки профиля" />
+                    </FlareStack>
+                </FlareCard>
             </Authorized>
+
             <NotAuthorized>
                 <FlareNavLink Href="/login">
                     <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Login" /></IconContent>
@@ -46,6 +106,7 @@
             </NotAuthorized>
         </AuthorizeView>
     </FooterContent>
+
 </FlareNavMenu>
 
 @code {
