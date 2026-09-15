@@ -122,7 +122,7 @@
                        MinWidth="auto" снимает штатные 192px панели: они рассчитаны на меню, а тут
                        вертикальный слайдер шириной 12px - панель выходила пустой коробкой. *@
                     <FlarePopover Trigger="PopoverTrigger.Hover" @bind-Open="_volumeIsOpen"
-                                  Placement="PopoverPlacement.Top" MinWidth="auto">
+                                  Placement="Placement.Top" MinWidth="auto">
                         <AnchorContent>
                             <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? MaterialDesign3Icons.Regular.VolumeOff : MaterialDesign3Icons.Regular.VolumeUp)"
                                              Variant="ButtonVariant.Text"

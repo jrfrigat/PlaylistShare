@@ -4,41 +4,37 @@ using Flare.Abstractions.Tokens.Components;
 namespace PlaylistShare.Pwa.Theming;
 
 /// <summary>
-/// Deka's full non-color design tokens - typography, shape, elevation, motion, state, spacing and every
-/// component's geometry - authored entirely from scratch from the Claude Design mock. This does NOT derive
-/// from Material Design 3 or any other Flare theme package: since Flare 0.1.x the core ships zero token
-/// defaults (every <see cref="DesignTokens"/> field and every component-token field is <c>required</c>),
-/// so a theme must supply every value itself. This file does exactly that - the mock's own values where
-/// it specifies one (buttons, cards, inputs, nav, sheets, switch, tabs, mini-player), and neutral values
-/// that reference Deka's semantic <c>--flare-*</c> roles for the components the app never renders.
+/// Полный набор нецветовых дизайн-токенов Flare для PlaylistShare (Deka):
+/// типографика Onest, скругления (10-26px), диффузные мягкие тени, пружинная анимация,
+/// состояния интерактивности, сетка отступов и полная геометрия компонентов макета Obsidian Wave.
+/// Все поля обязательны (Flare 0.1+ / 0.35+).
 /// </summary>
 internal static class DekaTokens
 {
-    private const string FontStack = "'Onest', system-ui, -apple-system, sans-serif";
+    private const string FontStack = "'Onest', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
 
-    // ----- core scales -------------------------------------------------------------------------------
+    // ----- Базовые шкалы (Core Scales) -----------------------------------------------------------------
 
-    // Sizes/weights measured off the mock's actual inline styles.
     private static readonly TypographyTokens Typography = new()
     {
-        DisplayLarge = T("2.5rem", "800", "1.05", "-0.025em"),      // 40px - playlist/detail hero title
+        DisplayLarge = T("2.5rem", "800", "1.05", "-0.025em"),      // 40px - hero заголовок плейлиста
         DisplayMedium = T("2rem", "800", "1.1", "-0.02em"),         // 32px - "Мои плейлисты"
-        DisplaySmall = T("1.75rem", "800", "1.15", "-0.02em"),      // 28px - search/settings headings
-        HeadlineLarge = T("1.625rem", "800", "1.2", "-0.02em"),     // 26px - auth welcome title
-        HeadlineMedium = T("1.4375rem", "800", "1.25", "-0.01em"),  // 23px - connect screen title
-        HeadlineSmall = T("1.3125rem", "800", "1.3", "-0.01em"),    // 21px - section headings
-        TitleLarge = T("1.1875rem", "700", "1.3", "0em"),           // 19px - share sheet title, dialog titles
-        TitleMedium = T("1rem", "700", "1.4", "0em"),               // 16px - card titles
-        TitleSmall = T("0.9375rem", "700", "1.4", "0em"),           // 15px - playlist/track titles
-        BodyLarge = T("1rem", "500", "1.5", "0em"),                 // 16px - buttons, primary body text
-        BodyMedium = T("0.9375rem", "500", "1.5", "0em"),           // 15px - secondary text
-        BodySmall = T("0.875rem", "500", "1.4", "0em"),             // 14px - captions, hints
-        LabelLarge = T("0.8125rem", "700", "1.3", "0.04em"),        // 13px - eyebrows, tab labels
-        LabelMedium = T("0.8125rem", "600", "1.3", "0em"),          // 13px - chips, nav items
-        LabelSmall = T("0.6875rem", "600", "1.3", "0.02em"),        // 11px - badges, micro-labels
+        DisplaySmall = T("1.75rem", "800", "1.15", "-0.02em"),      // 28px - заголовки поиска / фонотеки
+        HeadlineLarge = T("1.625rem", "800", "1.2", "-0.02em"),     // 26px - экран авторизации
+        HeadlineMedium = T("1.4375rem", "800", "1.25", "-0.01em"),  // 23px - модальные окна комнат
+        HeadlineSmall = T("1.3125rem", "800", "1.3", "-0.01em"),    // 21px - заголовки секций треков
+        TitleLarge = T("1.1875rem", "700", "1.3", "0em"),           // 19px - заголовки шторки шеринга
+        TitleMedium = T("1rem", "700", "1.4", "0em"),               // 16px - заголовки карточек плейлистов
+        TitleSmall = T("0.9375rem", "700", "1.4", "0em"),           // 15px - названия треков
+        BodyLarge = T("1rem", "500", "1.5", "0em"),                 // 16px - кнопки, основной текст
+        BodyMedium = T("0.9375rem", "500", "1.5", "0em"),           // 15px - имена исполнителей, вторичный текст
+        BodySmall = T("0.875rem", "500", "1.4", "0em"),             // 14px - подсказки, хронометраж
+        LabelLarge = T("0.8125rem", "700", "1.3", "0.04em"),        // 13px - верхние надписи (eyebrows), вкладки
+        LabelMedium = T("0.8125rem", "600", "1.3", "0em"),          // 13px - чипы, элементы навигации
+        LabelSmall = T("0.6875rem", "600", "1.3", "0.02em"),        // 11px - бейджи качества (Lossless / HQ)
     };
 
-    // Rounder than a typical MD baseline, matching the mock's 10-26px card/button/sheet radii.
+    // Мягкие скругления макета (10px для мелких элементов, 18-22px для карточек, 26px для шторки/плеера)
     private static readonly ShapeTokens Shape = new()
     {
         None = "0px",
@@ -48,23 +44,22 @@ internal static class DekaTokens
         Large = "22px",
         ExtraLarge = "26px",
         Full = "9999px",
-        // Переход формы (кнопка в выбранное состояние, FAB в развёрнутый): идёт на пружине.
         MorphDuration = "var(--flare-motion-duration-spring-fast)",
         MorphEasing = "var(--flare-motion-easing-spring-fast)",
     };
 
-    // Soft, diffuse, large-blur shadows with a big negative spread - matching the mock's card/sheet/
-    // full-player shadow style, not a typical multi-layer MD shadow.
+    // Диффузные тёмные тени Obsidian Wave с глубоким рассеиванием
     private static readonly ElevationTokens Elevation = new()
     {
         Level0 = "none",
         Level1 = "0 2px 8px -4px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.15)",
-        Level2 = "0 6px 20px -14px rgba(0,0,0,.5)",
+        Level2 = "0 6px 20px -14px rgba(0,0,0,.50)",
         Level3 = "0 10px 28px -12px rgba(0,0,0,.55)",
-        Level4 = "0 16px 40px -12px rgba(0,0,0,.6)",
-        Level5 = "0 20px 50px -12px rgba(0,0,0,.7)",
+        Level4 = "0 16px 40px -12px rgba(0,0,0,.60)",
+        Level5 = "0 20px 50px -12px rgba(0,0,0,.70)",
     };
 
+    // Плавная музыкальная моторика с пружинами
     private static readonly MotionTokens Motion = new()
     {
         DurationShort1 = "100ms",
@@ -79,9 +74,6 @@ internal static class DekaTokens
         EasingDecelerate = "cubic-bezier(0, 0, 0, 1)",
         EasingAccelerate = "cubic-bezier(0.3, 0, 1, 1)",
         EasingEmphasized = "cubic-bezier(0.2, 0.8, 0.2, 1)",
-        // Пружина: её просит морфинг формы (ShapeTokens.Morph*) и раскрывающиеся панели. Эталонные
-        // темы задают её длинным linear(...) из 33 точек; у Deka вся моторика - короткие кривые, так
-        // что пружина здесь тоже кривая с небольшим перелётом, а не табличная аппроксимация.
         EasingSpring = "cubic-bezier(0.32, 1.4, 0.5, 1)",
         EasingSpringFast = "cubic-bezier(0.34, 1.56, 0.64, 1)",
         EasingSpringSlow = "cubic-bezier(0.3, 1.25, 0.45, 1)",
@@ -90,52 +82,43 @@ internal static class DekaTokens
         DurationSpringSlow = "400ms",
     };
 
-    // Subtler than a typical MD state-layer scale - the mock's interactions are simple scale/color-shifts.
+    // Полупрозрачные наложения интерактивных состояний
     private static readonly StateTokens State = new()
     {
         HoverOpacity = "0.06",
-        SelectedOpacity = "0.12",
+        SelectedOpacity = "0.14",
         FocusOpacity = "0.10",
-        PressedOpacity = "0.10",
-        DraggedOpacity = "0.14",
+        PressedOpacity = "0.12",
+        DraggedOpacity = "0.16",
         DisabledOpacity = "0.38",
         DisabledContainerOpacity = "0.12",
-        // State-layer paint (Flare 0.2.0): translucent currentColor wash at each state's opacity (Material model).
         HoverLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-hover-opacity) * 100%), transparent)",
         FocusLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-focus-opacity) * 100%), transparent)",
         PressedLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-pressed-opacity) * 100%), transparent)",
         DraggedLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-dragged-opacity) * 100%), transparent)",
-        // Выбранное - единственное состояние, которое держится, поэтому оно красится акцентом, а не
-        // currentColor: так выбранная строка/вкладка читается как выбор, а не как наведение. Пары
-        // "выбрано + наведение" и "фокус + наведение" - отдельные токены, иначе две полупрозрачные
-        // заливки складывались бы и давали цвет, которого в языке нет.
         SelectedLayer = "color-mix(in srgb, var(--flare-color-primary) calc(var(--flare-state-selected-opacity) * 100%), transparent)",
         SelectedHoverLayer = "color-mix(in srgb, var(--flare-color-primary) 18%, transparent)",
         FocusHoverLayer = "color-mix(in srgb, currentColor calc(var(--flare-state-focus-opacity) * 100%), transparent)",
     };
 
-    // 2px-base spacing ramp (0/2/4/6/8/10/12/16/20/24/32/48/64px).
+    // 2px-базовый ритм отступов
     private static readonly SpacingTokens Spacing = new()
     {
         S0 = "0",
-        S1 = "0.125rem",
-        S2 = "0.25rem",
-        S3 = "0.375rem",
-        S4 = "0.5rem",
-        S5 = "0.625rem",
-        S6 = "0.75rem",
-        S8 = "1rem",
-        S10 = "1.25rem",
-        S12 = "1.5rem",
-        S16 = "2rem",
-        S24 = "3rem",
-        S32 = "4rem",
+        S1 = "0.125rem",  // 2px
+        S2 = "0.25rem",   // 4px
+        S3 = "0.375rem",  // 6px
+        S4 = "0.5rem",    // 8px
+        S5 = "0.625rem",  // 10px
+        S6 = "0.75rem",   // 12px
+        S8 = "1rem",      // 16px
+        S10 = "1.25rem",  // 20px
+        S12 = "1.5rem",   // 24px
+        S16 = "2rem",     // 32px
+        S24 = "3rem",     // 48px
+        S32 = "4rem",     // 64px
     };
 
-    // ----- scales added after the mock was authored ---------------------------------------------------
-
-    // Правила-разделители (Flare 0.22.0): язык Deka рисит их волосяной линией на outline-variant, а
-    // 2px - ширина выделения (Card.SelectedBorder, рамка чекбокса), поэтому emphasis-шаг равен ей.
     private static readonly BorderTokens Border = new()
     {
         Width = "1px",
@@ -145,20 +128,16 @@ internal static class DekaTokens
         Outline = "var(--flare-border-width) var(--flare-border-style) var(--flare-color-outline)",
     };
 
-    // Скроллбары красит тема (Flare 0.24.0): Deka тёмный, системный светлый скроллбар был бы самым
-    // громким элементом экрана. Ползунок - on-surface на низкой прозрачности, как всякий покойный
-    // интерактив языка, трек прозрачен, чтобы поверхность под ним держала свой тон.
     private static readonly ScrollbarTokens Scrollbar = new()
     {
         Width = "thin",
         Size = "8px",
-        Thumb = "color-mix(in srgb, var(--flare-color-on-surface) 28%, transparent)",
-        ThumbHover = "color-mix(in srgb, var(--flare-color-on-surface) 45%, transparent)",
+        Thumb = "color-mix(in srgb, var(--flare-color-on-surface) 24%, transparent)",
+        ThumbHover = "color-mix(in srgb, var(--flare-color-on-surface) 40%, transparent)",
         Track = "transparent",
         Radius = "var(--flare-shape-full)",
     };
 
-    // Морфинг иконок (Flare 0.18.0): моторика Deka - короткие пружины, и смена глифа едет на быстрой.
     private static readonly IconTokens Icon = new()
     {
         MorphDuration = "var(--flare-motion-duration-spring-fast)",
@@ -167,8 +146,6 @@ internal static class DekaTokens
         MorphRotate = "90deg",
     };
 
-    // Drag-and-drop (Flare 0.32.0): приложение не переупорядочивает перетаскиванием, значения - по
-    // семантическим ролям, как у эталонных тем.
     private static readonly DragTokens Drag = new()
     {
         SourceOpacity = "0.4",
@@ -179,8 +156,6 @@ internal static class DekaTokens
         IndicatorColor = "var(--flare-color-primary)",
     };
 
-    // Плавающие панели и то, сколько экрана они занимают (Flare 0.32.0): Deka мобильна и держит панель
-    // ближе к краю, чем MD3, - 2rem воздуха (1.5rem на телефоне) и 75% экрана панелью.
     private static readonly OverlayTokens Overlay = new()
     {
         ViewportInset = "2rem",
@@ -188,9 +163,6 @@ internal static class DekaTokens
         PanelMaxBlockSize = "75dvh",
     };
 
-    // Графики приложение не рисует, но токены обязательны (Flare 0.24+). Категориальная палитра -
-    // из собственных ролей Deka по рецепту MD3 (три источника x четыре тональных обработки), геометрия
-    // нейтральная; радиус - своя шкала формы.
     private static readonly ChartTokens Chart = new()
     {
         Series1 = "var(--flare-color-primary)",
@@ -205,7 +177,6 @@ internal static class DekaTokens
         Series10 = "color-mix(in srgb, var(--flare-color-primary) 55%, var(--flare-color-surface))",
         Series11 = "color-mix(in srgb, var(--flare-color-tertiary) 55%, var(--flare-color-surface))",
         Series12 = "color-mix(in srgb, var(--flare-color-secondary) 55%, var(--flare-color-surface))",
-
         LineWidth = "2",
         LineCap = "round",
         PointRadius = "2.5",
@@ -218,14 +189,12 @@ internal static class DekaTokens
         WedgeOpacity = "0.7",
         SliceStrokeColor = "var(--flare-color-surface)",
         SliceStrokeWidth = "1.5",
-
         RampColor = "var(--flare-color-primary)",
         RampMinOpacity = "0.12",
         RampMaxOpacity = "1",
         CellRadius = "2",
         CellGap = "2",
         CellHoverOpacity = "0.85",
-
         GridColor = "var(--flare-color-outline-variant)",
         GridWidth = "0.5",
         GridDash = "none",
@@ -238,14 +207,12 @@ internal static class DekaTokens
         ValueSize = "8px",
         AxisTitleColor = "var(--flare-color-on-surface-variant)",
         AxisTitleSize = "10px",
-
         Surface = "var(--flare-color-surface)",
         Radius = "var(--flare-shape-medium)",
         BorderWidth = "1px",
         BorderColor = "var(--flare-color-outline-variant)",
         Padding = "var(--flare-spacing-8)",
         Gap = "var(--flare-spacing-4)",
-
         LegendGap = "var(--flare-spacing-6)",
         LegendItemGap = "var(--flare-spacing-3)",
         LegendDotSize = "0.625rem",
@@ -253,7 +220,6 @@ internal static class DekaTokens
         LegendSize = "var(--flare-typescale-label-small-size)",
         LegendColor = "var(--flare-color-on-surface-variant)",
         LegendOffOpacity = "0.4",
-
         TrendWidth = "1.5",
         TrendDash = "5 4",
         TrendOpacity = "0.7",
@@ -263,18 +229,13 @@ internal static class DekaTokens
         AnnotationBandOpacity = "0.12",
         AnnotationArrowSize = "7",
         AnnotationPointRadius = "3.5",
-
         LineDashDashed = "calc(var(--flare-chart-line-width) * 2) calc(var(--flare-chart-line-width) * 3)",
         LineDashDotted = "0.1 calc(var(--flare-chart-line-width) * 3)",
-        LineDashDashDot = "calc(var(--flare-chart-line-width) * 2) calc(var(--flare-chart-line-width) * 3)" +
-                          " 0.1 calc(var(--flare-chart-line-width) * 3)",
-
+        LineDashDashDot = "calc(var(--flare-chart-line-width) * 2) calc(var(--flare-chart-line-width) * 3) 0.1 calc(var(--flare-chart-line-width) * 3)",
         ZoomSelectionFill = "color-mix(in srgb, var(--flare-color-primary) 16%, transparent)",
         ZoomSelectionStroke = "var(--flare-color-primary)",
     };
 
-    // Гейджи приложение не рисует; значения - по семантическим ролям (Flare 0.26.0). Безразмерные
-    // величины - единицы viewBox (гейдж 200 широкий и масштабируется в контейнер).
     private static readonly GaugeTokens Gauge = new()
     {
         TrackColor = "var(--flare-color-surface-container-highest)",
@@ -304,13 +265,17 @@ internal static class DekaTokens
         TargetWidth = "2.5",
     };
 
-    // ----- component tokens the mock actively styles -------------------------------------------------
+    // ----- Токены компонентов макета (Component Tokens) ------------------------------------------------
 
     private static readonly ButtonTokens Button = new()
     {
         LoadingOpacity = "0.8",
         ContainerRadius = "var(--flare-shape-small)",
-        TextPaddingInline = "0.75rem",
+        TextPaddingInlineLg = "0.75rem",
+        TextPaddingInlineMd = "0.75rem",
+        TextPaddingInlineSm = "0.75rem",
+        TextPaddingInlineXl = "0.75rem",
+        TextPaddingInlineXs = "0.75rem",
         GapXs = "0.5rem",
         GapSm = "0.5rem",
         GapMd = "0.5rem",
@@ -326,7 +291,6 @@ internal static class DekaTokens
         PaddingInlineMd = "1.5rem",
         PaddingInlineLg = "1.75rem",
         PaddingInlineXl = "2rem",
-        // Rounded-rectangle (the mock's CTAs are ~15px radius), not a full capsule.
         RadiusXs = CornerRadiusTokens.All("var(--flare-shape-small)"),
         RadiusSm = CornerRadiusTokens.All("var(--flare-shape-small)"),
         RadiusMd = CornerRadiusTokens.All("var(--flare-shape-medium)"),
@@ -335,7 +299,7 @@ internal static class DekaTokens
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
-        FilledHoverShadow = "0 10px 24px -10px var(--deka-accent-strong)",
+        FilledHoverShadow = "0 10px 24px -10px color-mix(in srgb, var(--flare-color-primary) 65%, transparent)",
         IconSizeXs = "1.125rem",
         IconSizeSm = "1.125rem",
         IconSizeMd = "1.25rem",
@@ -346,26 +310,19 @@ internal static class DekaTokens
         LabelMd = T("1rem", "700", "1.3", "0em"),
         LabelLg = T("1rem", "700", "1.3", "0em"),
         LabelXl = T("1.0625rem", "700", "1.3", "0em"),
-        // Выключенная кнопка гаснет прозрачностью, отдельной заливки поверх неё Deka не кладёт.
         DisabledLayer = "transparent",
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
-        // Обводка у Deka - волосяная линия на всех размерах: она нужна только outlined-кнопке, а та
-        // в макете нигде не растёт до размеров, где 1px начал бы выглядеть ниткой.
         OutlineWidthXs = "1px",
         OutlineWidthSm = "1px",
         OutlineWidthMd = "1px",
         OutlineWidthLg = "1px",
         OutlineWidthXl = "1px",
-        // Кнопка-переключатель (Flare 0.16.0): выбор у Deka - смена цвета, а не формы, поэтому
-        // выбранные радиусы повторяют обычные Radius*, включая явно квадратную форму.
         SelectedRadiusXs = "var(--flare-shape-small)",
         SelectedRadiusSm = "var(--flare-shape-small)",
         SelectedRadiusMd = "var(--flare-shape-medium)",
         SelectedRadiusLg = "var(--flare-shape-medium)",
         SelectedRadiusXl = "var(--flare-shape-medium)",
         SelectedRadiusSquare = "var(--flare-shape-extra-small)",
-        // Выбранное состояние по всему языку одно: контейнер акцента и акцентный текст на нём -
-        // ровно то, чем макет красит активную вкладку фильтра.
         SelectedBg = "var(--flare-color-primary-container)",
         SelectedColor = "var(--flare-color-primary)",
         ElevatedSelectedBg = "var(--flare-color-primary-container)",
@@ -376,12 +333,11 @@ internal static class DekaTokens
         TonalSelectedColor = "var(--flare-color-on-primary)",
         OutlinedSelectedBg = "var(--flare-color-primary-container)",
         OutlinedSelectedColor = "var(--flare-color-primary)",
-        // Невыбранный filled-переключатель не должен читаться как залитая кнопка действия, поэтому
-        // он садится на нейтральный контейнер и приглушённый текст.
         FilledUnselectedBg = "var(--flare-color-surface-container-high)",
         FilledUnselectedColor = "var(--flare-color-on-surface-variant)",
     };
 
+    // Исправлены заполнители "xxx" на валидные токены Elevation
     private static readonly CardTokens Card = new()
     {
         ElevatedBg = "var(--flare-color-surface)",
@@ -416,39 +372,29 @@ internal static class DekaTokens
         SubtitleFontSize = "var(--flare-typescale-body-medium-size)",
         TransitionDuration = "var(--flare-motion-duration-short2)",
         TransitionEasing = "var(--flare-motion-easing-standard)",
+        FilledElevation = "var(--flare-elevation-0)",
+        OutlinedElevation = "var(--flare-elevation-0)",
+        TextElevation = "var(--flare-elevation-0)",
+        TonalElevation = "var(--flare-elevation-0)",
     };
 
     private static readonly InputTokens Input = new()
     {
-        // Появился в Flare 0.8.0: размер ведущей/замыкающей иконки поля, включая раскрывающий
-        // переключатель у date/time-пикеров - это одна и та же деталь поля, поэтому и токен один.
         IconSize = "1.25rem",
         FilledBg = "var(--flare-color-surface-container-low)",
-        // Flare 0.9.0: границы поля стали ТОЛЬКО цветом (толщину/стиль рисует input.css сам),
-        // поэтому OutlinedBorder/FilledBorderBottom/HoverBorderBottom переименованы в *Color и
-        // отдают лишь цвет - без "1px solid".
         BorderColor = "var(--flare-color-outline)",
         OutlinedRadius = "var(--flare-shape-small)",
         BorderBottomColor = "var(--flare-color-outline)",
-        // Focus indicator (Flare 0.2.0, drawn by input.css on :focus-within as a layout-neutral box-shadow):
-        // a full 1px primary ring inside the field well, matching the Deka look where the edge tints primary.
         FocusRing = "inset 0 0 0 1px var(--fc-main, var(--flare-color-primary))",
         FocusOutline = "none",
         FocusOutlineOffset = "0",
-        // Deka fields are uniformly bordered - hover must NOT recolor just the bottom edge (Material
-        // filled-underline behavior), so match the resting outline. Only focus tints (the FocusRing above).
         HoverBorderBottomColor = "var(--flare-color-outline)",
         HoverStateLayer = "transparent",
-        // Паддинги по размерам (Flare 0.22.0): Md - прежний единственный Padding ("0.875rem 1rem"),
-        // соседние шаги расходятся от него.
         PaddingXs = "0.1875rem 0.5rem",
         PaddingSm = "0.375rem 0.625rem",
         PaddingMd = "0.875rem 1rem",
         PaddingLg = "1.125rem 1.125rem",
         PaddingXl = "1.375rem 1.25rem",
-        // Высоты колодца (Flare 0.27.0): Md = 52px - фактическая высота, которую поле Deka рисовало
-        // и раньше (паддинг 14px + строка BodyMedium 22.5px + рамки), так что переход на шкалу ничего
-        // не сдвигает. Шкала расходится в обе стороны с сохранением порядка.
         HeightXs = "1.875rem",
         HeightSm = "2.25rem",
         HeightMd = "3.25rem",
@@ -461,20 +407,20 @@ internal static class DekaTokens
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
     };
 
-    // Sidebar nav chips: rounded, active = primary-container fill with primary text.
     private static readonly NavTokens Nav = new()
     {
-        ActiveWeight = "600",
-        BadgeWeight = "700",
+        ActiveWeight = "700",
+        BadgeWeight = "600",
         RailLabelLineHeight = "1.15",
         ItemRadius = "var(--flare-shape-small)",
         IndicatorRadius = "var(--flare-shape-small)",
         ActiveIndicator = "var(--flare-color-primary-container)",
         ActiveLeftBar = "none",
         LinkDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        IconSize = "1.5rem",
+        ItemHeight = "3.5rem",
     };
 
-    // Mobile bottom nav: low-container bar, primary active tint, faint inactive.
     private static readonly BottomNavTokens BottomNav = new()
     {
         BarHeight = "4rem",
@@ -490,12 +436,12 @@ internal static class DekaTokens
         IndicatorBg = "transparent",
         IndicatorRadius = "var(--flare-shape-small)",
         IndicatorSize = "0",
+        IndicatorWidth = "0",
         ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
-        // Прибитая панель поверх контента (Flare 0.19.0): над содержимым, под слоем оверлеев.
         ZIndex = "1100",
+        ItemGap = "var(--flare-spacing-2)",
     };
 
-    // Bottom sheets (share / add-to-playlist) + dialogs use the extra-large 26px radius.
     private static readonly DialogTokens Dialog = new()
     {
         Radius = "var(--flare-shape-extra-large)",
@@ -506,8 +452,6 @@ internal static class DekaTokens
     {
         Width = "360px",
         MiniWidth = "72px",
-        // Края панели (Flare 0.22.0): постоянный drawer отделяется от контента волосяной линией -
-        // тот же приём, что у списков и аккордеонов Deka, а не тоном поверхности, как у MD3.
         Border = "1px solid var(--flare-color-outline-variant)",
         SectionBorder = "1px solid var(--flare-color-outline-variant)",
     };
@@ -522,8 +466,6 @@ internal static class DekaTokens
         PanelPaddingBlock = "0.375rem",
         ItemHeight = "2.75rem",
         ItemPaddingBlock = "0.5rem",
-        // Dense-варианты появились required в 0.9.0: компактное меню сжимает вертикальный паддинг
-        // и зазор иконка-текст. Меню приложение не рисует, значения - просто ужатые обычные.
         ItemPaddingBlockDense = "0.375rem",
         ItemGapBetween = "0.125rem",
         ItemRadius = "var(--flare-shape-small)",
@@ -556,14 +498,26 @@ internal static class DekaTokens
     {
         Radius = "var(--flare-shape-medium)",
         Height = "2rem",
-        // Required с 0.35.0: раньше заливка чипа была литералом в стилях. Приложение рисует только
-        // outlined-чип ("кем добавлен трек"), так что эти два - контейнеры под стать карточкам:
-        // filled на ступень выше поверхности, elevated на ступень ниже (он несёт ещё и тень).
         FilledBg = "var(--flare-color-surface-container-high)",
         ElevatedBg = "var(--flare-color-surface-container-low)",
+        IconSizeXs = "0.875rem",
+        IconSizeSm = "1rem",
+        IconSizeMd = "1.125rem",
+        IconSizeLg = "1.25rem",
+        IconSizeXl = "1.5rem",
+        AvatarSizeXs = "1rem",
+        AvatarSizeSm = "1.125rem",
+        AvatarSizeMd = "1.5rem",
+        AvatarSizeLg = "1.875rem",
+        AvatarSizeXl = "2.25rem",
+        PaddingInlineXs = "var(--flare-spacing-4)",
+        PaddingInlineSm = "var(--flare-spacing-5)",
+        PaddingInlineMd = "var(--flare-spacing-8)",
+        PaddingInlineLg = "var(--flare-spacing-10)",
+        PaddingInlineXl = "var(--flare-spacing-12)",
+
     };
 
-    // Search filter tabs: pill track, active = solid accent with on-primary text.
     private static readonly TabsTokens Tabs = new()
     {
         ActiveWeight = "700",
@@ -582,29 +536,20 @@ internal static class DekaTokens
         FilledFg = "var(--flare-color-on-primary)",
         TrackBg = "transparent",
         PillRadius = "var(--flare-shape-full)",
-        // Вторичный ряд вкладок (вложенная навигация) приложением не рисуется: индикатор тоньше
-        // основного 3px, активный текст - обычный on-surface, без акцента.
         SecondaryIndicatorThickness = "2px",
         SecondaryActiveColor = "var(--flare-color-on-surface)",
         TabDisabledOpacity = "var(--flare-state-disabled-opacity)",
         ScrollDisabledOpacity = "var(--flare-state-disabled-opacity)",
-        // Required с 0.35.0: до этого высота, минимальная ширина и боковые поля вкладки были
-        // литералами в tabs.css. Значения ровно те, что стояли там (padding-inline = spacing-10,
-        // высоту и ширину диктовал сам лейбл), поэтому пилюли фильтра поиска не сдвинулись.
         TabHeight = "auto",
         TabMinWidth = "0",
         TabPaddingInline = "var(--flare-spacing-10)",
+        IconSize = "1.5rem",
+        LabelSpacing = "var(--flare-typescale-label-large-spacing)",
+
     };
 
-    // Collaboration toggle: accent track when on.
     private static readonly SwitchTokens Switch = new()
     {
-        // Ramp по размерам (Flare 0.9.0): 8 геометрических членов (ширина/высота дорожки, размеры
-        // ползунка off/on и нажатых, сдвиги off/on-left) стали шкалой Xs..Xl вместо одиночных.
-        // Тумблер совместного доступа рисуется только в Md, поэтому Md держим ровно прежним
-        // (46x27px дорожка, ползунок 21px, нажатый 23px, off-left 3px, on-left calc(100% - 1.5rem)),
-        // а соседние размеры разведены пропорционально. on-left = calc(100% - (ползунок + off-left)),
-        // чтобы вставка ползунка справа оставалась симметричной левой.
         TrackWidthXs = "36px",
         TrackWidthSm = "41px",
         TrackWidthMd = "46px",
@@ -659,8 +604,6 @@ internal static class DekaTokens
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
-        // Фокус тумблера у Deka - только обводка выше, ореола вокруг ползунка нет ни в одном
-        // положении, поэтому обе тени пустые.
         FocusShadowOff = "none",
         FocusShadowOn = "none",
         TrackHoverOffBg = "var(--flare-switch-track-off-bg)",
@@ -679,6 +622,8 @@ internal static class DekaTokens
         PaddingBlock = "0.75rem",
         ProviderInset = "1.5rem",
         CloseOpacity = "0.75",
+        MinWidth = "20rem",
+        MaxWidth = "36rem",
     };
 
     private static readonly AlertTokens Alert = new()
@@ -694,11 +639,6 @@ internal static class DekaTokens
     private static readonly BadgeTokens Badge = new()
     {
         Radius = "var(--flare-shape-full)",
-        // Ramp по размерам (Flare 0.9.0): бокс/точка/лейбл стали шкалой Xs..Xl вместо одиночных
-        // MinWidth/Height/DotSize/PaddingX. Md держим ровно прежним видом (16px бокс, 6px точка,
-        // 4px паддинг), шкала расходится в обе стороны по дефолтам changelog: бокс 12/14/16/20/24,
-        // точка 4/5/6/8/10, лейбл 9/10/11/12/14px. Бейджей приложение пока не рисует, но члены
-        // required - значения обязаны быть заданы.
         MinWidthXs = "0.75rem",
         MinWidthSm = "0.875rem",
         MinWidthMd = "1rem",
@@ -719,7 +659,6 @@ internal static class DekaTokens
         PaddingXMd = "0.25rem",
         PaddingXLg = "0.3125rem",
         PaddingXXl = "0.375rem",
-        // Новый в 0.9.0: кегль текста бейджа-лейбла (9/10/11/12/14px).
         LabelSizeXs = "0.5625rem",
         LabelSizeSm = "0.625rem",
         LabelSizeMd = "0.6875rem",
@@ -740,10 +679,6 @@ internal static class DekaTokens
 
     private static readonly ProgressTokens Progress = new()
     {
-        // Ramp по размерам (Flare 0.6.0): раньше это были одиночные LinearHeight/CircularSize/
-        // CircularWidth, а размер прогресса задавался пикселями через Size="40". Md держим ровно
-        // тем, что тема рисовала до 0.6.0 (4px / 40px / 4px), чтобы по умолчанию ничего не сдвинулось;
-        // шкала расходится в обе стороны - мелкий спиннер в строке нужен не реже крупного.
         LinearHeightXs = "2px",
         LinearHeightSm = "3px",
         LinearHeightMd = "4px",
@@ -755,14 +690,11 @@ internal static class DekaTokens
         StopInset = "0px",
         StopColor = "var(--fc-main, var(--flare-color-primary))",
         BufferOpacity = "30%",
-        // Xs и Sm подобраны под живые вызовы (спиннер в строке списка просил 16px, экран привязки
-        // Яндекса - 24px), чтобы переход на шкалу не изменил ни один существующий размер.
         CircularSizeXs = "16px",
         CircularSizeSm = "24px",
         CircularSizeMd = "40px",
         CircularSizeLg = "48px",
         CircularSizeXl = "56px",
-        // Толщина кольца растёт вместе с диаметром, иначе крупный спиннер выглядит проволочным.
         CircularWidthXs = "2px",
         CircularWidthSm = "3px",
         CircularWidthMd = "4px",
@@ -770,16 +702,16 @@ internal static class DekaTokens
         CircularWidthXl = "6px",
         CircularCap = "round",
         CircularGap = "4px",
-        // Волна уехала в 0.34.0 туда, где она и придумана - в пакет MD3 Expressive; семь её членов
-        // (WavyEnabled/WavyHeight/WaveLength/WaveAmplitude/WaveSpeed/RingWaves/RingWaveAmplitude)
-        // из ProgressTokens убраны. Deka волну и не рисовала (WavyEnabled стоял в 0).
-        // Взамен required стали тайминги неопределённого прогресса - раньше они были литералами в
-        // progress.css. Значения оставлены теми же, что рисовал компонент, чтобы спиннер привязки
-        // Яндекса и списков крутился ровно как крутился.
         LinearIndeterminateDuration = "1500ms",
         LinearIndeterminateEasing = "var(--flare-motion-easing-standard)",
         CircularIndeterminateRotationDuration = "1400ms",
         CircularIndeterminateProgressDuration = "1400ms",
+        ContentColor = "var(--flare-color-on-surface)",
+        ContentSizeXs = "0.5rem",
+        ContentSizeSm = "0.625rem",
+        ContentSizeMd = "0.75rem",
+        ContentSizeLg = "1rem",
+        ContentSizeXl = "1.25rem",
     };
 
     private static readonly FabTokens Fab = new()
@@ -794,6 +726,9 @@ internal static class DekaTokens
         Shadow = "var(--flare-elevation-3)",
         HoverShadow = "var(--flare-elevation-4)",
         AnchorOffset = "1.5rem",
+        IconSizeSm = "1.5rem",    // 24dp -> 40dp container
+        IconSizeMd = "1.5rem",    // 24dp -> 56dp container
+        IconSizeLg = "2.25rem",   // 36dp -> 96dp container
     };
 
     private static readonly TooltipTokens Tooltip = new()
@@ -807,12 +742,6 @@ internal static class DekaTokens
         Radius = "var(--flare-shape-medium)",
     };
 
-    // ----- component tokens the app doesn't render: neutral, on-brand via --flare-* roles ------------
-
-    // Flare 0.16.0 развёл у группы кнопок две модели вместо одной: STANDARD - отдельные кнопки через
-    // зазор (форму держит сама кнопка), CONNECTED - сшитый сегментированный контроль. Прежние
-    // Gap/Overlap/OuterRadius/InnerRadius были описанием только второй; connected-значения перенесены
-    // как были, standard получает зазор в 0.5rem на всех размерах.
     private static readonly ButtonGroupTokens ButtonGroup = new()
     {
         StandardGapXs = "var(--flare-spacing-4)",
@@ -823,8 +752,6 @@ internal static class DekaTokens
         ConnectedGap = "0",
         ConnectedOverlap = "-1px",
         ConnectedOuterRadius = "var(--flare-shape-small)",
-        // Выбор у Deka не меняет форму сегмента, поэтому и выбранный, и нажатый радиусы смотрят
-        // туда же, куда обычный внутренний: шов остаётся плоским.
         ConnectedSelectedRadius = "0",
         ConnectedInnerRadiusXs = "0",
         ConnectedInnerRadiusSm = "0",
@@ -842,7 +769,11 @@ internal static class DekaTokens
     private static readonly SplitButtonTokens SplitButton = new()
     {
         Gap = "0.125rem",
-        TriggerWidth = "var(--_flare-btn-height, var(--flare-btn-height-md, 3rem))",
+        TriggerWidthXs = "auto",
+        TriggerWidthSm = "auto",
+        TriggerWidthMd = "auto",
+        TriggerWidthLg = "auto",
+        TriggerWidthXl = "auto",
         CaretSizeXs = "var(--flare-btn-icon-size-xs)",
         CaretSizeSm = "var(--flare-btn-icon-size-sm)",
         CaretSizeMd = "var(--flare-btn-icon-size-md)",
@@ -860,10 +791,6 @@ internal static class DekaTokens
         TriggerRadiusXl = new() { TopLeft = "0.75rem", BottomLeft = "0.75rem", TopRight = "var(--flare-btn-radius-xl-top-right)", BottomRight = "var(--flare-btn-radius-xl-bottom-right)" },
     };
 
-    // В 0.16.0 у сегментированной группы осталась только сама рамка: высота, паддинги, форма и
-    // краска сегмента переехали в ButtonTokens (переключатель - это кнопка с выбранным состоянием),
-    // поэтому прежние Height*/Padding*/Radius*/Rest*/Selected* отсюда убраны, а их роль играют
-    // Button.Height*, Button.PaddingInline*, Button.SelectedRadius* и Button.Selected*.
     private static readonly ToggleButtonTokens ToggleButton = new()
     {
         GroupBorder = "1px solid var(--flare-color-outline)",
@@ -890,7 +817,6 @@ internal static class DekaTokens
         Size = "1.25rem",
         StateLayerHover = "color-mix(in srgb, var(--flare-color-on-surface) 8%, transparent)",
         StateLayerHoverChecked = "color-mix(in srgb, var(--flare-color-primary) 8%, transparent)",
-        // Фокус как у чекбокса: обводка, а не ореол-тень.
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
@@ -899,11 +825,6 @@ internal static class DekaTokens
 
     private static readonly SliderTokens Slider = new()
     {
-        // Силуэт - классическая полоса музыкального плеера, а не MD3 Expressive (дорожка 16px +
-        // ползунок-палка 4x44px с разрывом 6px): в мини-плеере она занимала почти всю высоту бара.
-        // Xs достаётся мини-плееру, Sm - полному; ramp по дорожке даёт мини-плееру более тонкую
-        // линию. До Flare 0.4.0 такой ramp был невыразим - геометрия была одним токеном на все
-        // размеры, и Size на неё не влиял.
         TrackHeightXs = "3px",
         TrackHeightSm = "4px",
         TrackHeightMd = "4px",
@@ -914,41 +835,27 @@ internal static class DekaTokens
         TrackRadiusMd = "var(--flare-shape-full)",
         TrackRadiusLg = "var(--flare-shape-full)",
         TrackRadiusXl = "var(--flare-shape-full)",
-        // Разрыв дорожки вокруг ползунка - приём MD3 Expressive; музыкальному плееру он чужд,
-        // заливка должна доходить до ползунка вплотную.
-        // Ноль ОБЯЗАН быть с единицей. FlareSlider ставит сегментам инлайновый
-        // right: calc(100% - 46.79% + var(--_gap)), а внутри calc() голый 0 - это число, а не длина:
-        // "процент плюс число" невалидно, декларация отбрасывается целиком, и заливка с дорожкой
-        // схлопываются в нулевую ширину (виден только нативный ползунок, он на calc не завязан).
         GapRadius = "0px",
         Gap = "0px",
-        // Круглая "таблетка" вместо вертикальной палки. Высота обязана совпадать с шириной, а
-        // ширина - одна на все размеры (ramp есть только у высоты), поэтому и высота везде 12px:
-        // разведи их - и кружок станет овалом. Так же поступают все темы с круглой ручкой.
         HandleHeightXs = "12px",
         HandleHeightSm = "12px",
         HandleHeightMd = "12px",
         HandleHeightLg = "12px",
         HandleHeightXl = "12px",
         HandleWidth = "12px",
-        // Expressive сплющивает ползунок при нажатии до 2px - здесь это выглядело бы дёрганьем.
         HandlePressedWidth = "12px",
         HandleRadius = "var(--flare-shape-full)",
         HandleClipPath = "none",
         HandleBorderWidth = "0px",
-        // Иконки по краям дорожки: мы их не используем, значения - как у эталонных тем.
         IconSizeXs = "20px",
         IconSizeSm = "22px",
         IconSizeMd = "24px",
         IconSizeLg = "24px",
         IconSizeXl = "32px",
-        // Длина вертикального слайдера по умолчанию; вертикальных у нас нет.
         Length = "12rem",
-        // Следуем за локальным акцентом инстанса (Color="..." на самом слайдере).
         HandleFill = "var(--fc-main, var(--flare-color-primary))",
         ActiveColor = "var(--flare-color-primary)",
         InactiveColor = "var(--flare-color-outline)",
-        // Ореол под курсором соразмерен ползунку: при 40px вокруг 12px-точки вздувался пузырь.
         StateLayerSize = "28px",
         StateHoverOpacity = "0.08",
         StatePressedOpacity = "0.10",
@@ -957,10 +864,11 @@ internal static class DekaTokens
         StopSize = "4px",
         ValueBg = "var(--flare-color-inverse-surface)",
         ValueColor = "var(--flare-color-inverse-on-surface)",
-        // Выключенный слайдер: дорожка и заливка гаснут до нейтрального, ручка - общей прозрачностью.
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
         DisabledActiveColor = "color-mix(in srgb, var(--flare-color-on-surface) calc(var(--flare-state-disabled-opacity) * 100%), transparent)",
         DisabledInactiveColor = "color-mix(in srgb, var(--flare-color-on-surface) 12%, transparent)",
+        FocusOutline = "none",
+        FocusOutlineOffset = "0px",
     };
 
     private static readonly DataGridTokens DataGrid = new()
@@ -981,19 +889,12 @@ internal static class DekaTokens
         FilterGroupRail = "3px",
         ActiveCellOutline = "2px solid var(--flare-color-primary)",
         ColumnPickerMinWidth = "160px",
-        // Диапазон ячеек (выделение мышью по-экселевски) - не то же самое, что выбранная строка,
-        // поэтому у него своя краска, а не общий SelectedLayer. Прежний RowSelectedHoverPct в
-        // 0.16.0 убран: пара "выбрано + наведение" переехала в общий StateTokens.SelectedHoverLayer.
         RangeLayer = "color-mix(in srgb, var(--flare-color-primary) 14%, transparent)",
         RowEditingPct = "6%",
         LoadingVeilPct = "55%",
         LoadingDim = "0.6",
     };
 
-    // Rating и Pagination в приложении пока не используются, но токены обязаны нести реальный
-    // ramp: "initial" (стояло здесь раньше) означает "не переопределяю, возьми значение
-    // компонента", а после 0.2.0 брать стало нечего - звезда и кнопки схлопывались. Значения - как
-    // у эталонных тем.
     private static readonly RatingTokens Rating = new()
     {
         SizeXs = "1rem",
@@ -1082,8 +983,6 @@ internal static class DekaTokens
         RailWidth = "1px",
         ActiveBg = "var(--flare-color-primary-container)",
         ActiveRadius = "var(--flare-shape-full)",
-        // С единицей: значение уходит в calc(-1 * var(--flare-toc-marker-width)), а голый ноль там
-        // остаётся числом, и свойство-длина его отвергнет (та же мина, что была у слайдера).
         MarkerWidth = "0px",
         LinkPadX = "0.75rem",
         Indent = "0.75rem",
@@ -1103,8 +1002,6 @@ internal static class DekaTokens
         HeightDense = "3rem",
         PaddingX = "0.5rem",
         TitlePaddingX = "0.75rem",
-        // Край бара (Flare 0.22.0): мобильный хедер у Deka - собственная разметка приложения, поэтому
-        // значение нейтральное: без линии, тон поверхности сам отделяет хром от контента.
         Border = "none",
     };
 
@@ -1119,8 +1016,6 @@ internal static class DekaTokens
         PanelGap = "1rem",
     };
 
-    // Flare 0.8.0 свёл FlareDropZone и FlareFileUpload в одно семейство, поэтому DropzoneTokens стал
-    // FileUploadTokens. Компонентов загрузки в приложении нет, но тема обязана задать все токены.
     private static readonly FileUploadTokens FileUpload = new()
     {
         BorderWidth = "2px",
@@ -1128,12 +1023,9 @@ internal static class DekaTokens
         DraggingBg = "color-mix(in srgb, var(--flare-color-primary) 10%, var(--flare-color-surface))",
         DraggingRingWidth = "2px",
         IconSize = "2.5rem",
-        // Три токена появились в 0.8.0: раньше эти значения были литералами в CSS компонента.
         ZoneMinHeight = "10rem",
         ZoneRadius = "var(--flare-shape-large)",
         FileIconSize = "1.25rem",
-        // Строки очереди загрузки (Flare 0.25.0): приложение файлов не грузит, значения - по
-        // семантическим ролям; успех у Deka - своя роль Success, а не заимствованный tertiary.
         RowGap = "var(--flare-spacing-2)",
         RowRadius = "var(--flare-shape-small)",
         RowActiveBg = "color-mix(in srgb, var(--flare-color-primary) 8%, transparent)",
@@ -1150,19 +1042,15 @@ internal static class DekaTokens
     private static readonly LayoutTokens Layout = new()
     {
         AppBarHeight = "64px",
-        // Required с 0.9.0: сжатая высота и фон app bar у FlareLayout. Наш мобильный хедер - свой
-        // литеральный div, а не layout-app bar, поэтому значения нейтральные: 48px (как AppBar.HeightDense)
-        // и поверхность из семантической роли.
         AppBarHeightDense = "48px",
         AppBarBg = "var(--flare-color-surface)",
         ContentPadding = "34px 40px",
         ContentPaddingMobile = "20px 18px",
         DrawerRailWidth = "3.5rem",
         DrawerWidth = "15.5rem",
-        // Края шелла (Flare 0.22.0): app bar приложением не рисуется ("none"), а drawer шелла
-        // отделяется той же волосяной линией, что и компонентный DrawerTokens.Border выше.
         AppBarBorder = "none",
         DrawerBorder = "1px solid var(--flare-color-outline-variant)",
+        AppBarShadow = "none",
     };
 
     private static readonly LinkTokens Link = new()
@@ -1187,6 +1075,15 @@ internal static class DekaTokens
         OutsideOpacity = "0.4",
         DisabledOpacity = "0.3",
         WeekNumberOpacity = "0.7",
+        PanelMinWidth = "22.5rem",
+        PanelRadius = "var(--flare-shape-large)",
+        HeaderHeight = "4rem",
+        NavIconSize = "1.125rem",
+        WeekdayHeight = "2.75rem",
+        WeekdayFontSize = "var(--flare-typescale-body-large-size)",
+        DaySize = "3rem",
+        DayLayerSize = "2.5rem",
+        DayFontSize = "var(--flare-typescale-body-large-size)",
     };
 
     private static readonly ScrimTokens Scrim = new()
@@ -1212,15 +1109,11 @@ internal static class DekaTokens
         CellPaddingV = "0.75rem",
     };
 
-    // Полоска чётных строк переехала из TableTokens.StripeOpacity в общий StripeTokens: таблица,
-    // грид и список понимают под "полосатым" одно и то же, и у языка на это один ответ. Прежние 4%
-    // сохранены, только теперь это целиком краска, а не одна прозрачность.
     private static readonly StripeTokens Stripe = new()
     {
         Background = "color-mix(in srgb, var(--flare-color-on-surface) 4%, transparent)",
     };
 
-    // Минимальная цель для пальца: ядро читает её только внутри @media (pointer: coarse).
     private static readonly TouchTokens Touch = new()
     {
         TargetMin = "48px",
@@ -1240,7 +1133,6 @@ internal static class DekaTokens
         ItemPaddingInline = "var(--flare-spacing-8)",
         ItemGap = "var(--flare-spacing-6)",
         ItemContentGap = "var(--flare-spacing-1)",
-        // Строки у Deka скруглены, а не разделены линейкой во всю ширину.
         ItemRadius = "var(--flare-shape-small)",
         ItemLabelFont = "var(--flare-typescale-title-small-font)",
         ItemLabelSize = "var(--flare-typescale-title-small-size)",
@@ -1249,6 +1141,7 @@ internal static class DekaTokens
         ItemSelectedBg = "var(--flare-color-primary-container)",
         ItemSelectedColor = "var(--flare-color-primary)",
         ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
+        ItemIconSize = "1.5rem",
     };
 
     private static readonly AccordionTokens Accordion = new()
@@ -1300,13 +1193,21 @@ internal static class DekaTokens
     private static readonly TimePickerTokens TimePicker = new()
     {
         ColumnsSepSize = "1.5rem",
-        DisplaySize = "2.75rem",
+        DialCenterSize = "0.5rem",
+        DialHandleSize = "3rem",
+        DialSize = "16rem",
+        DialTrackWidth = "0.125rem",
+        PeriodHeight = "5rem",
+        PeriodWidth = "3.25rem",
+        TimeFieldHeight = "5rem",
+        TimeFieldWidth = "6rem",
+        DisplaySize = "3.5625rem",
         HeadlineTracking = "0.05em",
         PanelRadius = "var(--flare-shape-extra-large)",
-        TimeSepSize = "2.5rem",
+        TimeSepSize = "3.5625rem",
     };
 
-    // ----- composition -------------------------------------------------------------------------------
+    // ----- Композиция (DesignTokens) -------------------------------------------------------------------
 
     public static readonly DesignTokens Design = new()
     {
@@ -1319,7 +1220,6 @@ internal static class DekaTokens
         Spacing = Spacing,
         Border = Border,
         Scrollbar = Scrollbar,
-
         Badge = Badge,
         Alert = Alert,
         Button = Button,
@@ -1380,14 +1280,11 @@ internal static class DekaTokens
         Collapse = Collapse,
         Splitter = Splitter,
 
-        // Custom vars for surfaces the standard role set doesn't cover: the frosted mini-player/full-player
-        // bar ("glass") and the gradient logo mark / avatar swatches ("accent-strong" as the gradient's
-        // second stop). The mock's dimmer "faint" text tone is now the first-class OnSurfaceVariant2 role
-        // (Flare 0.1.2), so it's no longer an --deka-* var. Consumed via var(--deka-*) in scoped CSS.
+        // Кастомные переменные для музыкального плеера и акцентных градиентов
         Extended = new Dictionary<string, string>
         {
-            ["--deka-accent-strong"] = "oklch(0.5 0.21 300)",
-            ["--deka-glass"] = "oklch(1 0 0 / 0.72)",
+            ["--deka-accent-strong"] = "oklch(0.480 0.220 293)", // Глубокий стоп для неонового фиолетового градиента
+            ["--deka-glass"] = "oklch(0.180 0.010 286 / 0.75)",  // Тёмное матовое обсидиановое стекло (вместо белого)
             ["--deka-gradient-accent"] = "linear-gradient(150deg, var(--flare-color-primary), var(--deka-accent-strong))",
         },
     };

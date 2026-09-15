@@ -11,13 +11,14 @@
     <ChildContent>
         <AuthorizeView>
             <Authorized>
-                <FlareNavLink Href="/my-playlists">
-                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></IconContent>
-                    <ChildContent>Мои плейлисты</ChildContent>
-                </FlareNavLink>
                 <FlareNavLink Href="/search">
                     <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" /></IconContent>
                     <ChildContent>Поиск</ChildContent>
+                </FlareNavLink>
+
+                <FlareNavLink Href="/my-playlists">
+                    <IconContent><FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" /></IconContent>
+                    <ChildContent>Мои плейлисты</ChildContent>
                 </FlareNavLink>
             </Authorized>
             <NotAuthorized>
