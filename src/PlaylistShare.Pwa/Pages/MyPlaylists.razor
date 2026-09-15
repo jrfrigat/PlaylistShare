@@ -1,5 +1,5 @@
 @page "/my-playlists"
-<PageTitle>Мои плейлисты - Playlist Share</PageTitle>
+<PageTitle>Фонотека и плейлисты — PlaylistShare</PageTitle>
 
 @attribute [Authorize]
 @using PlaylistShare.Shared.DTO
@@ -12,28 +12,258 @@
 @inject ISnackbarService Snackbar
 @inject NavigationManager Navigation
 @inject IDialogService DialogService
+@inject ILogger<MyPlaylists> Logger
 
-<FlareContainer MaxWidth="ContainerMaxWidth.Lg" Class="mt-8 deka-my-playlists">
+<FlareContainer MaxWidth="ContainerMaxWidth.Full" Class="deka-my-playlists">
 
+    @* ── Ambient glow ──────────────────────────────────────────────── *@
+    <div class="deka-glow-layer" aria-hidden="true">
+        <div class="deka-glow deka-glow--primary"></div>
+        <div class="deka-glow deka-glow--secondary"></div>
+    </div>
+
+    @* ── Header control bar ────────────────────────────────────────── *@
+    <header class="deka-library-header">
+        <div class="deka-library-header__intro">
+            <FlareText Typo="TypographyScale.LabelLarge"
+                       Color="@FlareColor.Secondary"
+                       Class="deka-eyebrow">
+                Синхронизация с Яндекс Музыкой
+            </FlareText>
+            <FlareText Typo="TypographyScale.HeadlineLarge">
+                Фонотека и плейлисты
+            </FlareText>
+        </div>
+
+        <div class="deka-library-header__actions">
+            <FlareTextField @bind-Value="_searchQuery"
+                            Placeholder="Поиск по фонотеке..."
+                            Size="FieldSize.Sm"
+                            Variant="InputVariant.Outlined"
+                            Clearable
+                            Immediate
+                            DebounceInterval="200"
+                            Class="deka-search"
+                            AriaLabel="Поиск по фонотеке">
+                <LeadingIcon>
+                    <FlareIconView Value="@MaterialDesign3Icons.Regular.Search" SizePx="16" />
+                </LeadingIcon>
+            </FlareTextField>
+
+            <FlareButton Variant="ButtonVariant.Text"
+                         Size="ButtonSize.Sm"
+                         Color="@FlareColor.OnSurfaceVariant">
+                <LeadingIcon>
+                    <FlareIconView Value="@MaterialDesign3Icons.Regular.FilterList" />
+                </LeadingIcon>
+                <ChildContent>
+                    Сортировка
+                </ChildContent>
+            </FlareButton>
+
+            <FlareButton Variant="ButtonVariant.Filled"
+                         Size="ButtonSize.Sm"
+                         Color="@FlareColor.Primary"
+                         OnClick="OpenCreateDialog">
+                <LeadingIcon>
+                    <FlareIconView Value="@MaterialDesign3Icons.Regular.AddCircle" />
+                </LeadingIcon>
+                <ChildContent>
+                    Создать общий плейлист
+                </ChildContent>
+            </FlareButton>
+        </div>
+    </header>
+
+    @* ── Filter pills ──────────────────────────────────────────────── *@
+    <nav class="deka-filter-pills" aria-label="Фильтры плейлистов">
+        <FlareToggleGroup @bind-Value="_filter"
+                          Mandatory="true"
+                          Size="ButtonSize.Sm"
+                          Class="deka-filter-group">
+
+            <FlareToggleButton Value="@PlaylistFilter.All" Class="deka-pill">
+                <ChildContent>
+                    <FlareText>Все плейлисты</FlareText>
+                    <FlareBadge Size="FieldSize.Md"
+                                Color="@FlareColor.Primary"
+                                Count="@_playlists.Count" />
+                </ChildContent>
+            </FlareToggleButton>
+
+            <FlareToggleButton Value="@PlaylistFilter.Shared" Class="deka-pill">
+                <ChildContent>
+                    <FlareText>Совместные с друзьями</FlareText>
+                    <FlareBadge Size="FieldSize.Md" 
+                                Color="@FlareColor.Primary"
+                                Count="@_playlists.Count(p => p.IsShared)" />
+                </ChildContent>
+            </FlareToggleButton>
+
+            <FlareToggleButton Value="@PlaylistFilter.Personal" Class="deka-pill">
+                <ChildContent>
+                    <FlareText>Мои личные</FlareText>
+                    <FlareBadge Size="FieldSize.Md"
+                                Color="@FlareColor.Primary"
+                                Count="@_playlists.Count(p => !p.IsShared)" />
+                </ChildContent>
+            </FlareToggleButton>
+
+            <FlareToggleButton Value="@PlaylistFilter.Favorites" Class="deka-pill">
+                <ChildContent>
+                    <FlareText>Избранное друзей</FlareText>
+                    <FlareBadge Size="FieldSize.Md"
+                                Color="@FlareColor.Primary"
+                                Count="@_favorites.Count" />
+                </ChildContent>
+            </FlareToggleButton>
+        </FlareToggleGroup>
+    </nav>
+
+    @* ── Section 1: Избранное ──────────────────────────────────────── *@
     @if (_favoritesLoading)
     {
         <FlareProgressCircular />
     }
-    else if (_favorites.Any())
+    else if (_filter is PlaylistFilter.All or PlaylistFilter.Favorites && _favorites.Any())
     {
         <section class="deka-section">
-            <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-section-heading">
-                <FlareIconView Value="@MaterialDesign3Icons.Regular.Favorite" SizePx="20" Color="FlareColor.Primary" />
-                <FlareText Typo="TypographyScale.TitleLarge">Избранное</FlareText>
-            </FlareStack>
-            <div class="deka-card-grid">
+            <div class="deka-section-header">
+                <FlareIconView Value="@MaterialDesign3Icons.Regular.Bolt"
+                               Color="@FlareColor.Secondary" />
+                <FlareText Typo="TypographyScale.TitleLarge">Избранные и сейчас играют</FlareText>
+                <FlareSpacer />
+                <FlareText Typo="TypographyScale.LabelSmall"
+                           Color="@FlareColor.OnSurfaceVariant2">
+                    Синхронно в реальном времени
+                </FlareText>
+            </div>
+
+            <div class="deka-card-grid deka-card-grid--hero">
                 @foreach (var playlist in _favorites)
                 {
-                    <FlareCard Class="deka-tile" OnClick="@(() => GoToShared(playlist.ShareToken))">
+                    <FlareCard Class="deka-hero-card"
+                               Variant="CardVariant.Filled"
+                               OnClick="@(() => GoToShared(playlist.ShareToken))">
+
+                        <div class="deka-hero-card__head">
+                            <span class="deka-hero-card__badge">
+                                <span class="deka-pill__dot deka-pill__dot--live"></span>
+                                Яндекс Музыка
+                            </span>
+                            <span class="deka-hero-card__live">
+                                <FlareIconView Value="@MaterialDesign3Icons.Regular.Sensors" SizePx="14" />
+                                Live
+                            </span>
+                        </div>
+
+                        <div class="deka-hero-card__body">
+                            <div class="deka-hero-card__cover">
+                                @if (!string.IsNullOrEmpty(playlist.CoverUrl))
+                                {
+                                    <img src="@playlist.CoverUrl.FormatCoverUrl(200, 200)" alt="@playlist.Title" />
+                                }
+                                else
+                                {
+                                    <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" SizePx="24" />
+                                }
+                                <div class="deka-hero-card__shade"></div>
+                            </div>
+                            <div class="deka-hero-card__meta">
+                                <FlareText Typo="TypographyScale.TitleMedium" Class="deka-hero-card__title">
+                                    @playlist.Title
+                                </FlareText>
+                                <FlareText Typo="TypographyScale.BodySmall" Color="@FlareColor.OnSurfaceVariant">
+                                    153 треков
+                                </FlareText>
+                                <span class="deka-hero-card__listeners">
+                                    <span class="deka-pill__dot deka-pill__dot--live"></span>
+                                    69 друзей слушают
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="deka-hero-card__foot">
+                            <div class="deka-hero-card__avatars">
+                                <FlareAvatar Size="AvatarSize.Xs" Text="@playlist.Creator?.UserName" />
+                            </div>
+                            <div class="deka-tile-action" @onclick:stopPropagation="true">
+                                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Favorite"
+                                                 Color="@FlareColor.Error"
+                                                 AriaLabel="Удалить из избранного"
+                                                 OnClick="@(() => RemoveFromFavorites(playlist))" />
+                            </div>
+                        </div>
+                    </FlareCard>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Section 2: Все плейлисты фонотеки ─────────────────────────── *@
+    <section class="deka-section">
+        <div class="deka-section-header">
+            <div>
+                <FlareText Typo="TypographyScale.HeadlineMedium">Все плейлисты фонотеки</FlareText>
+                <FlareText Typo="TypographyScale.BodySmall" Color="@FlareColor.OnSurfaceVariant2">
+                    Автоматически обновляются через API Яндекс Музыки
+                </FlareText>
+            </div>
+            <FlareSpacer />
+            <FlareToggleGroup @bind-Value="_view"
+                              Mandatory="true"
+                              Size="ButtonSize.Sm"
+                              Class="deka-view-toggle">
+
+                <FlareToggleButton Value="@ViewMode.Grid" AriaLabel="Сетка" Class="deka-view-toggle__btn">
+                    <ChildContent>
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.GridView" />
+                    </ChildContent>
+                </FlareToggleButton>
+
+                <FlareToggleButton Value="@ViewMode.List" AriaLabel="Список" Class="deka-view-toggle__btn">
+                    <ChildContent>
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.ViewList" />
+                    </ChildContent>
+                </FlareToggleButton>
+            </FlareToggleGroup>
+        </div>
+
+        @if (_playlistsLoading)
+        {
+            <FlareProgressCircular />
+        }
+        else if (!FilteredPlaylists.Any())
+        {
+            <FlareCard Variant="CardVariant.Filled" Class="deka-empty">
+                <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" SizePx="40" />
+                <FlareText Typo="TypographyScale.TitleMedium">Плейлисты не найдены</FlareText>
+                <FlareText Typo="TypographyScale.BodySmall" Color="@FlareColor.OnSurfaceVariant2">
+                    Убедитесь, что вы сохранили корректный токен Яндекс Музыки,
+                    или измените фильтр / поисковый запрос.
+                </FlareText>
+                <FlareButton Variant="ButtonVariant.Filled"
+                             Color="@FlareColor.Primary"
+                             Size="ButtonSize.Sm"
+                             Href="/profile">
+                    Настроить токен
+                </FlareButton>
+            </FlareCard>
+        }
+        else
+        {
+            <div class="deka-card-grid @(_view == ViewMode.List ? "deka-card-grid--list" : null)">
+                @foreach (var playlist in FilteredPlaylists)
+                {
+                    <FlareCard Class="deka-tile"
+                               Variant="CardVariant.Filled"
+                               OnClick="@(() => GoToShared(playlist.ShareToken))">
                         <div class="deka-tile-cover">
                             @if (!string.IsNullOrEmpty(playlist.CoverUrl))
                             {
-                                <img class="deka-tile-cover-img" src="@playlist.CoverUrl.FormatCoverUrl(200, 200)" alt="@playlist.Title" />
+                                <img class="deka-tile-cover-img"
+                                     src="@playlist.CoverUrl.FormatCoverUrl(200, 200)"
+                                     alt="@playlist.Title" />
                             }
                             else
                             {
@@ -42,79 +272,100 @@
                                 </div>
                             }
                             <div class="deka-tile-cover-shade"></div>
+
+                            @if (playlist.IsShared)
+                            {
+                                <span class="deka-tile-badge deka-tile-badge--secondary">
+                                    <span class="deka-pill__dot deka-pill__dot--live"></span>
+                                    Яндекс Музыка
+                                </span>
+                            }
+
+                            <FlareStack Row Gap="FlareSpacing.XXSmall"
+                                        Align="FlareAlignItems.Center"
+                                        Class="deka-tile-count">
+                                <FlareIconView Value="@MaterialDesign3Icons.Regular.MusicNote" SizePx="13" />
+                                <span>@playlist.TrackCount</span>
+                            </FlareStack>
                         </div>
-                        <FlareText Typo="TypographyScale.TitleSmall" Class="deka-tile-title">@playlist.Title</FlareText>
-                        <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-tile-owner">
-                            <FlareAvatar Size="AvatarSize.Xs" Text="@playlist.Creator?.UserName" />
-                            <FlareText Typo="TypographyScale.BodySmall" Class="deka-tile-owner-name">@playlist.Creator?.UserName</FlareText>
-                        </FlareStack>
+
+                        <FlareText Typo="TypographyScale.TitleSmall" Class="deka-tile-title">
+                            @playlist.Title
+                        </FlareText>
+                        <FlareText Typo="TypographyScale.BodySmall" Class="deka-tile-sub">
+                            @(playlist.IsShared ? "Расшарен" : "Не расшарен")
+                        </FlareText>
+
                         <div class="deka-tile-action" @onclick:stopPropagation="true">
-                            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Favorite"
-                                              Color="FlareColor.Error"
-                                              AriaLabel="Удалить из избранного"
-                                              OnClick="@(() => RemoveFromFavorites(playlist))" />
+                            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.IosShare"
+                                             AriaLabel="Поделиться"
+                                             OnClick="@(() => SharePlaylist(playlist))" />
                         </div>
                     </FlareCard>
                 }
+
+                @* CTA-плитка «Новый список» *@
+                <button class="deka-tile deka-tile--add" type="button" @onclick="OpenCreateDialog">
+                    <span class="deka-tile-add__icon">
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.Add" SizePx="30" />
+                    </span>
+                    <span class="deka-tile-add__title">Новый список</span>
+                    <span class="deka-tile-add__sub">Синхронизировать с другом</span>
+                </button>
             </div>
-        </section>
-    }
+        }
+    </section>
 
-    <FlareStack Row Justify="FlareJustifyContent.SpaceBetween" Align="FlareAlignItems.End" Class="deka-section-heading deka-my-playlists-heading">
-        <div>
-            <FlareText Typo="TypographyScale.LabelLarge" Color="FlareColor.Primary" Class="deka-eyebrow">ВАША ФОНОТЕКА</FlareText>
-            <FlareText Typo="TypographyScale.HeadlineMedium">Мои плейлисты</FlareText>
-        </div>
-        <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Class="deka-sync-indicator">
-            <FlareIconView Value="@MaterialDesign3Icons.Regular.Schedule" SizePx="17" />
-            <span>Синхронизировано</span>
-        </FlareStack>
-    </FlareStack>
+    @* ── Section 3: Integration banner ─────────────────────────────── *@
+    <section class="deka-integration-banner">
+        <div class="deka-integration-banner__glow deka-integration-banner__glow--primary" aria-hidden="true"></div>
+        <div class="deka-integration-banner__glow deka-integration-banner__glow--secondary" aria-hidden="true"></div>
 
-    @if (_playlistsLoading)
-    {
-        <FlareProgressCircular />
-    }
-    else if (!_playlists.Any())
-    {
-        <FlareText>Плейлисты не найдены. Убедитесь, что вы сохранили корректный токен Яндекс.Музыки.</FlareText>
-    }
-    else
-    {
-        <div class="deka-card-grid">
-            @foreach (var playlist in _playlists)
-            {
-                <FlareCard Class="deka-tile" OnClick="@(() => GoToShared(playlist.ShareToken))">
-                    <div class="deka-tile-cover">
-                        @if (!string.IsNullOrEmpty(playlist.CoverUrl))
-                        {
-                            <img class="deka-tile-cover-img" src="@playlist.CoverUrl.FormatCoverUrl(200, 200)" alt="@playlist.Title" />
-                        }
-                        else
-                        {
-                            <div class="deka-tile-cover-placeholder">
-                                <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" SizePx="36" />
-                            </div>
-                        }
-                        <div class="deka-tile-cover-shade"></div>
-                        <FlareStack Row Gap="FlareSpacing.XXSmall" Align="FlareAlignItems.Center" Class="deka-tile-count">
-                            <FlareIconView Value="@MaterialDesign3Icons.Regular.MusicNote" SizePx="13" />
-                            <span>@playlist.TrackCount</span>
-                        </FlareStack>
-                    </div>
-                    <FlareText Typo="TypographyScale.TitleSmall" Class="deka-tile-title">@playlist.Title</FlareText>
-                    <FlareText Typo="TypographyScale.BodySmall" Class="deka-tile-sub">
-                        @(playlist.IsShared ? "Расшарен" : "Не расшарен")
+        <div class="deka-integration-banner__body">
+            <div class="deka-integration-banner__lead">
+                <div class="deka-integration-banner__icon">
+                    <FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" SizePx="30" />
+                </div>
+                <div>
+                    <FlareStack Row Gap="FlareSpacing.XSmall" Align="FlareAlignItems.Center" Wrap>
+                        <FlareText Typo="TypographyScale.TitleLarge">
+                            Слушайте вместе через Яндекс Музыку
+                        </FlareText>
+                        <span class="deka-badge-live">
+                            <span class="deka-pill__dot deka-pill__dot--live"></span>
+                            Яндекс Плюс активен
+                        </span>
+                    </FlareStack>
+                    <FlareText Typo="TypographyScale.BodySmall" Color="@FlareColor.OnSurfaceVariant2">
+                        Треки добавляются синхронно в реальном времени. Любые изменения
+                        в плейлисте «Общий ПЛ» мгновенно появляются на всех устройствах,
+                        включая Яндекс Станцию и мобильные приложения ваших друзей.
                     </FlareText>
-                    <div class="deka-tile-action" @onclick:stopPropagation="true">
-                        <FlareIconButton Icon="@MaterialDesign3Icons.Regular.IosShare"
-                                          AriaLabel="Поделиться"
-                                          OnClick="@(() => SharePlaylist(playlist))" />
-                    </div>
-                </FlareCard>
-            }
+                </div>
+            </div>
+
+            <div class="deka-integration-banner__actions">
+                <FlareButton Variant="ButtonVariant.Text"
+                             Size="ButtonSize.Sm"
+                             Color="@FlareColor.OnSurface">
+                    <LeadingIcon>
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.QrCode2" />
+                    </LeadingIcon>
+                    <ChildContent>QR-код комнаты</ChildContent>
+                </FlareButton>
+
+                <FlareButton Variant="ButtonVariant.Filled"
+                             Size="ButtonSize.Sm"
+                             Color="@FlareColor.Primary"
+                             OnClick="CopyInviteLink">
+                    <LeadingIcon>
+                        <FlareIconView Value="@MaterialDesign3Icons.Regular.Link" />
+                    </LeadingIcon>
+                    <ChildContent>Скопировать инвайт-ссылку</ChildContent>
+                </FlareButton>
+            </div>
         </div>
-    }
+    </section>
 </FlareContainer>
 
 @code {
@@ -122,6 +373,25 @@
     private List<SharedPlaylistDto> _favorites = new();
     private bool _playlistsLoading = true;
     private bool _favoritesLoading = true;
+
+    private string _searchQuery = string.Empty;
+    private PlaylistFilter _filter = PlaylistFilter.All;
+    private ViewMode _view = ViewMode.Grid;
+
+    private enum PlaylistFilter { All, Shared, Personal, Favorites }
+    private enum ViewMode { Grid, List }
+
+    private IEnumerable<YandexPlaylistShare> FilteredPlaylists =>
+        _playlists
+            .Where(p => _filter switch
+            {
+                PlaylistFilter.Shared => p.IsShared,
+                PlaylistFilter.Personal => !p.IsShared,
+                _ => true
+            })
+            .Where(p => string.IsNullOrWhiteSpace(_searchQuery)
+                        || p.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.Title, StringComparer.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
@@ -134,19 +404,21 @@
         try
         {
             var response = await Http.GetFromJsonAsync<ApiResponse<List<YandexPlaylistShare>>>("/api/playlists");
-            if (response?.Success == true)
+            if (response is null)
+                Snackbar.Show("Пустой ответ сервера при загрузке плейлистов", SnackbarSeverity.Error);
+            else if (response.Success)
                 _playlists = response.Data ?? new();
             else
-                Snackbar.Show("Ошибка загрузки плейлистов", SnackbarSeverity.Error);
+                Snackbar.Show(response.Error?.Message ?? "Ошибка загрузки плейлистов", SnackbarSeverity.Error);
         }
         catch (Exception ex)
         {
-            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+            Logger.LogError(ex, "Failed to load playlists");
+            Snackbar.Show($"Ошибка загрузки плейлистов: {ex.Message}", SnackbarSeverity.Error);
         }
         finally
         {
             _playlistsLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -156,20 +428,36 @@
         try
         {
             var response = await Http.GetFromJsonAsync<ApiResponse<List<SharedPlaylistDto>>>("/api/favorites");
-            if (response?.Success == true)
+            if (response is null)
+                Snackbar.Show("Пустой ответ сервера при загрузке избранного", SnackbarSeverity.Error);
+            else if (response.Success)
                 _favorites = response.Data ?? new();
             else
-                Snackbar.Show(response?.Error?.Message ?? "Ошибка загрузки избранного", SnackbarSeverity.Error);
+                Snackbar.Show(response.Error?.Message ?? "Ошибка загрузки избранного", SnackbarSeverity.Error);
         }
         catch (Exception ex)
         {
-            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+            Logger.LogError(ex, "Failed to load favorites");
+            Snackbar.Show($"Ошибка загрузки избранного: {ex.Message}", SnackbarSeverity.Error);
         }
         finally
         {
             _favoritesLoading = false;
-            StateHasChanged();
         }
+    }
+
+    private Task OpenCreateDialog()
+    {
+        // TODO: заменить на реальный диалог создания плейлиста
+        Snackbar.Show("Создание плейлиста пока не реализовано", SnackbarSeverity.Info);
+        return Task.CompletedTask;
+    }
+
+    private async Task CopyInviteLink()
+    {
+        // TODO: подставить реальный токен активной комнаты
+        Snackbar.Show("Ссылка скопирована", SnackbarSeverity.Success);
+        await Task.CompletedTask;
     }
 
     private async Task SharePlaylist(YandexPlaylistShare playlist)
@@ -180,20 +468,29 @@
             return;
         }
 
-        var request = new SharePlaylistRequest { Kind = playlist.Kind, OwnerUid = playlist.OwnerUid };
-        var response = await Http.PostAsJsonAsync("/api/playlists/share", request);
-        if (response.IsSuccessStatusCode)
+        try
         {
+            var request = new SharePlaylistRequest { Kind = playlist.Kind, OwnerUid = playlist.OwnerUid };
+            var response = await Http.PostAsJsonAsync("/api/playlists/share", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                Snackbar.Show("Ошибка расшаривания", SnackbarSeverity.Error);
+                return;
+            }
+
             Snackbar.Show("Плейлист расшарен", SnackbarSeverity.Success);
             await LoadPlaylists();
 
-            var updated = _playlists.FirstOrDefault(p => p.Kind == playlist.Kind && p.OwnerUid == playlist.OwnerUid);
+            var updated = _playlists.FirstOrDefault(p =>
+                p.Kind == playlist.Kind && p.OwnerUid == playlist.OwnerUid);
+
             if (!string.IsNullOrEmpty(updated?.ShareToken))
                 await OpenShareDialog(updated.ShareToken);
         }
-        else
+        catch (Exception ex)
         {
-            Snackbar.Show("Ошибка расшаривания", SnackbarSeverity.Error);
+            Logger.LogError(ex, "Failed to share playlist {Kind}/{OwnerUid}", playlist.Kind, playlist.OwnerUid);
+            Snackbar.Show($"Ошибка расшаривания: {ex.Message}", SnackbarSeverity.Error);
         }
     }
 
@@ -205,7 +502,7 @@
         try
         {
             var response = await Http.GetFromJsonAsync<ApiResponse<SharedPlaylistDto>>($"/api/sharedplaylist/{shareToken}");
-            if (response?.Success == true && response.Data is { } dto)
+            if (response is { Success: true, Data: { } dto })
             {
                 initialPermissions = new UpdatePermissionsDto
                 {
@@ -219,7 +516,7 @@
         catch (Exception ex)
         {
             // Fall back to the plain link-only dialog if permissions can't be loaded.
-            Console.WriteLine($"Failed to load share permissions: {ex.Message}");
+            Logger.LogWarning(ex, "Failed to load share permissions for {Token}", shareToken);
         }
 
         await DialogService.ShowSheetAsync<ShareDialog>("Поделиться", new DialogParameters
@@ -237,7 +534,7 @@
             var response = await Http.DeleteAsync($"/api/favorites/{playlist.ShareToken}");
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Show($"Плейлист \"{playlist.Title}\" удалён из избранного", SnackbarSeverity.Success);
+                Snackbar.Show($"Плейлист «{playlist.Title}» удалён из избранного", SnackbarSeverity.Success);
                 await LoadFavorites();
             }
             else
@@ -248,7 +545,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Show($"Ошибка: {ex.Message}", SnackbarSeverity.Error);
+            Logger.LogError(ex, "Failed to remove favorite {Token}", playlist.ShareToken);
+            Snackbar.Show($"Ошибка удаления: {ex.Message}", SnackbarSeverity.Error);
         }
     }
 
@@ -257,6 +555,6 @@
         if (!string.IsNullOrEmpty(shareToken))
             Navigation.NavigateTo($"/shared/{shareToken}");
         else
-            Snackbar.Show("Ошибка: токен расшаривания не найден", SnackbarSeverity.Error);
+            Snackbar.Show("Токен расшаривания не найден", SnackbarSeverity.Error);
     }
 }

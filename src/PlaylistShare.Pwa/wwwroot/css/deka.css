@@ -9,10 +9,46 @@
      --line2= --flare-color-outline-variant       --accent= --flare-color-primary
      --acc-soft = --flare-color-primary-container --on-accent = --flare-color-on-primary
      --accent-strong = --deka-accent-strong       --glass = --deka-glass
+
+   Extra brand tokens used below:
+     --deka-yandex    = #ff3333  (Яндекс Музыка brand red, background @ 15%)
+     --deka-yandex-fg = #ff5555  (Яндекс Музыка brand red, foreground)
    =========================================================================== */
 
-@keyframes deka-pop { from { transform: translateY(14px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-@keyframes deka-fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes deka-pop {
+    from {
+        transform: translateY(14px) scale(.96);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes deka-fadein {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes deka-pulse {
+    50% {
+        opacity: .5;
+    }
+}
+
+@keyframes deka-ping {
+    75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
 
 .deka-gradient-mark {
     background: linear-gradient(150deg, var(--flare-color-primary), var(--deka-accent-strong));
@@ -47,8 +83,17 @@
     pointer-events: none;
 }
 
-.deka-auth-blob--tr { top: -160px; right: -120px; }
-.deka-auth-blob--bl { width: 420px; height: 420px; bottom: -160px; left: -120px; }
+.deka-auth-blob--tr {
+    top: -160px;
+    right: -120px;
+}
+
+.deka-auth-blob--bl {
+    width: 420px;
+    height: 420px;
+    bottom: -160px;
+    left: -120px;
+}
 
 .deka-auth-box {
     position: relative;
@@ -144,7 +189,10 @@
    inner control, so cover it on the element itself and as an ancestor. */
 .deka-token-area,
 .deka-token-area textarea,
-.deka-token-area .flare-input__control { font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+.deka-token-area .flare-input__control {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 14px;
+}
 
 /* Full-width primary CTA */
 .deka-cta {
@@ -161,9 +209,18 @@
     transition: filter .15s ease, transform .12s ease;
 }
 
-.deka-cta:hover { filter: brightness(1.05); }
-.deka-cta:active { transform: scale(.98); }
-.deka-cta:disabled { opacity: .6; cursor: default; }
+    .deka-cta:hover {
+        filter: brightness(1.05);
+    }
+
+    .deka-cta:active {
+        transform: scale(.98);
+    }
+
+    .deka-cta:disabled {
+        opacity: .6;
+        cursor: default;
+    }
 
 .deka-auth-footnote {
     text-align: center;
@@ -209,8 +266,18 @@
     border-radius: 16px;
 }
 
-.deka-connect-head h1 { font-size: 23px; font-weight: 800; letter-spacing: -.02em; margin: 0; }
-.deka-connect-head p { color: var(--flare-color-on-surface-variant); font-size: 14px; margin: 2px 0 0; }
+.deka-connect-head h1 {
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    margin: 0;
+}
+
+.deka-connect-head p {
+    color: var(--flare-color-on-surface-variant);
+    font-size: 14px;
+    margin: 2px 0 0;
+}
 
 .deka-connect-card {
     background: var(--flare-color-surface);
@@ -237,7 +304,12 @@
     margin-bottom: 6px;
 }
 
-.deka-connect-hintbox p { font-size: 13px; color: var(--flare-color-on-surface-variant); line-height: 1.5; margin: 0; }
+.deka-connect-hintbox p {
+    font-size: 13px;
+    color: var(--flare-color-on-surface-variant);
+    line-height: 1.5;
+    margin: 0;
+}
 
 .deka-connect-qr {
     display: flex;
@@ -259,8 +331,20 @@
     justify-content: center;
 }
 
-.deka-connect-qr-frame img { width: 100%; height: 100%; border-radius: 8px; object-fit: contain; }
-.deka-connect-qr p { color: var(--flare-color-on-surface-variant); font-size: 14px; line-height: 1.5; margin: 0 0 18px; max-width: 280px; }
+    .deka-connect-qr-frame img {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        object-fit: contain;
+    }
+
+.deka-connect-qr p {
+    color: var(--flare-color-on-surface-variant);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 18px;
+    max-width: 280px;
+}
 
 .deka-connect-note {
     display: flex;
@@ -292,7 +376,9 @@
     transition: background .15s ease;
 }
 
-.deka-btn-secondary:hover { background: var(--flare-color-surface-container-highest); }
+    .deka-btn-secondary:hover {
+        background: var(--flare-color-surface-container-highest);
+    }
 
 /* Заполненные (Filled) кнопки play/pause: значок красим в контрастный on-цвет.
    Variant=Filled даёт кнопке фон-акцент, но тема красит и SVG-глиф тем же акцентом
@@ -325,20 +411,693 @@
     height: var(--deka-slider-hit-area, 2.75rem);
 }
 
-/* WebKit ставит thumb от ВЕРХА дорожки, а не по центру: у Flare это скрыто тем, что thumb и
+    /* WebKit ставит thumb от ВЕРХА дорожки, а не по центру: у Flare это скрыто тем, что thumb и
    дорожка одной высоты (margin-top: 0 центрирует сам собой). Развели высоты - компенсируем
    вручную, иначе кружок уезжает под верхний край. Firefox центрирует thumb сам, ему правило
    не нужно.
    Читаем внутреннюю --_hnd-height, а не токен темы: с Flare 0.4.0 высота ползунка задаётся
    токеном на каждый размер (--flare-slider-handle-height-xs/-sm/...), и какой из них в силе,
    знает только size-класс - он и кладёт выбранное значение в --_hnd-height. */
-.flare-slider:not(.flare-slider--vertical) .flare-slider__input::-webkit-slider-thumb {
-    margin-top: calc((var(--deka-slider-hit-area, 2.75rem) - var(--_hnd-height)) / 2);
+    .flare-slider:not(.flare-slider--vertical) .flare-slider__input::-webkit-slider-thumb {
+        margin-top: calc((var(--deka-slider-hit-area, 2.75rem) - var(--_hnd-height)) / 2);
+    }
+
+/* ===========================================================================
+   My playlists / phonotheka page
+   =========================================================================== */
+
+.deka-my-playlists {
+    position: relative;
+    padding-block: var(--flare-spacing-8) var(--flare-spacing-32);
 }
 
+/* Ambient glow layer — не перехватывает мышь и клипается границей страницы */
+.deka-glow-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
 
+.deka-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: .10;
+}
+
+.deka-glow--primary {
+    top: -6rem;
+    right: 25%;
+    width: 30rem;
+    height: 30rem;
+    background: var(--flare-color-primary-container);
+}
+
+.deka-glow--secondary {
+    top: 2.5rem;
+    left: 33%;
+    width: 22rem;
+    height: 22rem;
+    background: var(--flare-color-secondary);
+    opacity: .08;
+}
+
+/* ---------- Library header ---------- */
+.deka-library-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--flare-spacing-6);
+    padding-block: var(--flare-spacing-2) var(--flare-spacing-6);
+}
+
+.deka-library-header__intro {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.deka-library-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--flare-spacing-4);
+    flex-wrap: wrap;
+}
+
+/* ---------- Search ---------- */
+.deka-search {
+    position: relative;
+    width: 18rem;
+    max-width: 100%;
+}
+
+    .deka-search .flare-input__field {
+        border-radius: var(--flare-shape-full);
+        border-color: transparent;
+        background: color-mix(in srgb, var(--flare-color-surface-container-high) 80%, transparent);
+        transition: background-color .15s ease;
+    }
+
+        .deka-search .flare-input__field:focus-within {
+            background: var(--flare-color-surface-container-highest);
+        }
+
+    .deka-search .flare-input__icon--leading {
+        color: var(--flare-color-outline);
+    }
+
+    .deka-search .flare-input__control {
+        background: transparent;
+    }
+
+        .deka-search .flare-input__control::placeholder {
+            color: var(--flare-color-outline);
+        }
+
+/* ---------- Filter pills ---------- */
+.deka-filter-pills {
+    position: relative;
+    z-index: 1;
+    margin-block-end: var(--flare-spacing-12);
+}
+
+.deka-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--flare-spacing-2);
+    /* Сброс segmented-вида FlareToggleGroup */
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+}
+
+.flare-togglegroup.deka-filter-group > .flare-btn.deka-pill {
+    height: 2rem;
+    padding: .25rem 1rem;
+    border-radius: var(--flare-shape-full);
+    border-right: none;
+    background: color-mix(in srgb, var(--flare-color-surface-container-high) 70%, transparent);
+    color: var(--flare-color-on-surface-variant);
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+    .flare-togglegroup.deka-filter-group > .flare-btn.deka-pill:hover {
+        background: var(--flare-color-surface-container-highest);
+        color: var(--flare-color-on-surface);
+    }
+
+    .flare-togglegroup.deka-filter-group > .flare-btn.deka-pill[aria-pressed="true"],
+    .flare-togglegroup.deka-filter-group > .flare-btn.deka-pill.flare-btn--selected {
+        background: var(--flare-color-primary-container);
+        color: var(--flare-color-on-primary-container);
+        font-weight: 700;
+    }
+
+.deka-filter-group .deka-pill .flare-btn__label {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    font-size: .8125rem;
+    line-height: 1.38;
+    font-weight: 600;
+}
+
+/* ---------- Sections ---------- */
+.deka-section {
+    position: relative;
+    z-index: 1;
+    margin-block-end: var(--flare-spacing-16);
+}
+
+.deka-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--flare-spacing-4);
+    margin-block-end: var(--flare-spacing-4);
+}
+/* ---------- Tiles ---------- */
+.deka-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: var(--flare-spacing-4);
+    border-radius: var(--flare-shape-large);
+    background: color-mix(in srgb, var(--flare-color-surface-container) 60%, transparent);
+    box-shadow: var(--flare-elevation-2);
+    transition: background-color .3s ease, transform .3s ease, box-shadow .3s ease;
+    cursor: pointer;
+}
+
+    .deka-tile:hover {
+        background: color-mix(in srgb, var(--flare-color-surface-container-high) 90%, transparent);
+        transform: translateY(-.25rem);
+        box-shadow: var(--flare-elevation-4);
+    }
+
+.deka-tile-cover {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--flare-shape-medium);
+    overflow: hidden;
+    margin-block-end: var(--flare-spacing-2);
+}
+
+.deka-tile-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s ease;
+}
+
+.deka-tile:hover .deka-tile-cover-img {
+    transform: scale(1.05);
+}
+
+.deka-tile-cover-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: var(--deka-gradient-accent);
+    color: var(--flare-color-on-primary);
+}
+
+.deka-tile-cover-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, color-mix(in srgb, var(--flare-color-surface-container-lowest) 80%, transparent), transparent 60%);
+    pointer-events: none;
+}
+
+.deka-tile-count {
+    position: absolute;
+    bottom: .5rem;
+    left: .5rem;
+    padding: .125rem .5rem;
+    border-radius: var(--flare-shape-full);
+    background: color-mix(in srgb, var(--flare-color-surface-container-lowest) 80%, transparent);
+    color: var(--flare-color-on-surface);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    line-height: 1.27;
+    font-weight: 500;
+}
+
+.deka-tile-badge {
+    position: absolute;
+    top: .5rem;
+    left: .5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .125rem .5rem;
+    border-radius: var(--flare-shape-small);
+    background: color-mix(in srgb, var(--flare-color-surface-container-lowest) 90%, transparent);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    line-height: 1.27;
+    font-weight: 600;
+    box-shadow: var(--flare-elevation-1);
+}
+
+.deka-tile-badge--secondary {
+    color: var(--flare-color-secondary);
+}
+
+.deka-tile-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.deka-tile-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--flare-color-on-surface-variant);
+}
+
+.deka-tile-owner {
+    min-width: 0;
+    padding-block-start: .5rem;
+}
+
+.deka-tile-owner-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.deka-tile-action {
+    position: absolute;
+    bottom: .75rem;
+    right: .75rem;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.deka-tile:hover .deka-tile-action,
+.deka-tile:focus-within .deka-tile-action {
+    opacity: 1;
+}
+/* Иконочная кнопка внутри — строго квадрат, не тянется */
+.deka-tile-action .flare-btn {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+}
+
+    .deka-tile-action .flare-btn > * {
+        height: auto;
+    }
+/* ---------- Add-tile ("Новый список") ---------- */
+.deka-tile--add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--flare-spacing-4);
+    padding: var(--flare-spacing-6);
+    border: 0;
+    background: color-mix(in srgb, var(--flare-color-surface-container-low) 60%, transparent);
+    color: var(--flare-color-on-surface);
+    text-align: center;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+    .deka-tile--add:hover {
+        background: color-mix(in srgb, var(--flare-color-surface-container) 70%, transparent);
+        transform: none;
+    }
+
+.deka-tile-add__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--flare-shape-full);
+    background: var(--flare-color-surface-container-high);
+    color: var(--flare-color-primary);
+    transition: transform .2s ease, background-color .2s ease;
+}
+
+.deka-tile--add:hover .deka-tile-add__icon {
+    background: var(--flare-color-primary-container);
+    color: var(--flare-color-on-primary-container);
+    transform: scale(1.1);
+}
+
+.deka-tile-add__title {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.33;
+    font-weight: 600;
+}
+
+.deka-tile-add__sub {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: .75rem;
+    line-height: 1.33;
+    color: var(--flare-color-outline);
+}
+/* ---------- Empty state ---------- */
+.deka-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--flare-spacing-4);
+    padding: var(--flare-spacing-16) var(--flare-spacing-8);
+    color: var(--flare-color-on-surface-variant);
+}
+/* ---------- Integration banner ---------- */
+.deka-integration-banner {
+    position: relative;
+    z-index: 1;
+    margin-block-start: var(--flare-spacing-16);
+    padding: var(--flare-spacing-12);
+    border-radius: var(--flare-shape-extra-large);
+    background: linear-gradient( 100deg, var(--flare-color-surface-container-high) 0%, var(--flare-color-surface-container) 50%, var(--flare-color-surface-container-low) 100%);
+    box-shadow: var(--flare-elevation-3);
+    overflow: hidden;
+}
+
+.deka-integration-banner__glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(64px);
+    pointer-events: none;
+}
+
+.deka-integration-banner__glow--primary {
+    top: -4rem;
+    right: -4rem;
+    width: 20rem;
+    height: 20rem;
+    background: var(--flare-color-primary-container);
+    opacity: .15;
+}
+
+.deka-integration-banner__glow--secondary {
+    bottom: -5rem;
+    right: 25%;
+    width: 16rem;
+    height: 16rem;
+    background: var(--flare-color-secondary);
+    opacity: .10;
+}
+
+.deka-integration-banner__body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--flare-spacing-12);
+}
+
+.deka-integration-banner__lead {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--flare-spacing-8);
+    max-width: 42rem;
+}
+
+.deka-integration-banner__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--flare-shape-extra-large);
+    background: color-mix(in srgb, var(--deka-yandex, #ff3333) 15%, transparent);
+    color: var(--deka-yandex-fg, #ff5555);
+    flex-shrink: 0;
+}
+
+.deka-integration-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--flare-spacing-4);
+}
+
+.deka-badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .125rem .5rem;
+    border-radius: var(--flare-shape-full);
+    background: color-mix(in srgb, var(--flare-color-secondary) 20%, transparent);
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    line-height: 1.27;
+    font-weight: 600;
+}
+/* ---------- Shared utility ---------- */
 .deka-eyebrow {
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: .1em;
     font-weight: 600;
+}
+/* ---------- View toggle ---------- */
+.deka-view-toggle {
+    display: inline-flex;
+    gap: .25rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+}
+
+.flare-togglegroup.deka-view-toggle > .flare-btn.deka-view-toggle__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0;
+    border-right: none;
+    border-radius: var(--flare-shape-medium);
+    background: var(--flare-color-surface-container-high);
+    color: var(--flare-color-on-surface-variant);
+    transition: background-color .15s ease, color .15s ease;
+}
+
+    .flare-togglegroup.deka-view-toggle > .flare-btn.deka-view-toggle__btn:hover {
+        background: var(--flare-color-surface-container-highest);
+    }
+
+    .flare-togglegroup.deka-view-toggle > .flare-btn.deka-view-toggle__btn[aria-pressed="true"],
+    .flare-togglegroup.deka-view-toggle > .flare-btn.deka-view-toggle__btn.flare-btn--selected {
+        background: var(--flare-color-surface-container-high);
+        color: var(--flare-color-primary);
+    }
+/* ---------- Nav menu ---------- */
+/* ---------- Боковая панель (LayoutDrawer + NavMenu) ---------- */
+/* Root-обёртка — здесь фон, ширина, тень */
+.flare-layout-drawer {
+    --fld-w: 16rem; /* в макете w-64 = 16rem, а не 15.5rem */
+    background: color-mix(in srgb, var(--flare-color-surface-container-lowest) 95%, transparent);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: none;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, .5);
+}
+/* Внутренний контейнер — фон не нужен, он уже на drawer */
+.flare-layout-drawer__inner {
+    background: transparent;
+}
+/* NavMenu внутри — убираем framed-рамку Flare */
+.deka-nav-menu {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: var(--flare-spacing-4);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+    /* Секции меню — тонкие паддинги по краям */
+    .deka-nav-menu .flare-nav-menu__header {
+        padding: 0 0 var(--flare-spacing-4) 0;
+    }
+
+    .deka-nav-menu .flare-nav-menu__scroll {
+        padding: 0;
+        flex: 1;
+    }
+
+    .deka-nav-menu .flare-nav-menu__footer {
+        padding: var(--flare-spacing-4) 0 0 0;
+    }
+/* ---------- Grid ---------- */
+.deka-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+    gap: var(--flare-spacing-8);
+}
+/* Hero-строка — чуть крупнее карточки, но тоже auto-fill */
+.deka-card-grid--hero {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--flare-spacing-4);
+}
+
+.deka-card-grid--list {
+    grid-template-columns: 1fr;
+    gap: var(--flare-spacing-2);
+}
+/* ---------- Hero card (Избранные и сейчас играют) ---------- */
+.deka-hero-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--flare-spacing-4);
+    padding: var(--flare-spacing-4);
+    border-radius: var(--flare-shape-large);
+    background: linear-gradient( 135deg, color-mix(in srgb, var(--flare-color-surface-container-high) 90%, transparent) 0%, color-mix(in srgb, var(--flare-color-surface-container) 70%, transparent) 50%, var(--flare-color-surface-container-low) 100%);
+    box-shadow: var(--flare-elevation-2);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+    .deka-hero-card:hover {
+        transform: scale(1.01);
+        box-shadow: 0 12px 36px rgba(160, 120, 255, 0.2);
+    }
+
+.deka-hero-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--flare-spacing-2);
+}
+
+.deka-hero-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .125rem .5rem;
+    border-radius: var(--flare-shape-full);
+    background: color-mix(in srgb, var(--flare-color-secondary) 15%, transparent);
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    font-weight: 600;
+}
+
+.deka-hero-card__live {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    font-weight: 500;
+}
+
+.deka-hero-card__body {
+    display: flex;
+    align-items: center;
+    gap: var(--flare-spacing-4);
+    min-width: 0;
+}
+
+.deka-hero-card__cover {
+    position: relative;
+    width: 4rem;
+    height: 4rem;
+    border-radius: var(--flare-shape-medium);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--flare-color-surface-container-high);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--flare-color-on-surface-variant);
+}
+
+    .deka-hero-card__cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.deka-hero-card__shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, color-mix(in srgb, var(--flare-color-surface-container-lowest) 80%, transparent), transparent 60%);
+    pointer-events: none;
+}
+
+.deka-hero-card__meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.deka-hero-card__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.deka-hero-card__listeners {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    margin-block-start: .25rem;
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    font-weight: 500;
+}
+
+.deka-hero-card__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block-start: var(--flare-spacing-1);
+}
+
+.deka-hero-card__avatars {
+    display: flex;
+    align-items: center;
+}
+/* Кнопка Play в hero-карточке показывается всегда (не только на hover) */
+.deka-hero-card .deka-tile-action {
+    position: static;
+    opacity: 1;
 }
