@@ -9,147 +9,88 @@
 @implements IDisposable
 @implements IAsyncDisposable
 
-    @* Тап по бару открывает полноэкранный плеер (главный сценарий на мобиле, где мелкую полосу
-       перемотки всё равно не поймать). Все интерактивные элементы ниже гасят всплытие, поэтому
-       play/pause, prev/next, громкость и перемотка продолжают работать везде. *@
-    <div class="deka-player-bar player-enter" @onclick="Expand">
-        @* Фоновая заливка прогресса - играющая часть подсвечивает фон плеера. Обёртка нужна, чтобы
-           скруглить заливку по углам бара: сам бар клипать не может, иначе срежет панель громкости
-           (см. .deka-player-fill-clip). *@
+<div class="deka-player-bar player-enter">
+    @* ── Левая зона: обложка + трек + лайк ─────────────────────────── *@
+    <div class="deka-player-left">
+        <div class="deka-player-cover" @onclick="Expand" role="button" tabindex="0" title="Открыть плеер">
+            @if (!string.IsNullOrEmpty(AudioPlayerService.CurrentTrack?.CoverUri))
+            {
+                <FlareImage Src="@AudioPlayerService.CurrentTrack.CoverUri.FormatCoverUrl(92, 92)"
+                            Height="100%" Width="100%" />
+            }
+        </div>
+
         @if (AudioPlayerService.CurrentTrack != null)
         {
-            <div class="deka-player-fill-clip">
-                <div class="deka-player-fill" style="width:@(ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+            <div class="deka-player-meta" @onclick="Expand" role="button" tabindex="0" title="Открыть плеер">
+                <span class="deka-player-title">@AudioPlayerService.CurrentTrack.Title</span>
+                <span class="deka-player-artist">
+                    @string.Join(", ", AudioPlayerService.CurrentTrack.Artists.Select(a => a.Name))
+                </span>
+            </div>
+            <div class="deka-player-like" @onclick="Swallow" @onclick:stopPropagation="true">
+                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Favorite"
+                                 Variant="ButtonVariant.Text"
+                                 Color="FlareColor.Default"
+                                 Size="ButtonSize.Sm"
+                                 AriaLabel="В избранное"
+                                 OnClick="Noop" />
             </div>
         }
-        @* Перемотка по фону бара - только ПК. Нативный range пересчитывает координату клика в
-           значение сам, поэтому не нужны ни замер ширины через JS, ни свой обработчик координат.
-           Полностью прозрачен: позицию показывают заливка и дорожка внизу. Гасит всплытие, поэтому
-           клик по фону НЕ открывает полный плеер. Контент бара лежит выше по z-index - кнопки и
-           название работают как раньше. На мобиле поверхности нет (display:none), клик доходит до
-           бара и открывает плеер: там мелкую полосу всё равно не поймать. *@
-        @if (AudioPlayerService.CurrentTrack != null)
+        else
         {
-            @* Числа - обязательно инвариантной культурой. Razor форматирует double по текущей, а она
-               русская: в атрибут уезжало "146,0506", браузер считал это невалидным и молча брал
-               max по умолчанию (100). Трек на 146 секунд шёл по шкале до 100 - клик на середину
-               давал 50 секунд вместо 73. Соседняя .deka-player-fill не зря делает то же самое. *@
-            <input type="range" class="deka-player-seek-surface" aria-label="Перемотка по фону плеера"
-                   min="0" step="0.1"
-                   max="@AudioPlayerService.TotalTime.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                   value="@AudioPlayerService.CurrentTime.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                   @oninput="OnSeekSurfaceInput"
-                   @onclick="Swallow" @onclick:stopPropagation="true" />
+            <span class="deka-player-placeholder">Ничего не играет</span>
         }
-        <FlareStack Gap="FlareSpacing.XSmall" Row Align="FlareAlignItems.Center" Class="deka-player-row">
-            <!-- Кнопки управления -->
-            <div class="deka-player-controls" @onclick="Swallow" @onclick:stopPropagation="true">
-                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipPrevious"
-                                 Variant="ButtonVariant.Text"
-                                 Size="ButtonSize.Sm"
-                                 Color="FlareColor.Default"
-                                 Disabled="@(!AudioPlayerService.HasPrevious)"
-                                 OnClick="() => AudioPlayerService.PlayPreviousAsync()" />
+    </div>
 
-                <div class="deka-player-cover">
-                    @if (!string.IsNullOrEmpty(AudioPlayerService.CurrentTrack?.CoverUri))
-                    {
-                        <FlareImage Src="@AudioPlayerService.CurrentTrack.CoverUri.FormatCoverUrl(46, 46)" Height="100%" Width="100%" />
-                    }
+    @* ── Центральная зона: транспорт + прогресс ────────────────────── *@
+    <div class="deka-player-center">
+        <div class="deka-player-transport" @onclick="Swallow" @onclick:stopPropagation="true">
+            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Shuffle"
+                             Variant="ButtonVariant.Text"
+                             Color="FlareColor.Default"
+                             Size="ButtonSize.Xs"
+                             AriaLabel="Перемешать"
+                             OnClick="Noop" />
 
-                    <div class="deka-player-cover-overlay">
-                        @* Play/pause берём Filled-вариантом каталога напрямую - залитый глиф без FILL-трюка deka.css. *@
-                        <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? MaterialDesign3Icons.Filled.Pause : MaterialDesign3Icons.Filled.PlayArrow)"
-                                         Variant="ButtonVariant.Filled"
-                                         Color="FlareColor.Primary"
-                                         Shape="ButtonShape.Circular"
-                                         Size="ButtonSize.Sm"
-                                         Class="deka-play-toggle deka-play-toggle--filled"
-                                         OnClick="OnPlayClick" />
-                    </div>
-                </div>
+            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipPrevious"
+                             Variant="ButtonVariant.Text"
+                             Color="FlareColor.Default"
+                             Size="ButtonSize.Xs"
+                             Disabled="@(!AudioPlayerService.HasPrevious)"
+                             AriaLabel="Предыдущий"
+                             OnClick="() => AudioPlayerService.PlayPreviousAsync()" />
 
-                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipNext"
-                                 Variant="ButtonVariant.Text"
-                                 Size="ButtonSize.Sm"
-                                 Color="FlareColor.Default"
-                                 Disabled="@(!AudioPlayerService.HasNext)"
-                                 OnClick="() => AudioPlayerService.PlayNextAsync()" />
-            </div>
+            <FlareIconButton Icon="@(AudioPlayerService.IsPlaying ? MaterialDesign3Icons.Filled.Pause : MaterialDesign3Icons.Filled.PlayArrow)"
+                             Variant="ButtonVariant.Filled"
+                             Color="FlareColor.Primary"
+                             Shape="ButtonShape.Circular"
+                             Size="ButtonSize.Sm"
+                             Class="deka-play-toggle deka-play-toggle--filled"
+                             AriaLabel="@(AudioPlayerService.IsPlaying ? "Пауза" : "Играть")"
+                             OnClick="OnPlayClick" />
 
-            <!-- Название -->
-            @if (AudioPlayerService.CurrentTrack != null)
-            {
-                <FlareStack Gap="FlareSpacing.None" Align="FlareAlignItems.Start" Class="deka-player-title-block"
-                            role="button" tabindex="0" title="Открыть плеер"
-                            @onclick="() => OnExpandRequested.InvokeAsync()"
-                            @onkeydown="OnTitleKeyDown">
-                    <FlareText Element="span" Typo="TypographyScale.BodyMedium" Color="FlareColor.Default" Class="deka-player-title">
-                        @AudioPlayerService.CurrentTrack.Title
-                    </FlareText>
+            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.SkipNext"
+                             Variant="ButtonVariant.Text"
+                             Color="FlareColor.Default"
+                             Size="ButtonSize.Xs"
+                             Disabled="@(!AudioPlayerService.HasNext)"
+                             AriaLabel="Следующий"
+                             OnClick="() => AudioPlayerService.PlayNextAsync()" />
 
-                    <FlareText Element="span" Typo="TypographyScale.BodySmall" Class="deka-player-artist">
-                        @string.Join(", ", AudioPlayerService.CurrentTrack.Artists.Select(a => a.Name))
-                    </FlareText>
-                </FlareStack>
-
-                <FlareSpacer />
-
-                <FlareText Element="span" Typo="TypographyScale.BodyMedium">
-                    @AudioPlayerService.CurrentTimeString
-                </FlareText>
-            }
-            else
-            {
-                <FlareSpacer />
-            }
-
-            <FlareHidden Below="Breakpoint.Md">
-                <!-- Громкость -->
-                <div class="deka-player-volume"
-                     @onwheel="OnVolumeHandleWheel"
-                     @onclick="Swallow" @onclick:stopPropagation="true"
-                     style="position: relative; display: flex; align-items: center;">
-
-                    @* Trigger=Hover, а не самодельные mouseenter/mouseleave: панель отстоит от кнопки
-                       на Offset, и свой mouseleave срабатывал бы, едва курсор пошёл к слайдеру - до
-                       громкости было не дотянуться. У Flare для этого зазора есть HideDelay.
-                       Он же убирает второй клик по mute: backdrop, перехватывавший первый клик,
-                       рисуется только когда триггер НЕ Hover.
-                       @bind-Open обязателен и с этим триггером: FlarePopover контролируемый -
-                       HandleMouseEnter только поднимает OpenChanged, а состояние держит потребитель.
-                       Без привязки событие улетает в никуда и панель не открывается вовсе.
-                       MinWidth="auto" снимает штатные 192px панели: они рассчитаны на меню, а тут
-                       вертикальный слайдер шириной 12px - панель выходила пустой коробкой. *@
-                    <FlarePopover Trigger="PopoverTrigger.Hover" @bind-Open="_volumeIsOpen"
-                                  Placement="Placement.Top" MinWidth="auto">
-                        <AnchorContent>
-                            <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? MaterialDesign3Icons.Regular.VolumeOff : MaterialDesign3Icons.Regular.VolumeUp)"
-                                             Variant="ButtonVariant.Text"
-                                             Size="ButtonSize.Sm"
-                                             Color="FlareColor.Default"
-                                             OnClick="ToggleMute" />
-                        </AnchorContent>
-                        <ChildContent>
-                            <FlareSlider Vertical
-                                         Value="AudioPlayerService.CurrentVolume"
-                                         ValueChanged="ChangeVolume"
-                                         Min="0" Max="100" Step="1"
-                                         Color="FlareColor.Primary"
-                                         Style="--flare-slider-length:120px; padding:8px 4px;" />
-                        </ChildContent>
-                    </FlarePopover>
-                </div>
-            </FlareHidden>
-        </FlareStack>
+            <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Repeat"
+                             Variant="ButtonVariant.Text"
+                             Color="FlareColor.Default"
+                             Size="ButtonSize.Xs"
+                             AriaLabel="Повтор"
+                             OnClick="Noop" />
+        </div>
 
         @if (AudioPlayerService.CurrentTrack != null)
         {
-            @* Обёртка клипует полосу по скруглению бара: сам бар клипать не может - срежет панель
-               громкости. Без неё прямые углы полосы торчали из круглых углов бара.
-               Перемотка: гасим всплытие, иначе клик по полосе открывал бы полноэкранный плеер. *@
-            <div class="deka-player-progress-clip">
-                <div class="deka-player-progress" @onclick="Swallow" @onclick:stopPropagation="true">
+            <div class="deka-player-progress-row" @onclick="Swallow" @onclick:stopPropagation="true">
+                <span class="deka-player-time">@AudioPlayerService.CurrentTimeString</span>
+                <div class="deka-player-progress-bar">
                     <TrackProgress Value="@AudioPlayerService.CurrentTime"
                                    Min="0" Max="@AudioPlayerService.TotalTime"
                                    BufferValue="@_bufferSecond"
@@ -158,9 +99,57 @@
                                    Buffer
                                    ValueChanged="SeekTo" />
                 </div>
+                <span class="deka-player-time">@AudioPlayerService.TotalTimeString</span>
             </div>
         }
     </div>
+
+    @* ── Правая зона: иконки + sync pill + громкость ───────────────── *@
+    <div class="deka-player-right">
+        <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Lyrics"
+                         Variant="ButtonVariant.Text"
+                         Color="FlareColor.Default"
+                         Size="ButtonSize.Sm"
+                         AriaLabel="Текст песни"
+                         OnClick="Noop" />
+
+        <FlareIconButton Icon="@MaterialDesign3Icons.Regular.QueueMusic"
+                         Variant="ButtonVariant.Text"
+                         Color="FlareColor.Default"
+                         Size="ButtonSize.Sm"
+                         AriaLabel="Очередь"
+                         OnClick="Noop" />
+
+        <div class="deka-player-sync-pill" title="Синхронизировано">
+            <span class="deka-player-sync-dot"></span>
+            <span>Синхронизировано</span>
+        </div>
+
+        <div class="deka-player-volume-inline"
+             @onwheel="OnVolumeHandleWheel"
+             @onclick="Swallow" @onclick:stopPropagation="true">
+            <FlareIconButton Icon="@(AudioPlayerService.CurrentVolume == 0 ? MaterialDesign3Icons.Regular.VolumeOff : MaterialDesign3Icons.Regular.VolumeUp)"
+                             Variant="ButtonVariant.Text"
+                             Color="FlareColor.Default"
+                             Size="ButtonSize.Sm"
+                             AriaLabel="Громкость"
+                             OnClick="ToggleMute" />
+            <div class="deka-player-volume-slider">
+                <FlareSlider Value="AudioPlayerService.CurrentVolume"
+                             ValueChanged="ChangeVolume"
+                             Min="0" Max="100" Step="1"
+                             Color="FlareColor.Secondary"
+                             Size="TrackSize.Xs"
+                             ShowValue="false"
+                             
+                             AriaLabel="Громкость" />
+            </div>
+        </div>
+    </div>
+
+    @* Невидимая поверхность перемотки: клик по пустому фону бара открывает полный плеер,
+       а не перемотку (в отличие от прошлого варианта). Перемотка теперь только по слайдеру. *@
+</div>
 
 <audio id="@_audioId" style="display: none;"></audio>
 
@@ -440,4 +429,7 @@
     {
         DisposeAsync().AsTask().Wait();
     }
+
+    private void Noop() => Snackbar.Show("Скоро будет доступно", SnackbarSeverity.Info);
+    private Task Swallow(MouseEventArgs _) => Task.CompletedTask;
 }

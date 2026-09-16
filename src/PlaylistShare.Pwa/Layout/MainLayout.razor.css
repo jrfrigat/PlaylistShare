@@ -103,7 +103,7 @@
     /* Верхний отступ на мобильном даёт сам FlareLayout (flare-layout-content ~1.25rem),
        поэтому здесь 0 - иначе паддинги складывались и над контентом висела лишняя пустота.
        Боковой отступ на мобильном узкий (0.5rem) - чтобы списки/треки шли почти во всю ширину. */
-    padding: 0 0.5rem 9rem;
+    padding: 0 0.5rem 4rem;
     max-width: 70rem;
     margin: 0 auto;
     width: 100%;
@@ -114,50 +114,19 @@
    диапазоне 769-959 плеер уезжал вправо на 248px при full-width контенте и off-canvas меню. */
 @media (min-width: 960px) {
     .deka-content {
-        padding: 2rem 2.5rem 6rem;
+        padding: 2rem 2.5rem 2rem;
     }
 }
 
-/* Плеер накладывается поверх контента (position: fixed), а не занимает место в потоке.
-   .flare-layout имеет height: 100dvh; overflow: hidden - поэтому sticky-плеер добавлял
-   свою высоту к .deka-shell, вызывая внешний скролл body и уезжающее вместе с ним меню.
-   Место под плеер зарезервировано через padding-bottom у .deka-content. */
+/* Плеер — обычный flex-ребёнок .deka-shell внизу колонки: идёт после .flare-layout
+   и (на мобильном) перед .deka-bottom-nav. Появление плеера сжимает .flare-layout,
+   а не накрывает контент снизу — поэтому "быстрая вставка ссылки" и последние строки
+   списка не уезжают под бар. Drawer подрезается сам: он внутри .flare-layout,
+   который теперь короче на высоту плеера. */
 .deka-mini-player {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(3.75rem + env(safe-area-inset-bottom));
-    z-index: 25;
-    padding: 0 0.625rem;
-    max-width: 70rem;
-    margin: 0 auto;
+    flex: none;
+    padding: 0 0;
     width: 100%;
-    pointer-events: none;
-}
-
-/* Плеер-бар рендерится компонентом AudioPlayer и несёт ЕГО scope-атрибут, поэтому
-   без ::deep правило компилируется в `> *[scope-MainLayout]` и не совпадает - бар
-   наследует pointer-events: none от контейнера и кнопки становятся некликабельными. */
-.deka-mini-player ::deep > * {
-    pointer-events: auto;
-}
-
-/* 960px = брейкпоинт Md, на котором FlareLayout переключается на десктоп (постоянный drawer 15.5rem)
-   и скрываются мобильные header/bottom-nav. Держим CSS плеера/контента в тех же границах, иначе в
-   диапазоне 769-959 плеер уезжал вправо на 248px при full-width контенте и off-canvas меню. */
-@media (min-width: 960px) {
-    .deka-mini-player {
-        /* Плеер прижат к колонке контента (левый край на ширину drawer 15.5rem, правый - к краю окна)
-           и капается на те же 70rem по центру, что и .deka-content, - чтобы на широких экранах бар
-           был выровнен со списком треков, а не тянулся шире него. */
-        left: 15.5rem;
-        right: 0;
-        width: auto;
-        max-width: 70rem;
-        margin-inline: auto;
-        bottom: 0.625rem;
-        padding: 0 2.5rem;
-    }
 }
 
 .deka-bottom-nav {

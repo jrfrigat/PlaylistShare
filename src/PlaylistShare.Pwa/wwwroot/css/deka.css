@@ -943,7 +943,7 @@
     border: none;
     border-radius: 0;
     box-shadow: none;
-    padding: var(--flare-spacing-4);
+    padding: var(--flare-spacing-8);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -1100,4 +1100,254 @@
 .deka-hero-card .deka-tile-action {
     position: static;
     opacity: 1;
+}
+
+/* ---------- Трек плейлиста -------------- */
+
+/* Данные для колонок «Альбом» и «Кто добавил» пока не приходят из API —
+   временно скрываем, чтобы не провисала пустая ширина. Убрать, когда бэк
+   начнёт отдавать эти поля. */
+.deka-ptr__album,
+.deka-ptr-header__album,
+.deka-ptr__contributor,
+.deka-ptr-header__contributor {
+    display: none;
+}
+
+/* Общая сетка для header и row — задаётся через переменную, чтобы оба
+   элемента гарантированно использовали один шаблон на каждом брейкпоинте. */
+.deka-ptr,
+.deka-ptr-header {
+    --deka-track-grid: 36px minmax(0, 1fr) 48px 60px 40px;
+    display: grid;
+    grid-template-columns: var(--deka-track-grid);
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.deka-ptr {
+    padding: .5rem 1rem;
+    border-radius: var(--flare-shape-medium);
+    background: color-mix(in srgb, var(--flare-color-surface-container-low) 40%, transparent);
+    transition: background-color .15s ease;
+}
+
+    .deka-ptr:hover {
+        background: color-mix(in srgb, var(--flare-color-surface-container-high) 60%, transparent);
+    }
+
+.deka-ptr--current {
+    background: color-mix(in srgb, var(--flare-color-surface-container-high) 90%, transparent);
+    box-shadow: var(--flare-elevation-1);
+}
+
+/* --- index / equalizer --- */
+.deka-ptr__index {
+    display: flex;
+    justify-content: center;
+    color: var(--flare-color-outline);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.deka-ptr__eq {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 14px;
+    width: 14px;
+}
+
+    .deka-ptr__eq span {
+        width: 3px;
+        border-radius: 9999px;
+        background: var(--flare-color-primary);
+        animation: deka-eq-bounce .9s ease-in-out infinite;
+    }
+
+        .deka-ptr__eq span:nth-child(1) {
+            height: 100%;
+            animation-delay: 0s;
+        }
+
+        .deka-ptr__eq span:nth-child(2) {
+            height: 65%;
+            animation-delay: .15s;
+        }
+
+        .deka-ptr__eq span:nth-child(3) {
+            height: 80%;
+            animation-delay: .3s;
+        }
+
+@keyframes deka-eq-bounce {
+    0%, 100% {
+        transform: scaleY(.5);
+    }
+
+    50% {
+        transform: scaleY(1);
+    }
+}
+
+/* --- info (обложка + текст) --- */
+.deka-ptr__info {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    padding-right: .75rem;
+}
+
+.deka-ptr__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.deka-ptr__title {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: .875rem;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--flare-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+
+    .deka-ptr__title:hover {
+        color: var(--flare-color-primary);
+    }
+
+.deka-ptr--current .deka-ptr__title {
+    color: var(--flare-color-primary);
+    font-weight: 700;
+}
+
+.deka-ptr__artist {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: .75rem;
+    line-height: 1.3;
+    color: var(--flare-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- album (скрыт, пока нет данных) --- */
+.deka-ptr__album {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: .75rem;
+    color: var(--flare-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: .5rem;
+}
+
+/* --- contributor (скрыт, пока нет данных) --- */
+.deka-ptr__contributor {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+    padding-right: .5rem;
+}
+
+.deka-ptr__contributor-name {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    color: var(--flare-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- like --- */
+.deka-ptr__like {
+    display: flex;
+    justify-content: center;
+}
+
+/* --- duration --- */
+.deka-ptr__duration {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--flare-color-on-surface-variant);
+    text-align: right;
+    padding-right: .5rem;
+}
+
+.deka-ptr--current .deka-ptr__duration {
+    color: var(--flare-color-primary);
+    font-weight: 500;
+}
+
+/* --- more --- */
+.deka-ptr__more {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+    overflow: hidden;
+}
+
+    .deka-ptr__more .flare-btn {
+        flex: none;
+    }
+
+/* ---------- Header строки треклиста ---------- */
+.deka-ptr-header {
+    padding: .625rem 1rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--flare-color-outline);
+}
+
+.deka-ptr-header__num {
+    text-align: center;
+}
+
+.deka-ptr-header__duration {
+    text-align: right;
+    padding-right: .5rem;
+}
+
+.deka-ptr-header__like {
+    text-align: center;
+}
+
+/* ---------- Мобильная адаптация ---------- */
+
+@media (max-width: 1024px) {
+    .deka-ptr,
+    .deka-ptr-header {
+        --deka-track-grid: 36px minmax(0, 1fr) 48px 60px 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .deka-ptr,
+    .deka-ptr-header {
+        --deka-track-grid: 36px minmax(0, 1fr) 48px 60px 40px;
+    }
+}
+
+@media (max-width: 500px) {
+    .deka-ptr,
+    .deka-ptr-header {
+        --deka-track-grid: 36px minmax(0, 1fr) 60px 40px;
+    }
+
+    .deka-ptr__like,
+    .deka-ptr-header__like {
+        display: none;
+    }
 }

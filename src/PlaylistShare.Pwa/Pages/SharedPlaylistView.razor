@@ -30,7 +30,7 @@
 @inject AppBarState AppBar
 @implements IDisposable
 
-<FlareContainer MaxWidth="ContainerMaxWidth.Md" Class="pb-2 px-0">
+<FlareContainer MaxWidth="ContainerMaxWidth.Full" Class="pb-2 px-0">
     @* На мобильном "назад" живёт в контекстном app bar (см. AppBar.Set ниже); в контенте кнопку
        показываем только на десктопе (>=960 = Below Md), где мобильного хедера нет. *@
     <FlareHidden Below="Breakpoint.Md">
@@ -43,7 +43,7 @@
     @if (_loading)
     {
         <div class="deka-playlist-hero">
-            <FlareSkeleton Width="172px" Height="172px" Variant="SkeletonVariant.Rect" Class="deka-playlist-cover" />
+            <FlareSkeleton Width="224px" Height="224px" Variant="SkeletonVariant.Rect" Class="deka-playlist-cover" />
             <FlareStack Gap="FlareSpacing.Small" Class="flex-grow-1">
                 <FlareSkeleton Width="200px" Height="32px" Variant="SkeletonVariant.Text" />
                 <FlareSkeleton Width="140px" Height="18px" Variant="SkeletonVariant.Text" />
@@ -57,82 +57,131 @@
     }
     else
     {
-        <div class="deka-playlist-hero">
-            @if (!string.IsNullOrEmpty(_playlist?.CoverUrl))
-            {
-                <FlareImage Src="@_playlist.CoverUrl.FormatCoverUrl(344, 344)" Height="172px" Width="172px" Class="deka-playlist-cover" />
-            }
-            else
-            {
-                <div class="deka-playlist-cover deka-playlist-cover--fallback deka-playlist-cover--lg">
-                    <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" />
-                </div>
-            }
-
-            <FlareStack Gap="FlareSpacing.None" Class="min-width-0 flex-grow-1 deka-playlist-info">
-                <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Primary" Class="deka-playlist-eyebrow">
-                    ПЛЕЙЛИСТ
-                </FlareText>
-                <FlareText Typo="TypographyScale.HeadlineMedium" Class="deka-playlist-title">
-                    @_playlist?.Title
-                </FlareText>
-
-                @if (_tracksLoading)
-                {
-                    <FlareSkeleton Width="200px" Height="20px" Variant="SkeletonVariant.Text" />
-                }
-                else
-                {
-                    <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
-                        @($"{_playlistTrackCount} треков - {_playlistDurationMs.FormatDuration(LongExtensions.FormatDurationType.hhmmss)}")
-                    </FlareText>
-                }
-            </FlareStack>
-
         @* Действия лежат внутри hero: на десктопе grid ставит их в правую колонку под описанием,
            а на мобильном - отдельной строкой во всю ширину (там обложка ужимается и встаёт рядом
            с названием). Литеральный div (а не FlareStack) - чтобы scoped-CSS применялся. *@
         @* Кнопку "Слушать" убрали - треки запускаются кликом по строке. Остаются "Добавить"
            и группа icon-действий (поделиться / Яндекс / избранное / настройки). *@
-        <div class="deka-playlist-actions">
-            @if (_canAdd)
-            {
-                <FlareButton Variant="ButtonVariant.Tonal" OnClick="GoToAddTracks">
-                    <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.Add" /></LeadingIcon>
-                    <ChildContent>Добавить</ChildContent>
-                </FlareButton>
-            }
+            <section class="deka-playlist-hero">
+                @* Обложка с neon glow по контуру *@
+                <div class="deka-playlist-cover-wrap">
+                    @if (!string.IsNullOrEmpty(_playlist?.CoverUrl))
+                    {
+                        <FlareImage Src="@_playlist.CoverUrl.FormatCoverUrl(344, 344)"
+                                Height="224px" Width="224px"
+                                    Class="deka-playlist-cover" />
+                    }
+                    else
+                    {
+                        <div class="deka-playlist-cover deka-playlist-cover--fallback deka-playlist-cover--lg">
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.LibraryMusic" />
+                        </div>
+                    }
+                </div>
 
-            @* Icon-кнопки держим одной группой, чтобы они не разрывались между рядами
-               (share то в 1-м ряду, то во 2-м в зависимости от ширины) и шли ровным блоком. *@
-            <div class="deka-playlist-icon-actions">
-                <FlareIconButton Icon="@MaterialDesign3Icons.Regular.IosShare" Variant="ButtonVariant.Tonal" OnClick="SharePlaylist" AriaLabel="Поделиться" />
+                <div class="deka-playlist-info">
+                    @* Badge: совместный плейлист *@
+                    @if (_playlist?.AddPermission == EditPermission.Everyone
+                         || _playlist?.AddPermission == EditPermission.AuthorizedOnly)
+                    {
+                        <span class="deka-playlist-badge">
+                            <span class="deka-pill__dot deka-pill__dot--live"></span>
+                            Совместный плейлист
+                        </span>
+                    }
 
-                <FlareIconButton Href="@($"https://music.yandex.ru/playlists/{_playlist?.YandexPlaylistUuid}")"
-                                 Target="_blank"
-                                 Variant="ButtonVariant.Tonal"
-                                 AriaLabel="Открыть в Яндекс.Музыке">
-                    <FlareIconView Value="@CustomIcons.YandexMusic" />
-                </FlareIconButton>
+                    @* Заголовок *@
+                    <FlareText Element="h1"
+                               Typo="TypographyScale.DisplayLarge"
+                               Class="deka-playlist-title">
+                        @_playlist?.Title
+                    </FlareText>
 
-                @* Избранное перенесено из убранного баннера владельца - для не-создателей. *@
-                @if (!_isCreator && _playlist != null)
-                {
-                    <FlareIconButton Icon="@(_isFavorite ? MaterialDesign3Icons.Filled.Star : MaterialDesign3Icons.Regular.Star)"
-                                     Variant="ButtonVariant.Tonal"
-                                     Color="FlareColor.Warning"
-                                     OnClick="ToggleFavorite"
-                                     Disabled="_favoriteLoading"
-                                     AriaLabel="Избранное" />
-                }
+                    @* Description — заглушка, будет из API *@
+                    <p class="deka-playlist-description">
+                        Собираем лучшие треки для тусовок и поездок с друзьями.
+                        Добавляйте свои находки и формируйте общий вайб.
+                    </p>
 
-                @if (_isCreator && _isAuthenticated)
-                {
-                    <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Settings" Variant="ButtonVariant.Tonal" OnClick="OpenPermissionsDialog" AriaLabel="Настройки доступа" />
-                }
+                    @* Stats: creator • N треков • длительность *@
+                    <div class="deka-playlist-stats">
+                        <div class="deka-playlist-stats__creator">
+                            <FlareAvatar Size="AvatarSize.Xs" Text="@_playlist?.Creator?.UserName" />
+                            <span>@_playlist?.Creator?.UserName</span>
+                        </div>
+                        <span class="deka-playlist-stats__sep">•</span>
+                        <span class="deka-playlist-stats__num">@_playlistTrackCount треков</span>
+                        <span class="deka-playlist-stats__sep">•</span>
+                        <span class="deka-playlist-stats__num">
+                            @_playlistDurationMs.FormatDuration(LongExtensions.FormatDurationType.hhmmss)
+                        </span>
+                    </div>
+
+                    @* Collaborators — заглушка с avatar group *@
+                    <div class="deka-playlist-collaborators">
+                        <div class="deka-collab-avatars">
+                            <div class="deka-collab-avatar"><FlareAvatar Size="AvatarSize.Sm" Text="A" /></div>
+                            <div class="deka-collab-avatar"><FlareAvatar Size="AvatarSize.Sm" Text="M" /></div>
+                            <div class="deka-collab-avatar"><FlareAvatar Size="AvatarSize.Sm" Text="N" /></div>
+                            <div class="deka-collab-avatar"><FlareAvatar Size="AvatarSize.Sm" Text="V" /></div>
+                            <div class="deka-collab-avatar deka-collab-avatar--more">+4</div>
+                        </div>
+                        <span class="deka-playlist-collaborators__label">8 участников курируют трек-лист</span>
+                        <button class="deka-playlist-invite-btn" type="button">
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.PersonAdd" SizePx="14" />
+                            <span>+ Пригласить друга</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            @* Action toolbar: большая кнопка Слушать + действия + sync pill *@
+            <div class="deka-playlist-toolbar">
+                <div class="deka-playlist-toolbar__actions">
+                    <FlareButton Variant="ButtonVariant.Filled"
+                                 Color="@FlareColor.Primary"
+                                 Size="ButtonSize.Lg"
+                                 OnClick="PlayAll"
+                                 Class="deka-playlist-play-btn">
+                        <LeadingIcon>
+                            <FlareIconView Value="@MaterialDesign3Icons.Filled.PlayArrow" />
+                        </LeadingIcon>
+                        <ChildContent>Слушать</ChildContent>
+                    </FlareButton>
+
+                    @if (_canAdd)
+                    {
+                        <FlareButton Variant="ButtonVariant.Elevated" OnClick="GoToAddTracks">
+                            <LeadingIcon>
+                                <FlareIconView Value="@MaterialDesign3Icons.Regular.AddCircle" />
+                            </LeadingIcon>
+                            <ChildContent>Добавить трек</ChildContent>
+                        </FlareButton>
+                    }
+
+                <FlareButton Variant="ButtonVariant.Elevated" OnClick="SharePlaylist">
+                        <LeadingIcon>
+                            <FlareIconView Value="@MaterialDesign3Icons.Regular.QrCode2" />
+                        </LeadingIcon>
+                        <ChildContent>Поделиться</ChildContent>
+                    </FlareButton>
+
+                    @if (_isCreator && _isAuthenticated)
+                    {
+                        <FlareIconButton Icon="@MaterialDesign3Icons.Regular.Tune"
+                                     Variant="ButtonVariant.Elevated"
+                                         OnClick="OpenPermissionsDialog"
+                                         AriaLabel="Настройки доступа" />
+                    }
+                </div>
+
+                <div class="deka-playlist-sync-pill">
+                    <FlareIconView Value="@CustomIcons.YandexMusic" SizePx="14" />
+                    <span>Синхронизация с Яндекс Музыкой</span>
+                    <span class="deka-playlist-sync-pill__sep"></span>
+                    <span class="deka-playlist-sync-pill__status">Активна</span>
+                </div>
             </div>
-        </div>
-        </div> @* /deka-playlist-hero *@
 
         @if (_tracksLoading)
         {
@@ -146,10 +195,10 @@
         {
             @if (_tracks.Count > 8)
             {
-                <FlareField TValue="string" @bind-Value="_trackFilter" @bind-Value:after="ApplyTrackFilter"
-                            Variant="InputVariant.Outlined" Placeholder="Поиск трека..." Class="deka-playlist-filter">
+                <FlareTextField TValue="string" @bind-Value="_trackFilter" @bind-Value:after="ApplyTrackFilter"
+                            Variant="InputVariant.Outlined" Placeholder="Поиск трека..." Class="deka-search">
                     <AdornmentStart><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" Color="FlareColor.Secondary" /></AdornmentStart>
-                </FlareField>
+                </FlareTextField>
             }
             @* Виртуализация списка: в DOM живут только видимые строки плюс буфер. Штатный Virtualize
                скроллится вместе со страницей - ему не нужен свой контейнер с фиксированной высотой,
@@ -164,13 +213,22 @@
                Строку-обёртку рисуем литеральным div, а не FlareStack: scoped-CSS страницы вешает
                свой атрибут только на СВОЮ разметку, на корень дочернего компонента он не попадает,
                и правило для класса на FlareStack молча не применилось бы. *@
+            <div class="deka-ptr-header">
+                <span class="deka-ptr-header__num">#</span>
+                <span class="deka-ptr-header__title">Трек и исполнитель</span>
+                <span class="deka-ptr-header__album">Альбом</span>
+                <span class="deka-ptr-header__contributor">Кто добавил</span>
+                <span class="deka-ptr-header__like">Лайк</span>
+                <span class="deka-ptr-header__duration">Время</span>
+                <span></span>
+            </div>
             <div class="deka-track-list">
                 <Virtualize Items="@_filteredTracks" Context="track" ItemSize="73" OverscanCount="6">
                     <div class="deka-track-row-wrap">
                         <div class="deka-track-row-item">
-                            <TrackItem Track="@track" PlaylistShareToken="@Token" CanPlay="@_canPlay"
-                                       IsCurrentTrack="@(AudioPlayerService.CurrentTrackId == track.TrackId)"
-                                       AddedByName="@(_trackAdditions.TryGetValue(track.TrackId, out var n) ? n : null)" />
+                            <PlaylistTrackRow Index="@(_filteredTracks.IndexOf(track) + 1)" Track="@track" PlaylistShareToken="@Token" CanPlay="@_canPlay" CanRemove="@_removableTrackIds.Contains(track.TrackId)"
+                                              IsCurrent="@(AudioPlayerService.CurrentTrackId == track.TrackId)"
+                                              AddedByName="@(_trackAdditions.TryGetValue(track.TrackId, out var n) ? n : null)" />
                         </div>
                         @if (_removableTrackIds.Contains(track.TrackId))
                         {
@@ -189,6 +247,23 @@
             }
         }
     }
+
+    <div class="deka-playlist-quick-add">
+        <div class="deka-playlist-quick-add__icon">
+            <FlareIconView Value="@MaterialDesign3Icons.Regular.QueueMusic" SizePx="24" />
+        </div>
+        <div class="deka-playlist-quick-add__text">
+            <FlareText Typo="TypographyScale.LabelMedium">Не нашли свой любимый трек?</FlareText>
+            <FlareText Typo="TypographyScale.BodySmall" Color="@FlareColor.OnSurfaceVariant2">
+                Вставьте ссылку из Яндекс Музыки, чтобы сразу добавить его в плейлист
+            </FlareText>
+        </div>
+        <FlareButton Variant="ButtonVariant.Tonal"
+                     Color="@FlareColor.Primary"
+                     OnClick="OpenQuickAddDialog">
+            Быстрая вставка ссылки
+        </FlareButton>
+    </div>
 </FlareContainer>
 
 @code {
@@ -637,5 +712,39 @@
         AppBar.Reset();
 
         _shareModule?.DisposeAsync();
+    }
+
+    /// <summary>Запустить воспроизведение плейлиста с первого трека.</summary>
+    private async Task PlayAll()
+    {
+        var first = _tracks.FirstOrDefault();
+        if (first is null) return;
+        await AudioPlayerService.LoadAndPlayAsync(
+            trackId: first.TrackId,
+            playlistShareToken: Token,
+            track: first);
+    }
+
+    private Task OpenQuickAddDialog()
+    {
+        // TODO: диалог с полем ввода ссылки, POST на /api/playlists/quick-add
+        Snackbar.Show("Скоро будет доступно", SnackbarSeverity.Info);
+        return Task.CompletedTask;
+    }
+
+    private async Task OnTrackTitleClick(YandexTrack track)
+    {
+        if (!_canPlay) return;
+        await AudioPlayerService.LoadAndPlayAsync(
+            trackId: track.TrackId,
+            playlistShareToken: Token,
+            track: track);
+    }
+
+    private Task OnLikeToggle(YandexTrack track)
+    {
+        // TODO: интеграция с API реакций
+        Snackbar.Show("Лайки скоро появятся", SnackbarSeverity.Info);
+        return Task.CompletedTask;
     }
 }

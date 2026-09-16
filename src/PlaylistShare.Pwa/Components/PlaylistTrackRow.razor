@@ -1,0 +1,75 @@
+﻿@using PlaylistShare.Shared.Yandex
+@using PlaylistShare.Pwa.Extensions
+@inject IAudioPlayerService AudioPlayerService
+
+<div class="deka-ptr @(IsCurrent ? "deka-ptr--current" : "")">
+    @* Колонка 1: номер / эквалайзер на активном *@
+    <div class="deka-ptr__index">
+        @if (IsCurrent && IsPlaying)
+        {
+            <div class="deka-ptr__eq">
+                <span></span><span></span><span></span>
+            </div>
+        }
+        else
+        {
+            <span class="deka-ptr__num">@Index</span>
+        }
+    </div>
+
+    @* Колонка 2: обложка + название + артист *@
+    <div class="deka-ptr__info">
+        <TrackCoverWithPlay Track="@Track" TrackId="@Track.TrackId"
+                            PlaylistShareToken="@PlaylistShareToken"
+                            CanPlay="@CanPlay" Width="40" Height="40" />
+        <div class="deka-ptr__text">
+            <span class="deka-ptr__title" @onclick="() => OnTitleClick.InvokeAsync(Track)">@Track.Title</span>
+            <span class="deka-ptr__artist">@string.Join(", ", Track.Artists.Select(a => a.Name))</span>
+        </div>
+    </div>
+
+    @* Колонка 3: альбом — если появится поле в модели *@
+    <span class="deka-ptr__album">@Album</span>
+
+    @* Колонка 4: кто добавил *@
+    @if (!string.IsNullOrEmpty(AddedByName))
+    {
+        <div class="deka-ptr__contributor">
+            <FlareAvatar Size="AvatarSize.Xs" Text="@AddedByName" />
+            <span class="deka-ptr__contributor-name">@AddedByName</span>
+        </div>
+    }
+    else
+    {
+        <div class="deka-ptr__contributor"></div>
+    }
+
+    @* Колонка 5: лайк *@
+    <div class="deka-ptr__like">
+        <FlareIconButton Icon="@(IsLiked ? MaterialDesign3Icons.Filled.Favorite : MaterialDesign3Icons.Regular.Favorite)"
+                         Color="@(IsLiked ? FlareColor.Tertiary : FlareColor.OnSurfaceVariant)"
+                         Size="ButtonSize.Sm"
+                         OnClick="() => OnLikeToggle.InvokeAsync(Track)"
+                         AriaLabel="Лайк" />
+    </div>
+
+    @* Колонка 6: длительность *@
+    <span class="deka-ptr__duration">@Track.DurationMs.FormatDuration()</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public YandexTrack Track { get; set; } = null!;
+    [Parameter] public int Index { get; set; }
+    [Parameter] public string PlaylistShareToken { get; set; } = "";
+    [Parameter] public bool CanPlay { get; set; }
+    [Parameter] public bool CanRemove { get; set; }
+    [Parameter] public bool IsCurrent { get; set; }
+    [Parameter] public bool IsPlaying { get; set; }
+    [Parameter] public bool IsLiked { get; set; }
+    [Parameter] public string? AddedByName { get; set; }
+    [Parameter] public string? Album { get; set; }
+
+    [Parameter] public EventCallback<YandexTrack> OnTitleClick { get; set; }
+    [Parameter] public EventCallback<YandexTrack> OnLikeToggle { get; set; }
+    [Parameter] public EventCallback<YandexTrack> OnRemove { get; set; }
+}

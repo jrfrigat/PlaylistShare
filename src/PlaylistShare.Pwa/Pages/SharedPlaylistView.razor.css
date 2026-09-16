@@ -2,38 +2,62 @@
     margin-bottom: 1rem;
 }
 
-/* Десктоп: обложка слева, справа колонка "описание, под ним действия". Обложка занимает обе
-   строки, поэтому её область указана в обеих. На мобильном раскладка меняется ниже. */
+/* ===========================================================================
+   Hero — обложка + инфо-блок
+   =========================================================================== */
+
+/* Desktop: обложка слева (фиксированная колонка), инфо справа растягивается.
+   Grid-areas убраны: разметка стала плоской (hero — обложка + info), поэтому проще
+   flex-row чем grid. На мобильном (ниже) hero превращается в column. */
 .deka-playlist-hero {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-        "cover info"
-        "cover actions";
-    align-content: end;
-    gap: 0.75rem 1.375rem;
+    position: relative;
+    isolation: isolate; /* glow-псевдоэлемент не уйдёт за фон карточки */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 1.5rem;
+    padding: 1.5rem;
     margin-bottom: 1.5rem;
+    border-radius: var(--flare-shape-extra-large);
+    background: color-mix(in srgb, var(--flare-color-surface-container-low) 70%, transparent);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: var(--flare-elevation-2);
+    overflow: hidden;
 }
 
-/* FlareImage/FlareStack рендерят корень своим компонентом (чужой scope), поэтому ::deep
-   обязателен: без него scoped-CSS компилирует правило в `.deka-playlist-hero .deka-playlist-cover[scope]`
-   (атрибут вешается на ПОСЛЕДНИЙ селектор), у чужого корня его нет - и область молча не
-   применяется. С ::deep атрибут уходит на предка: `.deka-playlist-hero[scope] .deka-playlist-cover`,
-   что совпадает и с корнем FlareImage, и с литеральным div-фолбэком обложки. */
-.deka-playlist-hero ::deep .deka-playlist-cover {
-    grid-area: cover;
-    align-self: end;
-}
+/* ---------- Обложка с neon-glow по контуру ---------- */
 
-.deka-playlist-hero ::deep .deka-playlist-info {
-    grid-area: info;
-    align-self: end;
-}
-
-.deka-playlist-cover {
-    border-radius: var(--flare-shape-large);
+.deka-playlist-cover-wrap {
+    position: relative;
+    display: inline-block;
+    align-self: flex-end;
     flex: none;
-    box-shadow: var(--flare-elevation-1);
+}
+
+    /* Мягкое свечение за обложкой — растянутая градиентная подложка с blur. */
+    .deka-playlist-cover-wrap::before {
+        content: "";
+        position: absolute;
+        inset: -10px;
+        border-radius: var(--flare-shape-extra-large);
+        background: linear-gradient(135deg, var(--flare-color-primary-container), var(--flare-color-primary), var(--flare-color-secondary));
+        opacity: 0.35;
+        filter: blur(28px);
+        z-index: -1;
+        transition: opacity .5s ease;
+    }
+
+    .deka-playlist-cover-wrap:hover::before {
+        opacity: 0.6;
+    }
+
+/* FlareImage рендерит <img> дочерним компонентом со своим scope — правило без ::deep
+   компилируется в `.deka-playlist-hero .deka-playlist-cover[scope]` и не совпадает. */
+.deka-playlist-hero ::deep .deka-playlist-cover {
+    display: block;
+    border-radius: var(--flare-shape-large);
+    box-shadow: var(--flare-elevation-2);
     object-fit: cover;
 }
 
@@ -49,82 +73,332 @@
 }
 
 .deka-playlist-cover--lg {
-    width: 172px;
-    height: 172px;
-    font-size: 3rem;
+    width: 224px;
+    height: 224px;
+    font-size: 3.5rem;
 }
 
-.deka-playlist-eyebrow {
-    letter-spacing: 0.08em;
-    font-weight: 700;
+/* ---------- Info-блок справа ---------- */
+
+.deka-playlist-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+/* Badge «Совместный плейлист» — в стиле бейджей из shared-utility. */
+.deka-playlist-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .25rem .75rem;
+    border-radius: var(--flare-shape-full);
+    background: color-mix(in srgb, var(--flare-color-secondary) 15%, transparent);
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    line-height: 1.27;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    align-self: flex-start;
+    margin-bottom: .75rem;
 }
 
 .deka-playlist-title {
-    letter-spacing: -0.01em;
-    margin-bottom: 0.375rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.05;
+    margin: 0 0 .75rem;
+    color: var(--flare-color-on-surface);
 }
 
-.deka-playlist-actions {
-    grid-area: actions;
-    /* Прижимаемся к верху своей строки, а описание - к низу своей: обложка выше их суммы и
-       растягивает обе строки, поэтому без выравнивания кнопки повисали бы в середине пустой
-       строки, оторванные от описания. Так они читаются одним блоком с ним. */
-    align-self: start;
+.deka-playlist-description {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: .875rem;
+    line-height: 1.5;
+    color: var(--flare-color-on-surface-variant);
+    margin: 0 0 1rem;
+    max-width: 42rem;
+}
+
+/* Stats: creator • N треков • duration */
+.deka-playlist-stats {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
-    /* Блок лежит внутри hero, отступ до списка треков даёт margin-bottom самого hero. */
-    margin: 0;
+    gap: .75rem;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: .75rem;
+    color: var(--flare-color-on-surface-variant);
+    margin-bottom: 1rem;
 }
 
-/* Группа icon-кнопок (share / yandex / settings) - держится единым блоком. */
-.deka-playlist-icon-actions {
+.deka-playlist-stats__creator {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--flare-color-on-surface);
+    font-weight: 600;
+}
+
+.deka-playlist-stats__sep {
+    color: var(--flare-color-outline);
+}
+
+.deka-playlist-stats__num {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    color: var(--flare-color-on-surface);
+}
+
+/* ---------- Collaborators strip ---------- */
+
+.deka-playlist-collaborators {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    padding: .625rem .875rem;
+    border-radius: var(--flare-shape-large);
+    background: color-mix(in srgb, var(--flare-color-surface-container) 50%, transparent);
+}
+
+.deka-collab-avatars {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex: none;
 }
 
-/* Центрирование глифа icon-кнопок вынесено в глобальный deka.css
-   (.flare-btn--icon-only .flare-btn__icon--leading) - работает для всех кнопок приложения. */
+.deka-collab-avatar {
+    margin-left: -.5rem;
+    flex: none;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 2px var(--flare-color-surface-container-low);
+}
 
-/* Компактный hero на телефонах (MD3-стиль): обложка ужимается и встаёт рядом с
-   названием одной строкой, а не занимает почти пол-экрана. Действия - ниже, во всю ширину. */
-@media (max-width: 600px) {
-    /* Мобильный: обложка ужимается и встаёт рядом с названием, а действия уходят отдельной
-       строкой во всю ширину (в узкой инфо-колонке они бы не поместились). */
-    .deka-playlist-hero {
-        grid-template-areas:
-            "cover info"
-            "actions actions";
-        align-items: center;
-        gap: 0.75rem 1rem;
-        margin-bottom: 0.75rem;
+    .deka-collab-avatar:first-child {
+        margin-left: 0;
     }
 
-    /* Обложка: у FlareImage <img> рендерится дочерним компонентом (свой scope), а fallback -
-       литеральный div этого компонента. ::deep .deka-playlist-cover покрывает оба (совпадает
-       по потомку независимо от scope), поэтому !important гарантированно перебьёт inline-размер. */
+.deka-collab-avatar--more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: var(--flare-color-surface-container-highest);
+    color: var(--flare-color-on-surface-variant);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    font-weight: 600;
+}
+
+.deka-playlist-collaborators__label {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    color: var(--flare-color-on-surface-variant);
+}
+
+.deka-playlist-invite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    margin-left: auto;
+    padding: .25rem .75rem;
+    border: 0;
+    border-radius: var(--flare-shape-full);
+    background: color-mix(in srgb, var(--flare-color-surface-container-highest) 70%, transparent);
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+    .deka-playlist-invite-btn:hover {
+        background: var(--flare-color-surface-container-highest);
+    }
+
+/* ===========================================================================
+   Action toolbar — большая «Слушать» + действия + sync pill
+   =========================================================================== */
+
+.deka-playlist-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.deka-playlist-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+}
+
+/* Большая кнопка «Слушать» получает мягкое свечение в тон акцента. */
+.deka-playlist-play-btn {
+    box-shadow: 0 4px 24px rgba(208, 188, 255, 0.35);
+}
+
+.deka-playlist-sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .375rem .875rem;
+    border-radius: var(--flare-shape-full);
+    background: var(--flare-color-surface-container-low);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: .6875rem;
+    color: var(--flare-color-secondary);
+}
+
+.deka-playlist-sync-pill__sep {
+    width: 1px;
+    height: .75rem;
+    background: var(--flare-color-outline);
+}
+
+.deka-playlist-sync-pill__status {
+    font-variant-numeric: tabular-nums;
+    color: var(--flare-color-secondary);
+}
+
+/* ===========================================================================
+   Quick add — блок внизу списка
+   =========================================================================== */
+
+.deka-playlist-quick-add {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    border-radius: var(--flare-shape-large);
+    background: color-mix(in srgb, var(--flare-color-surface-container-low) 60%, transparent);
+}
+
+.deka-playlist-quick-add__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--flare-shape-full);
+    background: var(--flare-color-surface-container-high);
+    color: var(--flare-color-secondary);
+    flex-shrink: 0;
+}
+
+.deka-playlist-quick-add__text {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ===========================================================================
+   Мобильная адаптация
+   =========================================================================== */
+
+@media (max-width: 768px) {
+    /* Hero складывается в колонку: обложка сверху по центру, инфо снизу. */
+    .deka-playlist-hero {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .deka-playlist-cover-wrap {
+        align-self: center;
+    }
+
+        .deka-playlist-cover-wrap::before {
+            content: "";
+            position: absolute;
+            inset: -14px;
+            border-radius: var(--flare-shape-extra-large);
+            background: linear-gradient(135deg, var(--flare-color-primary-container), var(--flare-color-primary), var(--flare-color-secondary));
+            opacity: 0.55;
+            filter: blur(36px);
+            z-index: -1;
+            transition: opacity .5s ease;
+        }
+
+        .deka-playlist-cover-wrap:hover::before {
+            opacity: 0.85;
+        }
+
+    /* Обложка уменьшается, чтобы не занимать пол-экрана. */
     .deka-playlist-hero ::deep .deka-playlist-cover {
-        width: 80px !important;
-        height: 80px !important;
+        width: 120px !important;
+        height: 120px !important;
     }
 
     .deka-playlist-cover--lg {
-        font-size: 1.75rem;
+        font-size: 2rem;
+    }
+
+    .deka-playlist-info {
+        align-items: center;
     }
 
     .deka-playlist-title {
-        font-size: 1.375rem;
-        line-height: 1.2;
+        font-size: 2rem;
+        line-height: 1.15;
+        text-align: center;
     }
 
-    .deka-playlist-actions {
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+    .deka-playlist-description {
+        text-align: center;
+    }
+
+    .deka-playlist-stats {
+        justify-content: center;
+    }
+
+    .deka-playlist-collaborators {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .deka-playlist-invite-btn {
+        margin-left: 0;
+    }
+
+    .deka-playlist-toolbar {
+        justify-content: center;
+    }
+
+    .deka-playlist-toolbar__actions {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .deka-playlist-quick-add {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .deka-playlist-quick-add__icon {
+        align-self: center;
     }
 }
+
+/* ===========================================================================
+   Track rows — сохранено как было
+   =========================================================================== */
 
 /* Плитка строки трека - literal-элемент этого компонента, поэтому scoped-класс
    без ::deep (с ::deep правило компилируется в [scope] .deka-track-row-item и не

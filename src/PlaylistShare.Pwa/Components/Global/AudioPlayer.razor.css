@@ -1,221 +1,215 @@
-/* Высота бара - это ровно ряд с контентом (46px, его задают кнопки) плюс padding: полоса
-   перемотки лежит поверх и в высоту не идёт. Нижний padding больше верхнего - под полосу.
-   Итого 60px против прежних 115px. */
-/* overflow НЕ hidden: FlarePopover рисует панель внутри своего анкора, то есть внутри бара, а
-   раскрывается она вверх - за его границу. Клипающий бар срезал панель громкости целиком: она
-   открывалась, но попасть по ней было нельзя (elementFromPoint отдавал элемент под ней). Скругление
-   заливки держит .deka-player-fill-clip, ему клипать безопасно. */
+/* ===========================================================================
+   Мини-плеер — полноширинный футер с тремя зонами
+   =========================================================================== */
+
 .deka-player-bar {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr) minmax(220px, 1fr);
+    align-items: center;
+    gap: 1.5rem;
+    height: 5.5rem; /* 88px = как в макете */
+    padding: 0 1.5rem;
+    background: color-mix(in srgb, var(--flare-color-surface-container-lowest) 95%, transparent);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+}
+
+/* ---------- Левая зона ---------- */
+.deka-player-left {
     display: flex;
-    flex-direction: column;
-    background: var(--deka-glass);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    border: 1px solid var(--flare-color-outline-variant);
-    border-radius: var(--flare-shape-extra-large);
-    box-shadow: 0 6px 20px -14px rgba(0, 0, 0, 0.5);
-    padding: 0.25rem 0.5rem 0.5rem;
-}
-
-/* Клипует ТОЛЬКО заливку - по скруглению бара, которое повторяет через inherit. Раньше эту роль
-   играл overflow:hidden самого бара, но он заодно срезал панель громкости. z-index: -1 держит
-   заливку позади flex-контента без правок дочерних компонентов. */
-.deka-player-fill-clip {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-/* Фоновая заливка прогресса: тонкая подсветка проигранной части за контентом бара. */
-.deka-player-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    background: var(--flare-color-primary);
-    opacity: 0.16;
-    pointer-events: none;
-    /* Без transition - иначе заливка "плывёт" и рассинхронизируется с мгновенной
-       тонкой полосой прогресса (они должны идти вровень). */
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
 }
 
 .deka-player-cover {
     position: relative;
-    width: 2.875rem;
-    height: 2.875rem;
+    width: 3.25rem;
+    height: 3.25rem;
     flex: none;
-    border-radius: var(--flare-shape-small);
+    border-radius: var(--flare-shape-medium);
     overflow: hidden;
-}
-
-.deka-player-cover-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.28);
-}
-
-/* Полоса перемотки лежит ПОВЕРХ бара у нижнего края и высоту не занимает: в потоке её зона
-   захвата (44px по умолчанию) раздувала бар до 115px, а он должен быть 50-60px.
-   Отступы по бокам обязательны: у бара overflow:hidden и скругление 26px, и полоса у самого
-   низа обрезалась бы этим скруглением по концам (при ~7px от низа радиус съедает ~8px с краю).
-   Зона захвата здесь уже стандартной - полоса лежит поверх контента, и высокая зона
-   перехватывала бы клики по кнопкам; в полном плеере она остаётся комфортной. */
-/* Клипует полосу перемотки по скруглению бара. Раньше это делал overflow:hidden самого бара, но он
-   срезал панель громкости, которая раскрывается выше бара. Без клипа прямые углы полосы торчали из
-   круглых углов. Сам клип событий не ловит - их забирает полоса внутри. */
-.deka-player-progress-clip {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-/* Ширина и левый край обязаны совпадать с .deka-player-fill (left:0, ширина в % от всего бара):
-   иначе на одном и том же проценте заливка кончается в одной точке, а слайдер стоит в другой -
-   расходились везде, кроме 0% и 100%. Поэтому от края до края и прижат к самому низу. */
-.deka-player-progress {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* Клип-обёртка событий не ловит - забираем их обратно, иначе перемотка перестанет работать. */
-    pointer-events: auto;
-    --deka-slider-hit-area: 12px;
-    /* Ползунок в мини-плеере не нужен - позицию показывает заливка. Гасим ширину, а не высоту:
-       высота (--_hnd-height) участвует в центрировании thumb и в зоне захвата. Ореол состояния
-       тоже убираем, иначе вокруг невидимого ползунка вздувался бы пузырь при наведении. */
-    --flare-slider-handle-width: 0px;
-    --flare-slider-handle-pressed-width: 0px;
-    --flare-slider-state-layer-size: 0px;
-    margin: 0;
-}
-
-/* Контент бара - над полосой: её прозрачная зона захвата шире дорожки и иначе перехватывала бы
-   клики по нижней кромке кнопок. */
-.deka-player-controls,
-::deep .deka-player-title-block {
-    position: relative;
-    z-index: 1;
-}
-
-/* Фон бара как поверхность перемотки (только ПК). Нативный range - чтобы координату в значение
-   пересчитывал браузер, без замеров ширины. Невидим, но кликабелен: opacity 0 не отключает
-   события, в отличие от visibility/display. */
-.deka-player-seek-surface {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    border: none;
-    outline: none;
-    opacity: 0;
+    background: var(--flare-color-surface-container-high);
     cursor: pointer;
 }
 
-/* Ползунок гасим: поверхность обязана быть невидимой целиком. */
-.deka-player-seek-surface::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 0;
-    height: 0;
+    .deka-player-cover :deep(img) {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.deka-player-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    cursor: pointer;
 }
 
-.deka-player-seek-surface::-moz-range-thumb {
-    width: 0;
-    height: 0;
-    border: none;
+.deka-player-title {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--flare-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .15s ease;
 }
 
-/* Мобильная версия: поверхности нет, клик по бару доходит до него и открывает полный плеер. */
-@media (max-width: 899px) {
-    .deka-player-seek-surface {
+.deka-player-meta:hover .deka-player-title {
+    color: var(--flare-color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.deka-player-artist {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 0.75rem;
+    color: var(--flare-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deka-player-like {
+    flex: none;
+}
+
+.deka-player-placeholder {
+    font-size: 0.875rem;
+    color: var(--flare-color-on-surface-variant);
+}
+
+/* ---------- Центральная зона ---------- */
+.deka-player-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.deka-player-transport {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.deka-player-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 36rem;
+    --deka-slider-hit-area: 1.25rem;
+}
+
+.deka-player-time {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--flare-color-on-surface-variant);
+    flex: none;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.deka-player-progress-bar {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ---------- Правая зона ---------- */
+.deka-player-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.deka-player-sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--flare-shape-full);
+    background: color-mix(in srgb, var(--flare-color-secondary) 12%, transparent);
+    color: var(--flare-color-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.deka-player-sync-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--flare-color-secondary);
+    box-shadow: 0 0 6px var(--flare-color-secondary);
+    animation: deka-pulse 2s ease-in-out infinite;
+}
+
+.deka-player-volume-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 7rem;
+}
+
+.deka-player-volume-slider {
+    width: 6rem;
+    flex: none;
+    --deka-slider-hit-area: 1rem;
+}
+
+/* ---------- Адаптив: планшет ---------- */
+@media (max-width: 960px) {
+    .deka-player-bar {
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        padding: 0 1rem;
+        height: 5rem;
+    }
+
+    .deka-player-center {
+        display: none;
+    }
+
+    .deka-player-right {
+        gap: 0.25rem;
+    }
+
+    .deka-player-sync-pill {
+        display: none;
+    }
+
+    .deka-player-volume-inline {
         display: none;
     }
 }
 
-/* Ряд с контентом лежит НАД поверхностью перемотки, иначе она перехватывала бы кнопки и название.
-   Но ряд растянут на весь бар - "пустой фон" это и есть он, и подняв его, мы закрыли бы поверхность
-   целиком (z-index не умеет "выше контейнера, но ниже его детей"). Поэтому ряд не ловит события
-   вовсе и пропускает клик насквозь, а интерактивные элементы ниже возвращают их себе точечно.
-   Тот же приём применён у .deka-mini-player в MainLayout.
-   ::deep: корень FlareStack - чужой компонент и scope этого файла не несёт. */
-::deep .deka-player-row {
-    position: relative;
-    z-index: 1;
-    pointer-events: none;
-}
+/* ---------- Адаптив: телефон ---------- */
+@media (max-width: 600px) {
+    .deka-player-bar {
+        height: 4.5rem;
+        padding: 0 0.75rem;
+        gap: 0.5rem;
+    }
 
-/* Кликабельное в ряду. FlareSpacer и текст времени сознательно НЕ включены: они занимают
-   пустое место, и клик по ним обязан доходить до поверхности перемотки. */
-.deka-player-controls,
-.deka-player-volume,
-::deep .deka-player-title-block {
-    pointer-events: auto;
-}
+    .deka-player-cover {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
 
-/* Группа кнопок (prev / play-pause / next). Отдельный контейнер нужен, чтобы гасить всплытие
-   клика до бара (иначе play/pause открывал бы полноэкранный плеер). */
-.deka-player-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    flex: none;
-}
+    .deka-player-like {
+        display: none;
+    }
 
-/* ВНИМАНИЕ: title-block - это FlareStack, а title/artist - FlareText (дочерние компоненты),
-   их корни НЕ несут scope этого компонента. Поэтому selector'ы обязаны идти через ::deep
-   (иначе `.deka-player-...[scope]` не совпадает - ровно почему мини-плеер раньше не обрезал
-   и курсор был auto). Якорь ::deep - scoped-предок .deka-player-bar. */
-/* flex: 0 1 auto, а не 1 1 auto: блок обязан облегать текст. Растянутый, он занимал полбара, и
-   клик по видимо пустому месту попадал в название и открывал плеер вместо перемотки. Расти теперь
-   некуда - свободное место забирает FlareSpacer, который событий не ловит. Сжиматься по-прежнему
-   может, поэтому многоточие на узких экранах работает. */
-::deep .deka-player-title-block {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-::deep .deka-player-title,
-::deep .deka-player-artist {
-    /* align-self: stretch - блок колонка с Align=Start иначе сжимает spans до контента,
-       и ellipsis не срабатывает; растягиваем на ширину блока, чтобы обрезалось по краю. */
-    align-self: stretch;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-::deep .deka-player-title {
-    font-weight: 700;
-    transition: color 0.15s ease;
-}
-
-::deep .deka-player-artist {
-    color: var(--flare-color-on-surface-variant);
-}
-
-/* Подсказка кликабельности: при наведении подсвечиваем название - так понятно,
-   что по нему можно открыть полноэкранный плеер. */
-::deep .deka-player-title-block:hover .deka-player-title,
-::deep .deka-player-title-block:focus-visible .deka-player-title {
-    color: var(--flare-color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    /* На телефоне весь бар — тап-зона на полный плеер (работает через @onclick="Expand"
+       на .deka-player-left и .deka-player-cover; если нужно на всём баре — верни внешний
+       @onclick="Expand" на .deka-player-bar). */
 }
