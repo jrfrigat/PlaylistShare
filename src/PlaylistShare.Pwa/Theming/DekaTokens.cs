@@ -52,6 +52,9 @@ internal static class DekaTokens
         LabelMedium = T("0.8125rem", "600", "1.38", "0.01em", InterStack),
         // label-sm (11px / 14px / 0.04em / 500)
         LabelSmall = T("0.6875rem", "500", "1.27", "0.04em", InterStack),
+
+        // Flare 0.42: обязательное моноширинное семейство (код и выровненные по символам прогоны)
+        MonoFont = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     };
 
     // Мягкие скругления макета (10px для мелких элементов, 18-22px для карточек, 26px для шторки/плеера)
@@ -84,27 +87,70 @@ internal static class DekaTokens
         Level5 = "0 8px 32px rgba(0,0,0,0.5)",
     };
 
-    // Плавная музыкальная моторика с пружинами
+    // Одна фаза появления/ухода поверхности (Flare 0.42). Форма и затухание идут синхронно.
+    private static MotionPhaseTokens Phase(string duration, string easing, string offset) => new()
+    {
+        Delay = "0ms",
+        Duration = duration,
+        Easing = easing,
+        Offset = offset,
+        Scale = "1",
+        Opacity = "0",
+        Reveal = "100%",
+        Blur = "0px",
+        FadeDelay = "0ms",
+        FadeDuration = duration,
+        FadeEasing = easing,
+    };
+
+    // Появление/уход одного семейства поверхностей (Flare 0.42).
+    private static SurfaceMotionTokens Surface(
+        string enterDuration, string exitDuration, string offset, string enterEasing, string exitEasing) => new()
+    {
+        Enter = Phase(enterDuration, enterEasing, offset),
+        Exit = Phase(exitDuration, exitEasing, offset),
+    };
+
+    // Плавная музыкальная моторика с пружинами.
+    // Flare 0.42: движение описано РОЛЯМИ (порядковая шкала duration-short/medium/long удалена).
     private static readonly MotionTokens Motion = new()
     {
-        DurationShort1 = "100ms",
-        DurationShort2 = "150ms",
-        DurationShort3 = "175ms",
-        DurationShort4 = "200ms",
-        DurationMedium1 = "200ms",
-        DurationMedium2 = "250ms",
-        DurationLong1 = "300ms",
-        DurationLong2 = "400ms",
         EasingStandard = "cubic-bezier(0.2, 0.8, 0.2, 1)",
         EasingDecelerate = "cubic-bezier(0, 0, 0, 1)",
         EasingAccelerate = "cubic-bezier(0.3, 0, 1, 1)",
         EasingEmphasized = "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        EasingEmphasizedDecelerate = "cubic-bezier(0.05, 0.7, 0.1, 1)",
+        EasingEmphasizedAccelerate = "cubic-bezier(0.3, 0, 0.8, 0.15)",
+        EasingSubtle = "cubic-bezier(0.4, 0, 0.2, 1)",
+        EasingSubtleDecelerate = "cubic-bezier(0, 0, 0.2, 1)",
+        EasingSubtleAccelerate = "cubic-bezier(0.4, 0, 1, 1)",
+        EasingLinear = "linear",
+
+        DurationStateChange = "150ms",
+        DurationSmallMove = "175ms",
+        DurationEnterSmall = "150ms",
+        DurationEnterMedium = "200ms",
+        DurationEnterLarge = "250ms",
+        DurationExitSmall = "100ms",
+        DurationExitMedium = "150ms",
+        DurationExitLarge = "200ms",
+        DurationCycle = "800ms",
+        DurationCycleLong = "1400ms",
+
         EasingSpring = "cubic-bezier(0.32, 1.4, 0.5, 1)",
         EasingSpringFast = "cubic-bezier(0.34, 1.56, 0.64, 1)",
         EasingSpringSlow = "cubic-bezier(0.3, 1.25, 0.45, 1)",
         DurationSpring = "300ms",
         DurationSpringFast = "250ms",
         DurationSpringSlow = "400ms",
+
+        Dialog = Surface("200ms", "150ms", "12px", "cubic-bezier(0.05, 0.7, 0.1, 1)", "cubic-bezier(0.3, 0, 0.8, 0.15)"),
+        Sheet = Surface("250ms", "200ms", "8%", "cubic-bezier(0.05, 0.7, 0.1, 1)", "cubic-bezier(0.3, 0, 0.8, 0.15)"),
+        Menu = Surface("150ms", "100ms", "8px", "cubic-bezier(0.2, 0.8, 0.2, 1)", "cubic-bezier(0.3, 0, 1, 1)"),
+        Popover = Surface("150ms", "100ms", "8px", "cubic-bezier(0.2, 0.8, 0.2, 1)", "cubic-bezier(0.3, 0, 1, 1)"),
+        Tooltip = Surface("100ms", "75ms", "4px", "cubic-bezier(0.2, 0.8, 0.2, 1)", "cubic-bezier(0.3, 0, 1, 1)"),
+        Snackbar = Surface("200ms", "150ms", "12px", "cubic-bezier(0, 0, 0, 1)", "cubic-bezier(0.3, 0, 1, 1)"),
+        Drawer = Surface("250ms", "200ms", "8%", "cubic-bezier(0.05, 0.7, 0.1, 1)", "cubic-bezier(0.3, 0, 0.8, 0.15)"),
     };
 
     // Полупрозрачные наложения интерактивных состояний
@@ -335,7 +381,6 @@ internal static class DekaTokens
         LabelMd = T("1rem", "700", "1.3", "0em"),
         LabelLg = T("1rem", "700", "1.3", "0em"),
         LabelXl = T("1.0625rem", "700", "1.3", "0em"),
-        DisabledLayer = "transparent",
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
         OutlineWidthXs = "1px",
         OutlineWidthSm = "1px",
@@ -360,6 +405,33 @@ internal static class DekaTokens
         OutlinedSelectedColor = "var(--flare-color-primary)",
         FilledUnselectedBg = "var(--flare-color-surface-container-high)",
         FilledUnselectedColor = "var(--flare-color-on-surface-variant)",
+
+        // Flare 0.42: icon-only геометрия, отступы иконки, outlined/tonal/disabled
+        IconOnlySizeXs = "2rem",
+        IconOnlySizeSm = "2.5rem",
+        IconOnlySizeMd = "3rem",
+        IconOnlySizeLg = "3.25rem",
+        IconOnlySizeXl = "3.5rem",
+        IconOnlyRadiusXs = "var(--flare-shape-small)",
+        IconOnlyRadiusSm = "var(--flare-shape-small)",
+        IconOnlyRadiusMd = "var(--flare-shape-full)",
+        IconOnlyRadiusLg = "var(--flare-shape-full)",
+        IconOnlyRadiusXl = "var(--flare-shape-full)",
+        IconOnlyIconSizeXs = "1.125rem",
+        IconOnlyIconSizeSm = "1.125rem",
+        IconOnlyIconSizeMd = "1.25rem",
+        IconOnlyIconSizeLg = "1.375rem",
+        IconOnlyIconSizeXl = "1.5rem",
+        IconInset = "0.5rem",
+        TextIconInset = "0.25rem",
+        OutlinedColor = "var(--flare-color-primary)",
+        OutlinedBorderColor = "var(--flare-color-outline)",
+        TonalUnselectedBg = "var(--flare-color-surface-container-high)",
+        TonalUnselectedColor = "var(--flare-color-on-surface-variant)",
+        DisabledContainer = "color-mix(in srgb, var(--flare-color-on-surface) 12%, transparent)",
+        DisabledContent = "color-mix(in srgb, var(--flare-color-on-surface) 38%, transparent)",
+        DisabledStroke = "color-mix(in srgb, var(--flare-color-on-surface) 12%, transparent)",
+        DisabledRepaint = "1",
     };
 
     // Исправлены заполнители "xxx" на валидные токены Elevation
@@ -395,12 +467,18 @@ internal static class DekaTokens
         SubtitleColor = "var(--flare-color-on-surface-variant)",
         SubtitleFontFamily = "var(--flare-typescale-body-medium-font)",
         SubtitleFontSize = "var(--flare-typescale-body-medium-size)",
-        TransitionDuration = "var(--flare-motion-duration-short2)",
+        TransitionDuration = "var(--flare-motion-duration-state-change)",
         TransitionEasing = "var(--flare-motion-easing-standard)",
         FilledElevation = "var(--flare-elevation-0)",
         OutlinedElevation = "var(--flare-elevation-0)",
         TextElevation = "var(--flare-elevation-0)",
         TonalElevation = "var(--flare-elevation-0)",
+
+        // Flare 0.42: hover-возвышения по вариантам + кольцо фокуса
+        FilledElevationHover = "0 6px 20px -14px rgba(0,0,0,.5)",
+        OutlinedElevationHover = "0 6px 20px -14px rgba(0,0,0,.5)",
+        TonalElevationHover = "0 6px 20px -14px rgba(0,0,0,.5)",
+        FocusRing = "2px solid var(--flare-color-primary)",
     };
 
     private static readonly InputTokens Input = new()
@@ -430,6 +508,35 @@ internal static class DekaTokens
         DisabledIndicator = "color-mix(in srgb, var(--flare-color-on-surface) 38%, transparent)",
         ErrorHoverIndicator = "color-mix(in srgb, var(--flare-color-on-surface) 8%, var(--flare-color-error))",
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
+
+        // Flare 0.42: раздельные цвета границ/фокуса по вариантам и состояниям
+        FocusBorderColor = "var(--flare-color-primary)",
+        FocusBorderBottomColor = "var(--flare-color-primary)",
+        ErrorBorderColor = "var(--flare-color-error)",
+        ErrorBorderBottomColor = "var(--flare-color-error)",
+        ErrorFocusRing = "inset 0 0 0 1px var(--flare-color-error)",
+
+        FilledVariantBg = "var(--flare-color-surface-container-low)",
+        FilledVariantBorderColor = "transparent",
+        FilledVariantBorderBottomColor = "var(--flare-color-outline)",
+        FilledVariantRadius = "var(--flare-shape-small) var(--flare-shape-small) 0 0",
+        FilledVariantFocusRing = "inset 0 0 0 1px var(--fc-main, var(--flare-color-primary))",
+        FilledVariantFocusBorderColor = "var(--flare-color-primary)",
+        FilledVariantFocusBorderBottomColor = "var(--flare-color-primary)",
+        FilledVariantErrorBorderColor = "transparent",
+        FilledVariantErrorBorderBottomColor = "var(--flare-color-error)",
+        FilledVariantErrorFocusRing = "inset 0 0 0 1px var(--flare-color-error)",
+
+        OutlinedVariantBg = "transparent",
+        OutlinedVariantBorderColor = "var(--flare-color-outline)",
+        OutlinedVariantBorderBottomColor = "var(--flare-color-outline)",
+        OutlinedVariantRadius = "var(--flare-shape-small)",
+        OutlinedVariantFocusRing = "inset 0 0 0 1px var(--fc-main, var(--flare-color-primary))",
+        OutlinedVariantFocusBorderColor = "var(--flare-color-primary)",
+        OutlinedVariantFocusBorderBottomColor = "var(--flare-color-primary)",
+        OutlinedVariantErrorBorderColor = "var(--flare-color-error)",
+        OutlinedVariantErrorBorderBottomColor = "var(--flare-color-error)",
+        OutlinedVariantErrorFocusRing = "inset 0 0 0 1px var(--flare-color-error)",
     };
 
     private static readonly NavTokens Nav = new()
@@ -444,6 +551,13 @@ internal static class DekaTokens
         LinkDisabledOpacity = "var(--flare-state-disabled-opacity)",
         IconSize = "1.5rem",
         ItemHeight = "3rem",
+
+        // Flare 0.42: цвета элементов навигации
+        ActiveColor = "var(--flare-color-primary)",
+        ItemColor = "var(--flare-color-on-surface-variant)",
+        ItemHoverColor = "var(--flare-color-on-surface)",
+        GroupColor = "var(--flare-color-on-surface-variant2)",
+        MetaColor = "var(--flare-color-on-surface-variant2)",
     };
 
     private static readonly BottomNavTokens BottomNav = new()
@@ -463,7 +577,6 @@ internal static class DekaTokens
         IndicatorSize = "0",
         IndicatorWidth = "0",
         ItemDisabledOpacity = "var(--flare-state-disabled-opacity)",
-        ZIndex = "1100",
         ItemGap = "var(--flare-spacing-2)",
     };
 
@@ -471,6 +584,9 @@ internal static class DekaTokens
     {
         Radius = "var(--flare-shape-extra-large)",
         IconSize = "1.5rem",
+        Bg = "var(--flare-color-surface-container-high)",
+        Color = "var(--flare-color-on-surface)",
+        Shadow = "0 16px 40px -8px rgba(0,0,0,0.7)",
     };
 
     private static readonly DrawerTokens Drawer = new()
@@ -484,6 +600,7 @@ internal static class DekaTokens
     private static readonly MenuTokens Menu = new()
     {
         GroupDivider = "none",
+        PanelOffset = "0px",
         PanelRadius = "var(--flare-shape-medium)",
         PanelMinWidth = "8rem",
         PanelShadow = "var(--flare-elevation-4)",
@@ -540,6 +657,18 @@ internal static class DekaTokens
         PaddingInlineMd = "var(--flare-spacing-8)",
         PaddingInlineLg = "var(--flare-spacing-10)",
         PaddingInlineXl = "var(--flare-spacing-12)",
+
+        // Flare 0.42: граница, цвет и типографика метки чипа
+        BorderColor = "var(--flare-color-outline-variant)",
+        LabelColor = "var(--flare-color-on-surface)",
+        LabelFont = "var(--flare-typescale-label-medium-font)",
+        LabelSizeXs = "var(--flare-typescale-label-small-size)",
+        LabelSizeSm = "var(--flare-typescale-label-small-size)",
+        LabelSizeMd = "var(--flare-typescale-label-medium-size)",
+        LabelSizeLg = "var(--flare-typescale-label-medium-size)",
+        LabelSizeXl = "var(--flare-typescale-label-large-size)",
+        LabelWeight = "var(--flare-typescale-label-medium-weight)",
+        LabelSpacing = "0.01em",
 
     };
 
@@ -649,6 +778,21 @@ internal static class DekaTokens
         CloseOpacity = "0.75",
         MinWidth = "20rem",
         MaxWidth = "36rem",
+
+        // Flare 0.42: поверхности, текст, действие и тени снекбара
+        Bg = "var(--flare-color-surface-container-high)",
+        Color = "var(--flare-color-on-surface)",
+        ActionColor = "var(--flare-color-primary)",
+        Shadow = "0 8px 30px rgba(0,0,0,0.5)",
+        PaddingInline = "1rem",
+        ErrorBg = "var(--flare-color-error-container)",
+        ErrorColor = "var(--flare-color-on-error-container)",
+        SuccessBg = "var(--flare-color-success-container)",
+        SuccessColor = "var(--flare-color-on-success-container)",
+        WarningBg = "var(--flare-color-warning-container)",
+        WarningColor = "var(--flare-color-on-warning-container)",
+        InfoBg = "var(--flare-color-info-container)",
+        InfoColor = "var(--flare-color-on-info-container)",
     };
 
     private static readonly AlertTokens Alert = new()
@@ -760,11 +904,25 @@ internal static class DekaTokens
     {
         MaxWidth = "18rem",
         Offset = "0.5rem",
+
+        // Flare 0.42: поверхности и тени подсказок
+        Bg = "var(--flare-color-surface-container-high)",
+        Color = "var(--flare-color-on-surface)",
+        Shadow = "0 6px 20px -14px rgba(0,0,0,.5)",
+        Padding = "0.5rem 0.75rem",
+        RichBg = "var(--flare-color-surface-container-high)",
+        RichColor = "var(--flare-color-on-surface)",
+        RichShadow = "0 8px 30px rgba(0,0,0,0.5)",
+        RichPadding = "0.75rem 1rem",
     };
 
     private static readonly PopoverTokens Popover = new()
     {
         Radius = "var(--flare-shape-medium)",
+        Bg = "var(--flare-color-surface-container)",
+        Color = "var(--flare-color-on-surface)",
+        Offset = "0.5rem",
+        Shadow = "0 8px 30px rgba(0,0,0,0.5)",
     };
 
     private static readonly ButtonGroupTokens ButtonGroup = new()
@@ -826,7 +984,6 @@ internal static class DekaTokens
 
     private static readonly CheckboxTokens Checkbox = new()
     {
-        Size = "1.125rem",
         BorderWidth = "2px",
         Radius = "5px",
         StateLayerHover = "color-mix(in srgb, var(--flare-color-on-surface) 8%, transparent)",
@@ -835,17 +992,28 @@ internal static class DekaTokens
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
+        SizeXs = "1rem",
+        SizeSm = "1.125rem",
+        SizeMd = "1.125rem",
+        SizeLg = "1.375rem",
+        SizeXl = "1.5rem",
+        StateLayerSize = "2.5rem",
     };
 
     private static readonly RadioTokens Radio = new()
     {
-        Size = "1.25rem",
         StateLayerHover = "color-mix(in srgb, var(--flare-color-on-surface) 8%, transparent)",
         StateLayerHoverChecked = "color-mix(in srgb, var(--flare-color-primary) 8%, transparent)",
         FocusOutline = "2px solid var(--flare-color-primary)",
         FocusOutlineOffset = "2px",
         FocusShadow = "none",
         DisabledOpacity = "var(--flare-state-disabled-opacity)",
+        SizeXs = "1rem",
+        SizeSm = "1.125rem",
+        SizeMd = "1.25rem",
+        SizeLg = "1.5rem",
+        SizeXl = "1.75rem",
+        StateLayerSize = "2.5rem",
     };
 
     private static readonly SliderTokens Slider = new()
@@ -1076,6 +1244,20 @@ internal static class DekaTokens
         AppBarBorder = "none",
         DrawerBorder = "none",
         AppBarShadow = "none",
+
+        // Flare 0.42: плоскости оболочки, тень края ящика и геометрия кнопки-гамбургера
+        ShellBg = "var(--flare-color-surface)",
+        ContentBg = "transparent",
+        DrawerBg = "var(--flare-color-surface-container-low)",
+        RailBg = "var(--flare-color-surface-container-low)",
+        DrawerShadowOffset = "1px",
+        DrawerShadowBlur = "12px",
+        DrawerShadowColor = "rgba(0,0,0,0.35)",
+        AppBarToggleSize = "2.5rem",
+        AppBarToggleGlyphWidth = "1.125rem",
+        AppBarToggleGlyphHeight = "0.75rem",
+        AppBarToggleBarThickness = "2px",
+        AppBarToggleRadius = "var(--flare-shape-small)",
     };
 
     private static readonly LinkTokens Link = new()
@@ -1109,6 +1291,11 @@ internal static class DekaTokens
         DaySize = "3rem",
         DayLayerSize = "2.5rem",
         DayFontSize = "var(--flare-typescale-body-large-size)",
+
+        // Flare 0.42: поверхность панели выбора
+        PanelBg = "var(--flare-color-surface-container)",
+        PanelColor = "var(--flare-color-on-surface)",
+        PanelShadow = "0 8px 30px rgba(0,0,0,0.5)",
     };
 
     private static readonly ScrimTokens Scrim = new()
@@ -1213,6 +1400,14 @@ internal static class DekaTokens
         HoverColor = "color-mix(in srgb, var(--flare-color-primary) 24%, transparent)",
         IconSize = "1.125rem",
         IconColor = "var(--flare-color-on-surface-variant)",
+
+        // Flare 0.42: ручка разделителя и её нажатое состояние
+        GripColor = "var(--flare-color-outline)",
+        GripRadius = "var(--flare-shape-full)",
+        GripPressedColor = "var(--flare-color-primary)",
+        GripPressedLength = "2.25rem",
+        GripPressedThickness = "3px",
+        GripPressedRadius = "var(--flare-shape-full)",
     };
 
     private static readonly TimePickerTokens TimePicker = new()
@@ -1232,6 +1427,18 @@ internal static class DekaTokens
         TimeSepSize = "3.5625rem",
     };
 
+    // Flare 0.42: лестница наложения (z-index) открепленных поверхностей.
+    private static readonly LayerTokens Layer = new()
+    {
+        Chrome = "100",
+        Drawer = "200",
+        Dropdown = "300",
+        Modal = "400",
+        Toast = "500",
+        Tooltip = "600",
+        Drag = "700",
+    };
+
     // ----- Композиция (DesignTokens) -------------------------------------------------------------------
 
     public static readonly DesignTokens Design = new()
@@ -1245,6 +1452,7 @@ internal static class DekaTokens
         Spacing = Spacing,
         Border = Border,
         Scrollbar = Scrollbar,
+        Layer = Layer,
         Badge = Badge,
         Alert = Alert,
         Button = Button,

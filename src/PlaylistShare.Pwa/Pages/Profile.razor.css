@@ -1,3 +1,8 @@
+.deka-profile {
+    position: relative;
+    padding-block: var(--flare-spacing-8) var(--flare-spacing-32);
+}
+
 .account-badge {
     display: flex;
     align-items: center;
@@ -27,4 +32,9 @@
 .theme-mode-chip {
     flex: 1;
     justify-content: center;
+}
+
+.theme-mode-hint {
+    display: block;
+    margin-top: var(--flare-spacing-6);
 }

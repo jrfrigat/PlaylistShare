@@ -16,28 +16,38 @@
 @inject AppBarState AppBar
 @implements IDisposable
 
-<FlareContainer MaxWidth="ContainerMaxWidth.Lg" Class="deka-search-page px-0">
+<FlareContainer MaxWidth="ContainerMaxWidth.Lg" Class="deka-search-page">
+    @* Ambient glow нового шаблона (как на Фонотеке) *@
+    <div class="deka-glow-layer" aria-hidden="true">
+        <div class="deka-glow deka-glow--primary"></div>
+        <div class="deka-glow deka-glow--secondary"></div>
+    </div>
+
     @* На мобильном "назад" и заголовок несёт контекстный app bar (см. ApplyAppBar);
        в контенте дублируем их только на десктопе (>=960 = Below Md), где хедера нет. *@
     <FlareHidden Below="Breakpoint.Md">
-        @if (_hasBackLink)
-        {
-            <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="GoBack" Class="deka-search-back">
-                <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.ArrowBack" /></LeadingIcon>
-                <ChildContent>Назад в "@_backName"</ChildContent>
-            </FlareButton>
-        }
-
-        <FlareText Typo="TypographyScale.HeadlineSmall" Class="mb-4">
-            @(_hasBackLink ? $"Добавить в '{_backName}'" : "Поиск треков")
-        </FlareText>
+        <header class="deka-library-header">
+            <div class="deka-library-header__intro">
+                @if (_hasBackLink)
+                {
+                    <FlareButton Variant="ButtonVariant.Text" Color="FlareColor.Secondary" OnClick="GoBack" Class="deka-search-back">
+                        <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.ArrowBack" /></LeadingIcon>
+                        <ChildContent>Назад в "@_backName"</ChildContent>
+                    </FlareButton>
+                }
+                <FlareText Typo="TypographyScale.LabelLarge" Color="@FlareColor.Secondary" Class="deka-eyebrow">Яндекс Музыка</FlareText>
+                <FlareText Typo="TypographyScale.HeadlineLarge">
+                    @(_hasBackLink ? $"Добавить в '{_backName}'" : "Поиск")
+                </FlareText>
+            </div>
+        </header>
     </FlareHidden>
 
     <FlareField TValue="string" @bind-Value="_query"
                 @bind-Value:after="OnQueryChanged"
                 Variant="InputVariant.Outlined"
                 Placeholder="Трек, альбом, исполнитель или плейлист"
-                Class="mb-3">
+                Class="deka-search-field">
         <AdornmentStart><FlareIconView Value="@MaterialDesign3Icons.Regular.Search" Color="FlareColor.Secondary" /></AdornmentStart>
         <AdornmentEnd>
             @if (!string.IsNullOrEmpty(_query))
@@ -47,7 +57,7 @@
         </AdornmentEnd>
     </FlareField>
 
-    <div class="deka-search-chips mb-4">
+    <div class="deka-search-chips">
         <FlareChipGroup SelectedValues="_selectedChips" SelectedValuesChanged="OnChipChanged" AriaLabel="Тип поиска">
             <FlareChip Value="all" Label="Топ" />
             <FlareChip Value="track" Label="Треки" />
@@ -96,7 +106,7 @@
         }
         else if ((_result?.Playlists?.Count ?? 0) == 0 && (_result?.LikedPlaylists?.Count ?? 0) == 0)
         {
-            <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="pa-4 text-center">Плейлисты не найдены</FlareText>
+            <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="deka-search-note">Плейлисты не найдены</FlareText>
         }
         else
         {
@@ -128,7 +138,7 @@
     }
     else if (string.IsNullOrWhiteSpace(_query))
     {
-        <div class="deka-search-empty">
+        <div class="deka-empty">
             <FlareIconView Value="@MaterialDesign3Icons.Regular.Search" SizePx="36" />
             <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary">
                 Начните вводить название трека, альбома, исполнителя или плейлиста
@@ -137,7 +147,7 @@
     }
     else if (_result == null || IsResultEmpty(_result))
     {
-        <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="pa-4 text-center">Ничего не нашлось по запросу "@_query"</FlareText>
+        <FlareText Typo="TypographyScale.BodyMedium" Color="FlareColor.Secondary" Class="deka-search-note">Ничего не нашлось по запросу "@_query"</FlareText>
     }
     else if (_type == TrackSearchType.All)
     {
@@ -525,11 +535,32 @@
 }
 
 <style>
+    .deka-search-page {
+        position: relative;
+        padding-block: var(--flare-spacing-8) var(--flare-spacing-32);
+    }
+
+    .deka-search-field {
+        position: relative;
+        z-index: 1;
+        margin-bottom: 0.75rem;
+    }
+
+    .deka-search-note {
+        position: relative;
+        z-index: 1;
+        padding: var(--flare-spacing-8);
+        text-align: center;
+    }
+
     .deka-search-back {
         margin-bottom: 0.5rem;
     }
 
     .deka-search-chips {
+        position: relative;
+        z-index: 1;
+        margin-bottom: 1rem;
         overflow-x: auto;
         /* прячем полосу прокрутки - чипы скроллятся свайпом в один ряд */
         scrollbar-width: none;

@@ -97,12 +97,29 @@ internal static class DekaColors
             OnSurfaceVariant2 = "oklch(0.65 0.022 293)", // #958ea0
 
             // ── Ступенчатые контейнеры поверхностей ─────────────────────
-            // TODO: добавить токен SurfaceContainerLowest в Flare
-            // SurfaceContainerLowest = "oklch(0.16 0.008 286)", // #0e0e13
+            SurfaceContainerLowest = "oklch(0.16 0.008 286)", // #0e0e13
             SurfaceContainerLow = "oklch(0.21 0.008 286)", // #1b1b20
             SurfaceContainer = "oklch(0.24 0.009 286)", // #1f1f25
             SurfaceContainerHigh = "oklch(0.28 0.010 286)", // #2a292f
             SurfaceContainerHighest = "oklch(0.33 0.011 286)", // #35343a
+
+            // ── Flare 0.38+: яркость/тусклость поверхности ──────────────
+            SurfaceBright = "oklch(0.33 0.011 286)", // #35343a
+            SurfaceDim = "oklch(0.18 0.008 286)",    // #131318
+
+            // ── Flare 0.42: фиксированные роли (один цвет в обеих схемах) ─
+            PrimaryFixed = "oklch(0.82 0.110 293)",  // #d0bcff
+            PrimaryFixedDim = "oklch(0.72 0.140 293)",
+            OnPrimaryFixed = "oklch(0.28 0.150 293)",
+            OnPrimaryFixedVariant = "oklch(0.48 0.200 293)",
+            SecondaryFixed = "oklch(0.82 0.130 210)", // #4cd7f6
+            SecondaryFixedDim = "oklch(0.72 0.140 210)",
+            OnSecondaryFixed = "oklch(0.24 0.050 210)",
+            OnSecondaryFixedVariant = "oklch(0.42 0.070 210)",
+            TertiaryFixed = "oklch(0.82 0.100 355)", // #ffb0cd
+            TertiaryFixedDim = "oklch(0.72 0.140 355)",
+            OnTertiaryFixed = "oklch(0.28 0.130 355)",
+            OnTertiaryFixedVariant = "oklch(0.45 0.160 355)",
 
             // ── Обводки ─────────────────────────────────────────────────
             Outline = "oklch(0.65 0.022 293)",  // #958ea0
@@ -202,12 +219,29 @@ internal static class DekaColors
             OnSurfaceVariant = "oklch(0.38 0.025 293)",
             OnSurfaceVariant2 = "oklch(0.55 0.018 293)",
 
-            // TODO: добавить токен SurfaceContainerLowest в Flare
-            // SurfaceContainerLowest = "oklch(1.00 0 0)",
+            // TODO: добавлен токен SurfaceContainerLowest (Flare 0.38+)
+            SurfaceContainerLowest = "oklch(1.00 0 0)",
             SurfaceContainerLow = "oklch(0.97 0.006 293)",
             SurfaceContainer = "oklch(0.94 0.008 293)",
             SurfaceContainerHigh = "oklch(0.92 0.010 293)",
             SurfaceContainerHighest = "oklch(0.90 0.012 293)",
+
+            SurfaceBright = "oklch(1.00 0 0)",
+            SurfaceDim = "oklch(0.90 0.012 293)",
+
+            // Flare 0.42: фиксированные роли (один цвет в обеих схемах)
+            PrimaryFixed = "oklch(0.82 0.110 293)",  // #d0bcff
+            PrimaryFixedDim = "oklch(0.72 0.140 293)",
+            OnPrimaryFixed = "oklch(0.28 0.150 293)",
+            OnPrimaryFixedVariant = "oklch(0.48 0.200 293)",
+            SecondaryFixed = "oklch(0.82 0.130 210)", // #4cd7f6
+            SecondaryFixedDim = "oklch(0.72 0.140 210)",
+            OnSecondaryFixed = "oklch(0.24 0.050 210)",
+            OnSecondaryFixedVariant = "oklch(0.42 0.070 210)",
+            TertiaryFixed = "oklch(0.82 0.100 355)", // #ffb0cd
+            TertiaryFixedDim = "oklch(0.72 0.140 355)",
+            OnTertiaryFixed = "oklch(0.28 0.130 355)",
+            OnTertiaryFixedVariant = "oklch(0.45 0.160 355)",
 
             Outline = "oklch(0.55 0.020 293)",
             OutlineVariant = "oklch(0.82 0.020 293)",

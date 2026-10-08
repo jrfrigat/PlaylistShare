@@ -8,69 +8,85 @@
 
 <PageTitle>Профиль</PageTitle>
 
-<FlareContainer MaxWidth="ContainerMaxWidth.Sm" Class="mt-8">
-    <FlareText Typo="TypographyScale.HeadlineMedium" Class="mb-6">Настройки</FlareText>
+<div class="deka-profile">
+    <div class="deka-glow-layer" aria-hidden="true">
+        <div class="deka-glow deka-glow--primary"></div>
+        <div class="deka-glow deka-glow--secondary"></div>
+    </div>
 
-    <FlareStack Gap="FlareSpacing.Large">
-        <!-- Секция Яндекс.Музыки -->
-        <div>
-            <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="mb-3">АККАУНТ ЯНДЕКС МУЗЫКИ</FlareText>
-            <FlareCard Variant="CardVariant.Outlined">
-                <FlareCardContent>
-                    @if (_hasToken)
-                    {
-                        <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
-                            <div class="account-badge account-badge--connected">
-                                <FlareIconView Value="@MaterialDesign3Icons.Regular.Check" />
-                            </div>
-                            <FlareStack Gap="FlareSpacing.None" Class="account-info">
-                                <FlareText Typo="TypographyScale.TitleMedium">Подключено</FlareText>
-                                <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">@_statusText</FlareText>
+    <FlareContainer MaxWidth="ContainerMaxWidth.Sm">
+        <header class="deka-library-header">
+            <div class="deka-library-header__intro">
+                <FlareText Typo="TypographyScale.LabelLarge" Color="@FlareColor.Secondary" Class="deka-eyebrow">Настройки</FlareText>
+                <FlareText Typo="TypographyScale.HeadlineLarge">Профиль</FlareText>
+            </div>
+        </header>
+
+        <FlareStack Gap="FlareSpacing.Large">
+            <!-- Секция Яндекс.Музыки -->
+            <section class="deka-section">
+                <div class="deka-section-header">
+                    <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="deka-eyebrow">Аккаунт Яндекс Музыки</FlareText>
+                </div>
+                <FlareCard Variant="CardVariant.Outlined">
+                    <FlareCardContent>
+                        @if (_hasToken)
+                        {
+                            <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
+                                <div class="account-badge account-badge--connected">
+                                    <FlareIconView Value="@MaterialDesign3Icons.Regular.Check" />
+                                </div>
+                                <FlareStack Gap="FlareSpacing.None" Class="account-info">
+                                    <FlareText Typo="TypographyScale.TitleMedium">Подключено</FlareText>
+                                    <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">@_statusText</FlareText>
+                                </FlareStack>
+                                <FlareButton Variant="ButtonVariant.Outlined" OnClick="GoToConnect">Переподключить</FlareButton>
                             </FlareStack>
-                            <FlareButton Variant="ButtonVariant.Outlined" OnClick="GoToConnect">Переподключить</FlareButton>
-                        </FlareStack>
-                    }
-                    else
-                    {
-                        <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
-                            <div class="account-badge account-badge--disconnected">
-                                <FlareIconView Value="@MaterialDesign3Icons.Regular.Schedule" />
-                            </div>
-                            <FlareStack Gap="FlareSpacing.None" Class="account-info">
-                                <FlareText Typo="TypographyScale.TitleMedium">Не подключено</FlareText>
-                                <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">Подключите, чтобы видеть плейлисты</FlareText>
+                        }
+                        else
+                        {
+                            <FlareStack Row Align="FlareAlignItems.Center" Gap="FlareSpacing.Medium">
+                                <div class="account-badge account-badge--disconnected">
+                                    <FlareIconView Value="@MaterialDesign3Icons.Regular.Schedule" />
+                                </div>
+                                <FlareStack Gap="FlareSpacing.None" Class="account-info">
+                                    <FlareText Typo="TypographyScale.TitleMedium">Не подключено</FlareText>
+                                    <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary">Подключите, чтобы видеть плейлисты</FlareText>
+                                </FlareStack>
+                                <FlareButton Variant="ButtonVariant.Filled" Color="FlareColor.Primary" OnClick="GoToConnect">Подключить</FlareButton>
                             </FlareStack>
-                            <FlareButton Variant="ButtonVariant.Filled" Color="FlareColor.Primary" OnClick="GoToConnect">Подключить</FlareButton>
+                        }
+                    </FlareCardContent>
+                </FlareCard>
+            </section>
+
+            <!-- Секция темы оформления -->
+            <section class="deka-section">
+                <div class="deka-section-header">
+                    <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="deka-eyebrow">Тема оформления</FlareText>
+                </div>
+                <FlareCard Variant="CardVariant.Outlined">
+                    <FlareCardContent>
+                        <FlareStack Row Gap="FlareSpacing.Small">
+                            <FlareChip Label="Авто" Selected="@(ThemeService.Mode == ThemeMode.Auto)" OnClick="@(() => SetMode(ThemeMode.Auto))" Class="theme-mode-chip">
+                                <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.BrightnessAuto" /></LeadingIcon>
+                            </FlareChip>
+                            <FlareChip Label="Светлая" Selected="@(ThemeService.Mode == ThemeMode.Light)" OnClick="@(() => SetMode(ThemeMode.Light))" Class="theme-mode-chip">
+                                <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.LightMode" /></LeadingIcon>
+                            </FlareChip>
+                            <FlareChip Label="Тёмная" Selected="@(ThemeService.Mode == ThemeMode.Dark)" OnClick="@(() => SetMode(ThemeMode.Dark))" Class="theme-mode-chip">
+                                <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.DarkMode" /></LeadingIcon>
+                            </FlareChip>
                         </FlareStack>
-                    }
-                </FlareCardContent>
-            </FlareCard>
-        </div>
+                        <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary" Class="theme-mode-hint">"Авто" следует системным настройкам устройства.</FlareText>
+                    </FlareCardContent>
+                </FlareCard>
+            </section>
 
-        <!-- Секция темы оформления -->
-        <div>
-            <FlareText Typo="TypographyScale.LabelMedium" Color="FlareColor.Secondary" Class="mb-3">ТЕМА ОФОРМЛЕНИЯ</FlareText>
-            <FlareCard Variant="CardVariant.Outlined">
-                <FlareCardContent>
-                    <FlareStack Row Gap="FlareSpacing.Small">
-                        <FlareChip Label="Авто" Selected="@(ThemeService.Mode == ThemeMode.Auto)" OnClick="@(() => SetMode(ThemeMode.Auto))" Class="theme-mode-chip">
-                            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.BrightnessAuto" /></LeadingIcon>
-                        </FlareChip>
-                        <FlareChip Label="Светлая" Selected="@(ThemeService.Mode == ThemeMode.Light)" OnClick="@(() => SetMode(ThemeMode.Light))" Class="theme-mode-chip">
-                            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.LightMode" /></LeadingIcon>
-                        </FlareChip>
-                        <FlareChip Label="Тёмная" Selected="@(ThemeService.Mode == ThemeMode.Dark)" OnClick="@(() => SetMode(ThemeMode.Dark))" Class="theme-mode-chip">
-                            <LeadingIcon><FlareIconView Value="@MaterialDesign3Icons.Regular.DarkMode" /></LeadingIcon>
-                        </FlareChip>
-                    </FlareStack>
-                    <FlareText Typo="TypographyScale.BodySmall" Color="FlareColor.Secondary" Class="mt-3">"Авто" следует системным настройкам устройства.</FlareText>
-                </FlareCardContent>
-            </FlareCard>
-        </div>
-
-        <FlareButton Variant="ButtonVariant.Outlined" Color="FlareColor.Error" OnClick="Logout">Выйти</FlareButton>
-    </FlareStack>
-</FlareContainer>
+            <FlareButton Variant="ButtonVariant.Outlined" Color="FlareColor.Error" OnClick="Logout">Выйти</FlareButton>
+        </FlareStack>
+    </FlareContainer>
+</div>
 
 @code {
     private string _statusText = "Загрузка...";
