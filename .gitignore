@@ -90,3 +90,11 @@ dp-keys/
 
 AGENTS.md
 .codex/
+/.aiko/
+/.mcp.json
+/.cursor/mcp.json
+/.zcode/config.json
+/.cline/
+/.clinerules/
+/.codex/
+/.agents/

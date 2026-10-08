@@ -3,3 +3,9 @@ inherit = "core"
 
 [shell_environment_policy.set]
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
+
+# aiko:begin
+[mcp_servers.aiko]
+url = "http://127.0.0.1:24598/mcp/projects/playlistshared"
+bearer_token_env_var = "AIKO_TOKEN"
+# aiko:end
