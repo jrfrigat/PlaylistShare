@@ -20,7 +20,7 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
-		<PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="11.0.0" />
 		<!-- PostgreSQL provider (selectable at runtime via Database:Provider). -->
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
 		<PackageReference Include="Community.Microsoft.Extensions.Caching.PostgreSql" Version="6.0.2" />
